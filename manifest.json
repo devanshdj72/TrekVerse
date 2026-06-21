@@ -1,0 +1,41 @@
+{
+  "name": "SummitLog — Himalayan Trek Atlas",
+  "short_name": "SummitLog",
+  "description": "Track every Himalayan trek and mountain you climb. Real terrain map with GPS trail routes, campsites, passes and summit points.",
+  "id": "/summitlog/",
+  "start_url": "/summitlog/",
+  "scope": "/summitlog/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "orientation": "portrait-primary",
+  "categories": ["travel", "sports", "navigation"],
+  "lang": "en",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

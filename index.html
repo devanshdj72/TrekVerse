@@ -1,0 +1,2363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0d1117">
+<meta name="description" content="Track every Himalayan trek and mountain you climb. Real terrain map with GPS trail routes, campsites, passes and summit points.">
+
+<!-- iOS install support -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SummitLog">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<!-- Android / general PWA -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+
+<title>SummitLog — Himalayan Trek Atlas</title>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<!-- Leaflet JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<!-- MarkerCluster plugin -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0d1117;--surf:#161b22;--glass:rgba(13,17,23,0.94);
+  --bord:rgba(255,255,255,0.08);--txt:#e6edf3;--mute:#7d8590;
+  --ora:#f97316;--grn:#2ea043;--blu:#388bfd;--pur:#a371f7;--red:#f85149;--yel:#d29922;
+}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt)}
+
+/* TOPBAR */
+#topbar{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  height:54px;display:flex;align-items:center;gap:10px;padding:0 14px;
+  background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--bord);
+  box-shadow:0 4px 24px rgba(0,0,0,.35);
+}
+.logo{font-size:18px;font-weight:800;color:var(--ora);white-space:nowrap;letter-spacing:.3px;text-shadow:0 0 16px rgba(249,115,22,.4);display:flex;align-items:center;gap:4px}
+.logo .logo-peak{display:inline-block;animation:logoFloat 3s ease-in-out infinite}
+@keyframes logoFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-2px) rotate(-3deg)}}
+.logo em{color:var(--txt);font-style:normal;font-weight:300}
+.swrap{position:relative;flex:1}
+#srch{
+  width:100%;height:34px;border-radius:17px;
+  background:rgba(255,255,255,0.06);border:1px solid var(--bord);
+  padding:0 12px 0 34px;color:var(--txt);font-size:13px;outline:none;
+}
+#srch:focus{border-color:rgba(249,115,22,.5)}
+#srch::placeholder{color:var(--mute)}
+.sico{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none;color:var(--mute)}
+#sres{
+  position:absolute;top:40px;left:0;right:0;display:none;
+  background:var(--surf);border:1px solid var(--bord);border-radius:12px;
+  max-height:260px;overflow-y:auto;z-index:9999;
+  box-shadow:0 12px 40px rgba(0,0,0,.7);
+  animation:sresIn .22s cubic-bezier(.2,1,.3,1);
+}
+@keyframes sresIn{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.sri{padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--bord);display:flex;align-items:center;gap:10px;transition:background .15s}
+.sri:last-child{border:none}
+.sri:hover{background:rgba(255,255,255,.04)}
+.sri-ico{font-size:16px;flex-shrink:0}
+.sri-name{font-size:13px;font-weight:600}
+.sri-meta{font-size:11px;color:var(--mute)}
+.sri.ok .sri-name::after{content:" ✓";color:var(--grn)}
+#bdg{
+  font-size:11px;padding:4px 10px;border-radius:12px;
+  background:linear-gradient(135deg,rgba(249,115,22,.18),rgba(249,115,22,.08));
+  border:1px solid rgba(249,115,22,.35);color:var(--ora);cursor:pointer;
+  white-space:nowrap;font-weight:700;font-family:monospace;
+  box-shadow:0 2px 8px rgba(249,115,22,.15);
+  transition:transform .15s ease;
+}
+#bdg:active{transform:scale(.92)}
+#addbtn{
+  width:32px;height:32px;border-radius:50%;border:none;
+  background:linear-gradient(135deg,#fb923c,#f97316);color:#fff;
+  font-size:19px;font-weight:700;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s, background .25s;
+  box-shadow:0 3px 10px rgba(249,115,22,.45), inset 0 1px 0 rgba(255,255,255,.3);line-height:1;
+}
+#addbtn:hover{transform:scale(1.1);box-shadow:0 4px 16px rgba(249,115,22,.6), inset 0 1px 0 rgba(255,255,255,.3)}
+#addbtn:active{transform:scale(.92)}
+#addbtn.active{background:linear-gradient(135deg,#fb7185,#f85149);transform:rotate(45deg);box-shadow:0 3px 10px rgba(248,81,73,.45)}
+#addbanner{
+  position:fixed;top:54px;left:0;right:0;z-index:950;display:none;
+  align-items:center;justify-content:center;gap:14px;
+  background:linear-gradient(135deg,rgba(249,115,22,.97),rgba(234,108,4,.97));color:#fff;font-size:13px;font-weight:600;
+  padding:10px 16px;backdrop-filter:blur(10px);
+  box-shadow:0 4px 20px rgba(249,115,22,.4);
+}
+#addbanner.show{display:flex;animation:bannerSlide .3s cubic-bezier(.2,1,.3,1)}
+@keyframes bannerSlide{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+#addcancel{
+  background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.3);color:#fff;
+  padding:4px 12px;border-radius:14px;font-size:12px;font-weight:600;cursor:pointer;
+  transition:transform .15s;
+}
+#addcancel:active{transform:scale(.92)}
+.mk-custom{background:rgba(163,113,247,.92)!important;border-color:rgba(163,113,247,.5)!important}
+.wp-edit-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:10px;padding:10px;background:rgba(255,255,255,.03);border:1px solid var(--bord);border-radius:10px}
+.wp-edit-row .mf{flex:1;margin-bottom:0}
+.wp-edit-row select{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--bord);border-radius:9px;padding:9px 8px;color:var(--txt);font-size:12px;font-family:inherit;outline:none}
+.wp-remove{background:rgba(248,81,73,.15);border:1px solid rgba(248,81,73,.3);color:var(--red);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;flex-shrink:0}
+#wp-add-btn{width:100%;padding:10px;border-radius:10px;border:1px dashed var(--bord);background:transparent;color:var(--mute);font-size:12px;cursor:pointer;font-family:inherit;margin-top:4px}
+#wp-add-btn:hover{border-color:var(--ora);color:var(--ora)}
+.diff-select{display:flex;gap:6px}
+.diff-opt{flex:1;padding:8px;text-align:center;border-radius:8px;border:1px solid var(--bord);font-size:11px;font-weight:600;cursor:pointer;color:var(--mute);text-transform:capitalize}
+.diff-opt.sel-easy{background:rgba(46,160,67,.2);border-color:var(--grn);color:var(--grn)}
+.diff-opt.sel-moderate{background:rgba(210,153,34,.2);border-color:var(--yel);color:var(--yel)}
+.diff-opt.sel-difficult{background:rgba(249,115,22,.2);border-color:var(--ora);color:var(--ora)}
+.diff-opt.sel-extreme{background:rgba(248,81,73,.2);border-color:var(--red);color:var(--red)}
+.custom-badge{display:inline-block;font-size:9px;padding:2px 7px;border-radius:8px;background:rgba(163,113,247,.15);color:var(--pur);font-weight:700;margin-left:6px;vertical-align:middle}
+.btn-del{background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);color:var(--red);flex:0 0 auto;padding:13px 16px}
+.btn-del:hover{background:rgba(248,81,73,.2)}
+
+/* MAP */
+#tabs{
+  position:fixed;bottom:0;left:0;right:0;z-index:1000;
+  display:flex;overflow-x:auto;scrollbar-width:none;
+  background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--bord);
+  padding:8px 10px;padding-bottom:calc(8px + env(safe-area-inset-bottom));gap:6px;
+  box-shadow:0 -4px 24px rgba(0,0,0,.35);
+}
+#tabs::-webkit-scrollbar{display:none}
+.tab{
+  flex-shrink:0;padding:6px 14px;border-radius:16px;font-size:11px;font-weight:600;
+  cursor:pointer;border:1px solid var(--bord);color:var(--mute);
+  white-space:nowrap;background:rgba(255,255,255,.02);
+  transition:transform .15s ease, box-shadow .25s ease, background .25s ease, border-color .25s ease, color .25s ease;
+  font-family:inherit;
+}
+.tab.on{
+  background:linear-gradient(135deg,#fb923c,#f97316);
+  border-color:#f97316;color:#fff;
+  box-shadow:0 3px 12px rgba(249,115,22,.45), 0 0 0 1px rgba(255,255,255,.15) inset;
+  transform:translateY(-1px);
+}
+.tab:hover:not(.on){color:var(--txt);border-color:rgba(255,255,255,.25);background:rgba(255,255,255,.06)}
+.tab:active{transform:scale(.94)}
+.tab{display:flex;align-items:center;gap:5px}
+.tab-label{pointer-events:none}
+.tab-chev{
+  font-size:9px;opacity:.55;line-height:1;
+  padding:3px 2px;margin:-3px -4px -3px 1px;
+  transform:rotate(180deg);
+  transition:transform .2s ease, opacity .2s ease, background .15s ease;
+  border-radius:6px;
+}
+.tab-chev:hover{opacity:1;background:rgba(255,255,255,.15)}
+.tab-chev:active{transform:rotate(180deg) scale(.85)}
+.tab-chev.chev-open{transform:rotate(0deg);opacity:1}
+
+/* Region hover/tap popover — shows treks in that region */
+#regionpop{
+  position:fixed;z-index:1100;
+  bottom:0;left:0;
+  width:240px;
+  height:410px;
+  pointer-events:none;
+  display:none;
+  flex-direction:column;
+  justify-content:flex-end;
+  padding-bottom:70px;
+}
+#regionpop.show{display:flex}
+#regionpop.show .rpop-card{pointer-events:auto}
+.rpop-card{
+  position:relative;
+  background:var(--surf);
+  border:1px solid var(--bord);
+  border-radius:16px;
+  box-shadow:0 16px 48px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04);
+  transform-origin:18px 100%;
+  animation:rpopIn .28s cubic-bezier(.22,1.4,.36,1) backwards;
+  display:flex;flex-direction:column;
+  max-height:340px;
+}
+@keyframes rpopIn{
+  0%{opacity:0;transform:perspective(600px) rotateX(-18deg) translateY(10px) scale(.9)}
+  100%{opacity:1;transform:perspective(600px) rotateX(0) translateY(0) scale(1)}
+}
+#regionpop.closing .rpop-card{animation:rpopOut .16s ease forwards}
+@keyframes rpopOut{
+  0%{opacity:1;transform:perspective(600px) rotateX(0) translateY(0) scale(1)}
+  100%{opacity:0;transform:perspective(600px) rotateX(-14deg) translateY(8px) scale(.92)}
+}
+.rpop-head{
+  padding:11px 14px 9px;
+  border-bottom:1px solid var(--bord);
+  flex-shrink:0;
+  border-radius:16px 16px 0 0;
+  overflow:hidden;
+  background:linear-gradient(135deg,rgba(249,115,22,.1),transparent);
+}
+.rpop-title{font-size:13px;font-weight:800;color:var(--txt);display:flex;align-items:center;gap:6px}
+.rpop-count{font-size:10px;color:var(--mute);font-weight:600;margin-top:1px}
+.rpop-list{overflow-y:auto;flex:1;padding:6px;border-radius:0 0 16px 16px}
+.rpop-item{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 8px;border-radius:10px;cursor:pointer;
+  animation:rpopItemIn .25s ease backwards;
+  transition:background .15s ease, transform .15s ease;
+}
+@keyframes rpopItemIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.rpop-item:hover{background:rgba(255,255,255,.06);transform:translateX(2px)}
+.rpop-item:active{transform:scale(.97)}
+.rpop-ico{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:13px;
+  border:1.5px solid rgba(255,255,255,.25);
+  box-shadow:0 2px 6px rgba(0,0,0,.4);
+}
+.rpop-ico.ico-default{background:linear-gradient(145deg,#fb923c,#ea580c)}
+.rpop-ico.ico-done{background:linear-gradient(145deg,#4ade80,#1a7431)}
+.rpop-ico.ico-pin{background:linear-gradient(145deg,#c4b5fd,#7c3aed)}
+.rpop-info{min-width:0;flex:1}
+.rpop-name{font-size:12.5px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rpop-meta{font-size:10px;color:var(--mute);margin-top:1px}
+.rpop-check{font-size:12px;color:var(--grn);flex-shrink:0}
+.rpop-list::-webkit-scrollbar{width:5px}
+.rpop-list::-webkit-scrollbar-thumb{background:var(--bord);border-radius:3px}
+.rpop-card::after{
+  content:'';
+  position:absolute;bottom:-7px;left:var(--arrow-x,50%);
+  transform:translateX(-50%) rotate(45deg);
+  width:14px;height:14px;
+  background:var(--surf);
+  border-right:1px solid var(--bord);border-bottom:1px solid var(--bord);
+  border-radius:0 0 3px 0;
+}
+
+/* SHEET */
+#sheetbackdrop{
+  position:fixed;inset:0;z-index:850;
+  background:rgba(0,0,0,0);
+  pointer-events:none;
+  transition:background .4s ease;
+}
+#sheetbackdrop.up{background:rgba(0,0,0,.35);pointer-events:auto}
+#sheet{
+  position:fixed;bottom:-100%;left:0;right:0;z-index:900;
+  background:var(--surf);
+  border-top:1px solid var(--bord);
+  border-radius:22px 22px 0 0;
+  transition:bottom .42s cubic-bezier(.32,.72,0,1);
+  max-height:80dvh;overflow-y:auto;
+  box-shadow:0 -16px 50px rgba(0,0,0,.55), 0 -2px 0 rgba(249,115,22,.5);
+}
+#sheet.up{bottom:54px}
+.shandle{width:38px;height:4px;background:var(--bord);border-radius:2px;margin:12px auto 0}
+#sbody{padding:16px 18px 32px;animation:sbodyIn .35s ease backwards .05s}
+@keyframes sbodyIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.s-reg{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ora);margin-bottom:4px}
+.s-name{font-size:28px;font-weight:800;line-height:1.1;margin-bottom:3px}
+.s-season{font-size:12px;color:var(--mute);margin-bottom:14px}
+
+.s-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.ss{
+  background:linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+  border:1px solid var(--bord);border-radius:12px;padding:10px 6px;text-align:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.05);
+  animation:ssIn .35s ease backwards;
+  transition:transform .2s ease;
+}
+.ss:nth-child(1){animation-delay:.02s}.ss:nth-child(2){animation-delay:.07s}.ss:nth-child(3){animation-delay:.12s}.ss:nth-child(4){animation-delay:.17s}
+@keyframes ssIn{from{opacity:0;transform:translateY(6px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+.ssv{font-size:14px;font-weight:700;font-family:monospace;color:var(--ora);text-shadow:0 0 12px rgba(249,115,22,.3)}
+.ssl{font-size:9px;color:var(--mute);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+
+.dfrow{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.dfl{font-size:11px;color:var(--mute);white-space:nowrap}
+.dft{flex:1;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.4)}
+.dfb{height:100%;border-radius:3px;width:0;transition:width 1s cubic-bezier(.16,1,.3,1);box-shadow:0 0 10px currentColor}
+.easy{background:var(--grn);color:var(--grn)}.moderate{background:var(--yel);color:var(--yel)}.difficult{background:var(--ora);color:var(--ora)}.extreme{background:var(--red);color:var(--red)}
+.dfn{font-size:11px;font-weight:600;text-transform:capitalize}
+
+#ecanv{width:100%;height:68px;margin-bottom:14px;border-radius:8px;display:block}
+
+.s-desc{font-size:13px;line-height:1.75;color:#9ca3af;margin-bottom:18px}
+
+.wpt{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--mute);margin-bottom:10px;font-weight:600}
+.wpl{display:flex;flex-direction:column}
+.wpi{display:flex;gap:12px;position:relative;animation:wpiIn .3s ease backwards}
+.wpi:nth-child(1){animation-delay:.03s}.wpi:nth-child(2){animation-delay:.07s}.wpi:nth-child(3){animation-delay:.11s}.wpi:nth-child(4){animation-delay:.15s}.wpi:nth-child(5){animation-delay:.19s}.wpi:nth-child(6){animation-delay:.23s}.wpi:nth-child(7){animation-delay:.27s}
+@keyframes wpiIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+.wpleft{display:flex;flex-direction:column;align-items:center;width:14px;flex-shrink:0}
+.wpd{width:12px;height:12px;border-radius:50%;border:2px solid var(--bg);flex-shrink:0;box-shadow:0 0 8px currentColor, 0 1px 3px rgba(0,0,0,.4)}
+.wpline{flex:1;width:2px;background:linear-gradient(var(--bord),transparent);margin-top:2px;min-height:12px}
+.wpinfo{padding-bottom:10px}
+.wpn{font-size:13px;font-weight:500}
+.wps{font-size:11px;color:var(--mute);font-family:monospace;margin-top:1px}
+.wptag{display:inline-block;font-size:9px;padding:1px 6px;border-radius:8px;margin-left:5px;font-weight:700;vertical-align:middle}
+.tc{background:rgba(249,115,22,.15);color:var(--ora)}
+.tp{background:rgba(163,113,247,.15);color:var(--pur)}
+.tl{background:rgba(56,139,253,.15);color:var(--blu)}
+.ts{background:rgba(248,81,73,.15);color:var(--red)}
+.tv{background:rgba(125,133,144,.12);color:var(--mute)}
+
+.logbox{background:rgba(46,160,67,.08);border:1px solid rgba(46,160,67,.25);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px}
+.sacts{display:flex;gap:10px;margin-top:20px}
+.btn{flex:1;padding:13px;border-radius:12px;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:transform .15s ease, box-shadow .25s ease, background .25s ease}
+.bp{background:linear-gradient(135deg,#fb923c,#f97316);color:#fff;box-shadow:0 4px 14px rgba(249,115,22,.4)}
+.bp:hover{box-shadow:0 6px 18px rgba(249,115,22,.5);transform:translateY(-1px)}
+.bp:active{transform:scale(.97)}
+.bd{background:rgba(46,160,67,.12);border:1px solid rgba(46,160,67,.3);color:var(--grn)}
+.bd:active{transform:scale(.97)}
+.bsec{background:rgba(255,255,255,.06);border:1px solid var(--bord);color:var(--txt);flex:0 0 auto;padding:13px 16px}
+.bsec:hover{background:rgba(255,255,255,.1)}
+.bsec:active{transform:scale(.94)}
+
+/* MODAL */
+#modal{position:fixed;inset:0;z-index:2000;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(6px)}
+#modal.on{display:flex}
+#pinmodal{position:fixed;inset:0;z-index:2100;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(6px)}
+#pinmodal.on{display:flex}
+.mbox{background:var(--surf);border-radius:22px 22px 0 0;border:1px solid var(--bord);padding:22px 18px 40px;width:100%;max-width:500px}
+.mtitle{font-size:22px;font-weight:800;margin-bottom:2px}
+.msub{font-size:12px;color:var(--mute);margin-bottom:18px}
+.mf{margin-bottom:13px}
+.mf label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--mute);margin-bottom:5px}
+.mf input,.mf textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--bord);border-radius:10px;padding:9px 12px;color:var(--txt);font-size:13px;font-family:inherit;outline:none}
+.mf input:focus,.mf textarea:focus{border-color:rgba(249,115,22,.5)}
+.mf textarea{resize:none;height:70px}
+.stars{display:flex;gap:6px}
+.star{font-size:26px;cursor:pointer;color:var(--bord);transition:color .1s}
+.star.on{color:var(--ora)}
+.macts{display:flex;gap:10px;margin-top:20px}
+
+/* TOAST */
+#map{position:fixed;top:54px;left:0;right:0;bottom:54px;z-index:1;background:#1a1f2e}
+#map::after{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:450;
+  background:radial-gradient(ellipse at 50% 0%, rgba(13,17,23,0) 0%, rgba(13,17,23,.25) 100%);
+}
+#toast{
+  position:fixed;bottom:74px;left:50%;
+  transform:translateX(-50%) translateY(20px) scale(.9);
+  padding:11px 22px;border-radius:24px;
+  font-size:13px;font-weight:600;z-index:3000;
+  opacity:0;transition:opacity .3s ease, transform .35s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;white-space:nowrap;color:#fff;
+  box-shadow:0 8px 28px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.2);
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+
+/* Markers — clean circular badge, consistent with cluster bubbles */
+.mkwrap{
+  position:relative;width:34px;height:42px;
+  cursor:pointer;
+  transform-origin:50% 100%;
+  animation:pinDrop .42s cubic-bezier(.22,1,.36,1) backwards;
+}
+@keyframes pinDrop{
+  0%{transform:translateY(-16px) scale(.5);opacity:0}
+  100%{transform:translateY(0) scale(1);opacity:1}
+}
+.mkshadow{
+  position:absolute;bottom:1px;left:50%;transform:translateX(-50%);
+  width:14px;height:5px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(0,0,0,.5) 0%,rgba(0,0,0,0) 75%);
+}
+.mknub{
+  position:absolute;bottom:5px;left:50%;
+  width:8px;height:8px;
+  background:inherit;
+  transform:translateX(-50%) rotate(45deg);
+  border-radius:0 0 2px 0;
+  z-index:1;
+}
+.mkbody{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:34px;height:34px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  z-index:2;
+  border:2px solid rgba(255,255,255,.35);
+  box-shadow:0 3px 10px rgba(0,0,0,.45), inset 0 1px 2px rgba(255,255,255,.3);
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s;
+}
+.mkicon{font-size:15px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+.mko .mkbody, .mko .mknub{background:linear-gradient(145deg,#fb923c,#ea580c)}
+.mkg .mkbody, .mkg .mknub{background:linear-gradient(145deg,#4ade80,#1a7431)}
+.mkp .mkbody, .mkp .mknub{background:linear-gradient(145deg,#c4b5fd,#7c3aed)}
+.mkwrap:hover .mkbody{transform:translateX(-50%) scale(1.15)}
+.mkwrap:active .mkbody{transform:translateX(-50%) scale(.9)}
+.mkwrap.selected .mkbody{
+  transform:translateX(-50%) scale(1.25);
+  box-shadow:0 0 0 4px rgba(255,255,255,.18), 0 4px 16px rgba(0,0,0,.5);
+}
+.mkwrap.selected .mkshadow{opacity:.8}
+
+/* Waypoint trail dots — calmer, no infinite pulse */
+.wpdot{
+  position:relative;border-radius:50%;
+  background:var(--wpc);
+  border:2px solid #fff;
+  box-shadow:0 2px 6px rgba(0,0,0,.45);
+  animation:wpPop .35s cubic-bezier(.22,1,.36,1) backwards;
+}
+@keyframes wpPop{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+.wpdot-key{box-shadow:0 2px 8px rgba(0,0,0,.5), 0 0 0 3px rgba(255,255,255,.12)}
+
+
+
+/* Leaflet dark overrides */
+.leaflet-tile-pane{filter:saturate(1.2) brightness(.88) contrast(1.05)}
+.leaflet-popup-content-wrapper{background:var(--glass)!important;backdrop-filter:blur(16px);border:1px solid var(--bord)!important;border-radius:12px!important;color:var(--txt)!important;box-shadow:0 8px 32px rgba(0,0,0,.7)!important;font-family:-apple-system,sans-serif}
+.leaflet-popup-tip-container{display:none}
+.leaflet-popup-close-button{color:var(--mute)!important;font-size:18px!important;padding:6px 8px!important}
+.leaflet-control-zoom a{background:var(--surf)!important;color:var(--txt)!important;border:1px solid var(--bord)!important}
+.leaflet-control-attribution{display:none}
+
+/* Cluster — stacked deck of trek icons fanning out on hover */
+.marker-cluster{background:transparent!important;}
+.marker-cluster div{background:transparent!important;}
+.clwrap{
+  position:relative;width:56px;height:56px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  animation:clPop .4s cubic-bezier(.22,1,.36,1) backwards;
+}
+@keyframes clPop{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+
+.clstack{position:relative;width:38px;height:38px}
+.clcard{
+  position:absolute;top:0;left:0;width:38px;height:38px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;
+  border:2px solid rgba(255,255,255,.4);
+  box-shadow:0 3px 10px rgba(0,0,0,.4);
+  transition:transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .35s;
+}
+/* Stacked offset — each card behind peeks out top-left, darkened/scaled down */
+.clcard:nth-child(1){z-index:5;transform:translate(0,0) scale(1)}
+.clcard:nth-child(2){z-index:4;transform:translate(5px,-5px) scale(.92);filter:brightness(.88)}
+.clcard:nth-child(3){z-index:3;transform:translate(10px,-10px) scale(.84);filter:brightness(.76)}
+.clcard:nth-child(4){z-index:2;transform:translate(15px,-15px) scale(.76);filter:brightness(.64);opacity:.85}
+.clcard:nth-child(n+5){display:none}
+
+/* Hover: fan the deck out into a wider spread */
+.clwrap:hover .clcard:nth-child(1){transform:translate(-10px,8px) scale(1.05) rotate(-8deg)}
+.clwrap:hover .clcard:nth-child(2){transform:translate(2px,-10px) scale(1) rotate(2deg)}
+.clwrap:hover .clcard:nth-child(3){transform:translate(13px,2px) scale(.95) rotate(10deg)}
+.clwrap:hover .clcard:nth-child(4){transform:translate(8px,14px) scale(.88) rotate(16deg);opacity:1}
+.clwrap:active .clstack{transform:scale(.9)}
+.clstack{transition:transform .15s ease}
+
+.cl-default .clcard{background:linear-gradient(145deg,#fb923c,#ea580c)}
+.cl-mix .clcard{background:linear-gradient(145deg,#fbbf24,#f97316 60%,#2ea043)}
+.cl-done .clcard{background:linear-gradient(145deg,#4ade80,#1a7431)}
+
+.clcount{
+  position:absolute;bottom:-2px;right:-2px;z-index:6;
+  min-width:19px;height:19px;padding:0 4px;border-radius:10px;
+  background:#0d1117;border:2px solid var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:800;color:#fff;font-family:-apple-system,sans-serif;
+  box-shadow:0 2px 6px rgba(0,0,0,.5);
+}
+.cl-default .clcount{background:#ea580c}
+.cl-mix .clcount{background:#d29922}
+.cl-done .clcount{background:#1a7431}
+.cl-md .clstack, .cl-md .clcard{width:44px;height:44px}
+.cl-md .clcard{font-size:17px}
+.cl-lg .clstack, .cl-lg .clcard{width:50px;height:50px}
+.cl-lg .clcard{font-size:19px}
+.cl-md.clwrap{width:64px;height:64px}
+.cl-lg.clwrap{width:68px;height:68px}
+.leaflet-cluster-spider-leg{opacity:.5!important}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="logo"><span class="logo-peak">⛰</span> Summit<em>Log</em></div>
+  <div class="swrap">
+    <span class="sico">🔍</span>
+    <input id="srch" type="text" placeholder="Search trek, mountain, region…" autocomplete="off">
+    <div id="sres"></div>
+  </div>
+  <div id="bdg">0 / 0</div>
+  <button id="addbtn" title="Add your own trek/pin">+</button>
+</div>
+
+<div id="addbanner">
+  <span>📍 Tap anywhere on the map to drop your pin</span>
+  <button id="addcancel">Cancel</button>
+</div>
+
+<div id="map"></div>
+
+<div id="tabs">
+  <button class="tab on" data-r="all"><span class="tab-label">🌏 All</span></button>
+  <button class="tab" data-r="himachal"><span class="tab-label">🏔 Himachal</span><span class="tab-chev">⌃</span></button>
+  <button class="tab" data-r="uttarakhand"><span class="tab-label">🌿 Uttarakhand</span><span class="tab-chev">⌃</span></button>
+  <button class="tab" data-r="jk"><span class="tab-label">❄️ J&K / Ladakh</span><span class="tab-chev">⌃</span></button>
+  <button class="tab" data-r="northeast"><span class="tab-label">🌱 7 Sisters</span><span class="tab-chev">⌃</span></button>
+  <button class="tab" data-r="nepal"><span class="tab-label">🏔 Nepal</span><span class="tab-chev">⌃</span></button>
+  <button class="tab" data-r="tibet"><span class="tab-label">🕌 Tibet Border</span><span class="tab-chev">⌃</span></button>
+  <button class="tab" data-r="maharashtra"><span class="tab-label">⛰ Maharashtra</span><span class="tab-chev">⌃</span></button>
+  <button class="tab" data-r="southindia"><span class="tab-label">🌴 South India</span><span class="tab-chev">⌃</span></button>
+  <button class="tab" data-r="spiritual"><span class="tab-label">🕉️ Spiritual Yatras</span><span class="tab-chev">⌃</span></button>
+</div>
+
+<div id="regionpop"></div>
+
+<div id="sheetbackdrop"></div>
+<div id="sheet">
+  <div class="shandle"></div>
+  <div id="sbody"></div>
+</div>
+
+<div id="modal">
+  <div class="mbox">
+    <div class="mtitle">Log This Summit</div>
+    <div class="msub" id="mname"></div>
+    <div class="mf"><label>Date Completed</label><input type="date" id="mdate"></div>
+    <div class="mf"><label>Your Rating</label><div class="stars" id="stars"><span class="star" data-v="1">★</span><span class="star" data-v="2">★</span><span class="star" data-v="3">★</span><span class="star" data-v="4">★</span><span class="star" data-v="5">★</span></div></div>
+    <div class="mf"><label>Personal Notes</label><textarea id="mnotes" placeholder="Weather conditions, who you went with, highlights…"></textarea></div>
+    <div class="macts">
+      <button class="btn bsec" id="mcancel">Cancel</button>
+      <button class="btn bp" id="msave" style="flex:1">✔ Save Summit</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- CREATE/EDIT CUSTOM PIN MODAL -->
+<div id="pinmodal">
+  <div class="mbox" style="max-height:85dvh;overflow-y:auto">
+    <div class="mtitle" id="pm-title">New Trek Pin</div>
+    <div class="msub" id="pm-coords"></div>
+
+    <div class="mf"><label>Trek / Mountain Name *</label><input type="text" id="pm-name" placeholder="e.g. My Secret Valley Trek"></div>
+
+    <div class="mf"><label>Region</label>
+      <select id="pm-region" style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--bord);border-radius:10px;padding:9px 12px;color:var(--txt);font-size:13px;font-family:inherit;outline:none">
+        <option value="himachal">Himachal Pradesh</option>
+        <option value="uttarakhand">Uttarakhand</option>
+        <option value="jk">J&K / Ladakh</option>
+        <option value="northeast">Seven Sisters NE</option>
+        <option value="nepal">Nepal Himalaya</option>
+        <option value="tibet">Tibet / China Border</option>
+        <option value="maharashtra">Maharashtra Sahyadris</option>
+        <option value="southindia">South India Western Ghats</option>
+        <option value="spiritual">Spiritual Yatras</option>
+      </select>
+    </div>
+
+    <div class="mf"><label>Icon (emoji)</label><input type="text" id="pm-icon" placeholder="🏔" maxlength="4" value="📍"></div>
+
+    <div style="display:flex;gap:10px">
+      <div class="mf" style="flex:1"><label>Max Altitude (m) *</label><input type="number" id="pm-alt" placeholder="3800"></div>
+      <div class="mf" style="flex:1"><label>Distance (km)</label><input type="number" id="pm-km" placeholder="20"></div>
+      <div class="mf" style="flex:1"><label>Days</label><input type="number" id="pm-days" placeholder="6"></div>
+    </div>
+
+    <div class="mf"><label>Difficulty</label>
+      <div class="diff-select" id="pm-diff-select">
+        <div class="diff-opt sel-easy" data-d="easy">Easy</div>
+        <div class="diff-opt" data-d="moderate">Moderate</div>
+        <div class="diff-opt" data-d="difficult">Difficult</div>
+        <div class="diff-opt" data-d="extreme">Extreme</div>
+      </div>
+    </div>
+
+    <div class="mf"><label>Best Season</label><input type="text" id="pm-season" placeholder="e.g. May – Oct"></div>
+
+    <div class="mf"><label>Description</label><textarea id="pm-desc" placeholder="What makes this place special…" style="height:60px"></textarea></div>
+
+    <div class="mf">
+      <label>Trail Waypoints / Campsites</label>
+      <div id="pm-wp-list"></div>
+      <button id="wp-add-btn" type="button">+ Add Waypoint</button>
+    </div>
+
+    <div class="macts">
+      <button class="btn btn-del" id="pm-delete" style="display:none">🗑</button>
+      <button class="btn bsec" id="pm-cancel">Cancel</button>
+      <button class="btn bp" id="pm-save" style="flex:1">✔ Save Pin</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// TREK DATABASE — 25 treks, real GPS, real campsites
+// ═══════════════════════════════════════════════════
+const TREKS = [
+
+// ══ HIMACHAL PRADESH ══
+{id:'hp01',r:'himachal',name:'Hampta Pass',icon:'🏔',lat:32.208,lng:77.362,alt:4270,km:35,days:5,diff:'moderate',
+season:'Jun – Oct',
+desc:'One of the most dramatic crossovers in the Himalayas — lush green Kullu Valley transforms to the barren lunar Lahaul in a single pass crossing. Dense deodar forests, wildflower meadows, river crossings and glacier views.',
+wps:[
+  {n:'Jobra Trailhead',a:2700,t:'start',lat:32.220,lng:77.255,note:'Drive 22km from Manali. Trek begins here.'},
+  {n:'Chika Camp',a:3048,t:'camp',lat:32.214,lng:77.295,note:'Day 1 camp. Beside the Rani Nallah river. Flat grassy site.'},
+  {n:'Jwara Meadow',a:3300,t:'village',lat:32.211,lng:77.328,note:'Himachal\'s Valley of Flowers — wildflowers everywhere in July.'},
+  {n:'Balu Ka Ghera',a:3600,t:'camp',lat:32.209,lng:77.350,note:'Day 2 camp. Bouldery glacial valley. Pir Panjal peaks visible.'},
+  {n:'Hampta Pass',a:4270,t:'pass',lat:32.208,lng:77.362,note:'Day 3 crossing — green Kullu meets brown Spiti. Stunning contrast.'},
+  {n:'Shea Goru Camp',a:3735,t:'camp',lat:32.180,lng:77.410,note:'Day 3 camp on Lahaul side. Glacial stream flows beside tents.'},
+  {n:'Chatru',a:3350,t:'end',lat:32.150,lng:77.480,note:'Day 4 end. Drive to Chandratal or back to Manali.'}
+]},
+
+{id:'hp02',r:'himachal',name:'Sar Pass',icon:'❄️',lat:32.215,lng:77.320,alt:4250,km:48,days:5,diff:'moderate',
+season:'May – Jun',
+desc:'Parvati Valley snow trek. Beginner-friendly with dramatic snow ramps and panoramic views over the Kullu Valley. Connects Kasol to the Bichhleri area crossing meadows, pine forests and the snowfield.',
+wps:[
+  {n:'Kasol',a:1640,t:'start',lat:32.009,lng:77.314,note:'Parvati Valley. Drive from Bhuntar.'},
+  {n:'Grahan Village',a:2800,t:'village',lat:32.080,lng:77.316,note:'Day 1. Ancient Himachali village with slate-roofed homes.'},
+  {n:'Min Thatch',a:3650,t:'camp',lat:32.140,lng:77.318,note:'Day 2 camp. Open alpine meadow with rhododendron forest.'},
+  {n:'Nagaru Camp',a:4100,t:'camp',lat:32.185,lng:77.319,note:'Day 3 camp. Snow begins here. Close to the pass.'},
+  {n:'Sar Pass',a:4250,t:'pass',lat:32.215,lng:77.320,note:'Day 4 crossing. Steep snow ramp. 360° Kullu-Parvati views.'},
+  {n:'Biskeri Thatch',a:3300,t:'camp',lat:32.238,lng:77.278,note:'Descent camp. Rolling meadows on far side.'},
+  {n:'Bichhleri Village',a:2650,t:'end',lat:32.258,lng:77.252,note:'Drive back to Kasol from here.'}
+]},
+
+{id:'hp03',r:'himachal',name:'Rupin Pass',icon:'💧',lat:31.128,lng:77.840,alt:4650,km:52,days:7,diff:'difficult',
+season:'May – Jun, Sep – Oct',
+desc:'Voted India\'s most beautiful trek. The hanging village of Jakha, a legendary split waterfall, a natural snow bridge and a dramatic border-crossing pass between Uttarakhand and Himachal Pradesh.',
+wps:[
+  {n:'Dhaula Village',a:1830,t:'start',lat:30.980,lng:77.700,note:'Uttarkashi district roadhead.'},
+  {n:'Sewa Village',a:2380,t:'village',lat:31.000,lng:77.718,note:'Day 1. Stone path through terraced wheat fields.'},
+  {n:'Jakha Village',a:2410,t:'village',lat:31.020,lng:77.742,note:'Hanging village on a cliff shelf — surreal views.'},
+  {n:'Rupin Waterfall',a:2730,t:'village',lat:31.040,lng:77.768,note:'Day 2. Iconic split waterfall pours from a cliff above.'},
+  {n:'Upper Waterfall Camp',a:3300,t:'camp',lat:31.062,lng:77.790,note:'Day 3 camp directly below the waterfall.'},
+  {n:'Snow Bridge',a:4100,t:'pass',lat:31.090,lng:77.815,note:'Day 4. Walk on a natural snow arch over the river (Jun only).'},
+  {n:'Rupin High Camp',a:4300,t:'camp',lat:31.106,lng:77.828,note:'Day 5 camp before the pass.'},
+  {n:'Rupin Pass',a:4650,t:'pass',lat:31.128,lng:77.840,note:'Day 5 crossing. HP–Uttarakhand border. Glacier views.'},
+  {n:'Sangla Valley',a:2621,t:'end',lat:31.200,lng:77.998,note:'Kinnaur apple orchards. End of trek.'}
+]},
+
+{id:'hp04',r:'himachal',name:'Bhrigu Lake',icon:'🌊',lat:32.310,lng:77.220,alt:4270,km:22,days:3,diff:'moderate',
+season:'May – Oct',
+desc:'Sacred glacial lake of Sage Bhrigu at 4270m above Manali. No prior experience needed — fastest high-altitude lake in the Himalayas. The lake stays partially frozen year-round reflecting the surrounding snow peaks.',
+wps:[
+  {n:'Vashisht / Manali',a:2050,t:'start',lat:32.239,lng:77.188,note:'Trek begins from Manali area.'},
+  {n:'Rola Kholi',a:3100,t:'camp',lat:32.272,lng:77.200,note:'Day 1 camp. Open meadow with Solang Nala views.'},
+  {n:'Jonkers Thatch',a:3640,t:'camp',lat:32.292,lng:77.210,note:'Day 2 camp. Large open meadow. Snow peak panorama.'},
+  {n:'Bhrigu Lake',a:4270,t:'lake',lat:32.310,lng:77.220,note:'Day 3 — Sacred lake. Partially frozen. Peer Panjal backdrop.'}
+]},
+
+{id:'hp05',r:'himachal',name:'Kheerganga Trek',icon:'♨️',lat:32.071,lng:77.397,alt:2960,km:22,days:2,diff:'easy',
+season:'Mar – Dec',
+desc:'Famous for natural hot springs at the summit. Trek through the Parvati River gorge in dense pine-fir forest. The hot water pools at the top are one of the most rewarding natural spas in India.',
+wps:[
+  {n:'Barshaini',a:1820,t:'start',lat:32.015,lng:77.340,note:'Last road point in Parvati Valley.'},
+  {n:'Nakthan Village',a:2200,t:'village',lat:32.035,lng:77.362,note:'Small Himachali village mid-trail.'},
+  {n:'Rudranag',a:2500,t:'village',lat:32.052,lng:77.378,note:'Rock-carved Shiva shrine beside waterfall.'},
+  {n:'Kheerganga',a:2960,t:'end',lat:32.071,lng:77.397,note:'Natural hot spring pools. Camp on surrounding meadow.'}
+]},
+
+{id:'hp06',r:'himachal',name:'Chandratal Lake',icon:'🌙',lat:32.479,lng:77.617,alt:4270,km:13,days:2,diff:'moderate',
+season:'Jun – Oct',
+desc:'The Moon Lake of Spiti — crescent-shaped glacial lake at 4270m on the Samudra Tapu plateau. Turquoise waters mirror surrounding snow peaks. One of the highest and most beautiful lakes in India.',
+wps:[
+  {n:'Batal',a:3960,t:'start',lat:32.440,lng:77.570,note:'Basic dhaba. Road end on Manali–Kaza highway.'},
+  {n:'Samudra Tapu Plateau',a:4100,t:'village',lat:32.460,lng:77.592,note:'Wide glacial plateau walk with peak views.'},
+  {n:'Chandratal Base',a:4200,t:'camp',lat:32.470,lng:77.608,note:'Camping area near the lake.'},
+  {n:'Chandratal Lake',a:4270,t:'lake',lat:32.479,lng:77.617,note:'Crescent moon shaped. Crystal turquoise glacial lake.'}
+]},
+
+{id:'hp07',r:'himachal',name:'Pin Parvati Pass',icon:'⚡',lat:32.000,lng:77.567,alt:5319,km:110,days:11,diff:'extreme',
+season:'Jul – Sep',
+desc:'Hardest crossover in India — green lush Parvati Valley (Kullu) to barren Spiti desert via a 5319m glaciated pass. 110km with no road access or rescue possible. Expert trekkers only. Rope skills needed.',
+wps:[
+  {n:'Kheerganga',a:2960,t:'start',lat:32.071,lng:77.397,note:'Hot springs. Trek start point.'},
+  {n:'Thakur Kuan',a:3550,t:'camp',lat:32.030,lng:77.438,note:'Day 1 camp. Dense forest. River crossing.'},
+  {n:'Odi Thach',a:4100,t:'camp',lat:32.015,lng:77.488,note:'Day 2. Moraine terrain begins.'},
+  {n:'Mantalai Lake',a:4116,t:'lake',lat:32.000,lng:77.528,note:'Day 3. Sacred turquoise lake at glacier source.'},
+  {n:'Pin Parvati Base Camp',a:4700,t:'camp',lat:32.000,lng:77.548,note:'Day 4 high camp.'},
+  {n:'Pin Parvati Pass',a:5319,t:'pass',lat:32.000,lng:77.567,note:'Day 5. Glacier crossing. Rope needed. Epic views.'},
+  {n:'Pin Valley Camp',a:4400,t:'camp',lat:31.980,lng:77.618,note:'Day 6. Spiti side descent begins.'},
+  {n:'Mudh Village',a:3760,t:'end',lat:31.950,lng:77.698,note:'Spiti. Pin Valley National Park.'}
+]},
+
+// ══ UTTARAKHAND ══
+{id:'uk01',r:'uttarakhand',name:'Kedarkantha Peak',icon:'🏔',lat:31.108,lng:78.083,alt:3800,km:20,days:6,diff:'moderate',
+season:'Dec – Apr',
+desc:'Queen of Indian winter treks in Govind Pashu Vihar National Park. Snow-packed pine forests, the frozen Juda Ka Talab lake and a 360° summit sunrise over Swargarohini, Bandarpunch, Kala Nag and Gangotri ranges.',
+wps:[
+  {n:'Sankri Village',a:1920,t:'start',lat:31.096,lng:78.076,note:'Uttarkashi district. Last motorable point.'},
+  {n:'Saud Village',a:2100,t:'village',lat:31.099,lng:78.079,note:'Cross wooden bridge over stream. Enter forest.'},
+  {n:'Juda Ka Talab',a:2780,t:'lake',lat:31.102,lng:78.081,note:'Day 2. Frozen conjoined lake in oak forest. Sacred to Shiva.'},
+  {n:'Kedarkantha Base Camp',a:3400,t:'camp',lat:31.105,lng:78.082,note:'Day 3. Summit clearly visible. Milky Way nights.'},
+  {n:'Kedarkantha Summit',a:3800,t:'summit',lat:31.108,lng:78.083,note:'Day 4 summit. Trishul marks top. Full 360° Himalayan panorama.'},
+  {n:'Hargaon Camp',a:2750,t:'camp',lat:31.100,lng:78.075,note:'Day 4 descent via different route through dense pine forest.'},
+  {n:'Sankri Return',a:1920,t:'end',lat:31.096,lng:78.076,note:'Day 5 final descent. Stone path.'}
+]},
+
+{id:'uk02',r:'uttarakhand',name:'Valley of Flowers',icon:'🌸',lat:30.729,lng:79.603,alt:3658,km:38,days:6,diff:'moderate',
+season:'Jul – Sep',
+desc:'UNESCO World Heritage Site. 500+ Himalayan wildflower species — Blue Poppy, Brahma Kamal, Primula, orchids. Best mid-July to mid-August at peak bloom. Also includes Hemkund Sahib — world\'s highest Gurudwara.',
+wps:[
+  {n:'Govindghat',a:1829,t:'start',lat:30.564,lng:79.566,note:'Roadhead. 22km from Joshimath.'},
+  {n:'Pulna Village',a:2100,t:'village',lat:30.580,lng:79.572,note:'First stop. Suspension bridge crossing.'},
+  {n:'Bhyundar Village',a:2660,t:'village',lat:30.620,lng:79.581,note:'Bhyundar Ganga confluence. Views of Hathi Parbat.'},
+  {n:'Ghangaria (Govind Dham)',a:3050,t:'camp',lat:30.670,lng:79.594,note:'Day 1 base. Hotels and guesthouses. Last settlement.'},
+  {n:'Valley of Flowers Entry',a:3352,t:'village',lat:30.695,lng:79.599,note:'Day 2. Park gate 4km from Ghangaria.'},
+  {n:'Valley Inner Zone',a:3658,t:'lake',lat:30.729,lng:79.603,note:'500+ wildflowers. Glacier at valley end. No camping inside.'},
+  {n:'Hemkund Sahib',a:4329,t:'summit',lat:30.683,lng:79.609,note:'Day 4. World\'s highest Gurudwara. Sacred Sikh lake.'}
+]},
+
+{id:'uk03',r:'uttarakhand',name:'Roopkund Trek',icon:'💀',lat:30.249,lng:79.727,alt:5029,km:53,days:8,diff:'difficult',
+season:'May – Jun, Sep – Oct',
+desc:'The Skeleton Lake mystery at 5029m. Filled with 9th-century human skeletal remains. Crosses Ali Bugyal (Asia\'s largest alpine meadow), the rocky Junargali ridge and Bhagwabasa plateau before reaching the haunting lake.',
+wps:[
+  {n:'Lohajung',a:2414,t:'start',lat:30.082,lng:79.690,note:'Chamoli district roadhead.'},
+  {n:'Didna Village',a:2400,t:'village',lat:30.090,lng:79.694,note:'Day 1. Traditional Garhwali village with stone homes.'},
+  {n:'Ali Bugyal',a:3629,t:'camp',lat:30.160,lng:79.709,note:'Day 2-3. Asia\'s largest alpine meadow. 360° panorama.'},
+  {n:'Patar Nachauni',a:3800,t:'camp',lat:30.200,lng:79.717,note:'Day 4. Rocky boulder terrain begins.'},
+  {n:'Bhagwabasa',a:4463,t:'camp',lat:30.230,lng:79.722,note:'Day 5 high camp. No vegetation. Exposed but stunning.'},
+  {n:'Junargali Ridge',a:4900,t:'pass',lat:30.242,lng:79.724,note:'Day 6. Technical snow scramble on ridge crest.'},
+  {n:'Roopkund Lake',a:5029,t:'lake',lat:30.249,lng:79.727,note:'The Skeleton Lake. 800 human bones visible in clear water.'}
+]},
+
+{id:'uk04',r:'uttarakhand',name:'Har Ki Dun Trek',icon:'🏛️',lat:31.165,lng:78.415,alt:3566,km:49,days:7,diff:'moderate',
+season:'Apr – Jun, Sep – Nov',
+desc:'Cradle of civilization valley. The mythological route the Pandavas took to heaven. Ancient villages of Osla and Gangad, dense birch and oak forest, alpine meadows and the Swargarohini glacier at the valley head.',
+wps:[
+  {n:'Sankri',a:1920,t:'start',lat:31.096,lng:78.076,note:'Uttarkashi district base.'},
+  {n:'Taluka',a:2050,t:'village',lat:31.110,lng:78.148,note:'Drive from Sankri. Trek begins.'},
+  {n:'Gangad Village',a:2500,t:'village',lat:31.130,lng:78.248,note:'Ancient traditional village. Wooden architecture.'},
+  {n:'Osla Village',a:2560,t:'village',lat:31.142,lng:78.298,note:'Day 3. 800-year-old Duryodhana temple here.'},
+  {n:'Seema Camp',a:2700,t:'camp',lat:31.150,lng:78.348,note:'Day 4. Forest opens to alpine zone.'},
+  {n:'Har Ki Dun',a:3566,t:'summit',lat:31.165,lng:78.415,note:'Day 5. Swargarohini glacier. Hanging valley end.'}
+]},
+
+{id:'uk05',r:'uttarakhand',name:'Brahmatal Trek',icon:'🧊',lat:30.143,lng:79.538,alt:3741,km:22,days:6,diff:'moderate',
+season:'Dec – Mar',
+desc:'Winter trail to a frozen lake reflecting Mt Trishul (7120m) and Nanda Ghunti (6309m). Snow starts from day one. One of India\'s finest winter secrets — the frozen forest approach is magical.',
+wps:[
+  {n:'Lohajung',a:2414,t:'start',lat:30.082,lng:79.690,note:'250km from Rishikesh. Chamoli district.'},
+  {n:'Bekaltal Lake',a:2930,t:'lake',lat:30.100,lng:79.704,note:'Day 1 camp. Small frozen lake under oak canopy.'},
+  {n:'Tilandi Camp',a:3100,t:'camp',lat:30.115,lng:79.714,note:'Day 2. Rhododendron forest. Deep snow in winter.'},
+  {n:'Daldum Meadow',a:3200,t:'camp',lat:30.128,lng:79.720,note:'Day 3. Snow-covered meadow with peak views.'},
+  {n:'Brahmatal Lake',a:3741,t:'lake',lat:30.143,lng:79.538,note:'Day 4. Frozen lake. Perfect Trishul & Nanda Ghunti reflections.'}
+]},
+
+// ══ J&K / LADAKH ══
+{id:'jk01',r:'jk',name:'Kashmir Great Lakes',icon:'🏞️',lat:34.168,lng:75.389,alt:4213,km:72,days:8,diff:'moderate',
+season:'Jul – Sep',
+desc:'India\'s most photographed alpine trek. Seven pristine lakes — Vishansar, Krishansar, Gadsar, Satsar, Gangabal, Nundkol — linked by high meadows and three major passes. From Sonamarg to Naranag.',
+wps:[
+  {n:'Sonamarg',a:2740,t:'start',lat:34.297,lng:75.287,note:'Meadow of Gold. Starting camp.'},
+  {n:'Nichnai Camp',a:3505,t:'camp',lat:34.280,lng:75.308,note:'Day 2. 11km trek. Stream crossing. Pine meadow.'},
+  {n:'Nichnai Pass',a:4150,t:'pass',lat:34.268,lng:75.328,note:'First high pass. Wildflower carpet on descent.'},
+  {n:'Vishansar Lake',a:3658,t:'lake',lat:34.245,lng:75.343,note:'Day 3. First lake. Crystal blue. Trout fishing.'},
+  {n:'Krishansar Lake',a:3700,t:'lake',lat:34.240,lng:75.353,note:'Twin of Vishansar. Half-km further. Reflected peaks.'},
+  {n:'Gadsar Pass',a:4213,t:'pass',lat:34.225,lng:75.368,note:'Highest point. Nanga Parbat visible on clear days.'},
+  {n:'Gadsar Lake',a:3810,t:'lake',lat:34.215,lng:75.378,note:'Day 4. Most remote lake. Aquamarine.'},
+  {n:'Satsar Lakes',a:3658,t:'lake',lat:34.200,lng:75.383,note:'Day 5. Cluster of 7 interconnected lakes.'},
+  {n:'Gangabal Lake',a:3505,t:'lake',lat:34.190,lng:75.386,note:'Day 6. Largest lake. Camp on its bank.'},
+  {n:'Nundkol Lake',a:3505,t:'lake',lat:34.185,lng:75.387,note:'Adjacent to Gangabal. Harmukh peak backdrop.'},
+  {n:'Naranag',a:2271,t:'end',lat:34.168,lng:75.389,note:'Day 7. Ancient temple ruins at exit.'}
+]},
+
+{id:'jk02',r:'jk',name:'Markha Valley Trek',icon:'🙏',lat:33.850,lng:77.580,alt:5100,km:65,days:7,diff:'difficult',
+season:'Jun – Sep',
+desc:'Classic Ladakh trek crossing Kongmaru La (5100m). Ancient Buddhist monasteries, remote villages, yak pastures at Nimaling plateau, and face-to-face views of Kang Yatze (6400m).',
+wps:[
+  {n:'Chilling',a:3100,t:'start',lat:33.952,lng:77.438,note:'Zanskar river confluence. 1hr from Leh.'},
+  {n:'Skiu Village',a:3300,t:'village',lat:33.930,lng:77.478,note:'Day 1. Canyon trail. Ancient monastery ruins.'},
+  {n:'Markha Village',a:3700,t:'camp',lat:33.900,lng:77.518,note:'Day 3. Main village. Markha monastery. Campsite.'},
+  {n:'Hankar',a:3900,t:'camp',lat:33.875,lng:77.543,note:'Day 4. Last permanent settlement.'},
+  {n:'Nimaling Plateau',a:4700,t:'camp',lat:33.860,lng:77.560,note:'Day 5. Vast yak pasture. Kang Yatze towers above.'},
+  {n:'Kongmaru La',a:5100,t:'pass',lat:33.850,lng:77.580,note:'Day 6. Panoramic Indus Valley and Ladakh range views.'},
+  {n:'Hemis Monastery',a:3600,t:'end',lat:33.795,lng:77.680,note:'Day 6 end. Famous gompa. Giant thangka displayed.'}
+]},
+
+{id:'jk03',r:'jk',name:'Tarsar Marsar Trek',icon:'💙',lat:34.038,lng:75.297,alt:3950,km:48,days:6,diff:'moderate',
+season:'Jul – Sep',
+desc:'Twin high-altitude lakes near Pahalgam. Tarsar — deep blue ellipse; Marsar — hidden above a rocky ridge. Most photogenic back-to-back lake trek in the Himalaya through Aru valley forests.',
+wps:[
+  {n:'Aru Village',a:2400,t:'start',lat:34.068,lng:75.218,note:'12km from Pahalgam. Roadhead.'},
+  {n:'Lidderwat',a:3050,t:'camp',lat:34.062,lng:75.248,note:'Day 1 camp. Lush meadow beside Lidder river.'},
+  {n:'Shekwas Meadow',a:3500,t:'camp',lat:34.053,lng:75.268,note:'Day 2. Shepherd settlement. Open meadow.'},
+  {n:'Tarsar Lake',a:3900,t:'lake',lat:34.045,lng:75.286,note:'Day 3. Elliptical blue lake. Snow peaks reflected.'},
+  {n:'Marsar Lake',a:3950,t:'lake',lat:34.038,lng:75.297,note:'Day 3. Higher twin lake. Hidden and pristine.'}
+]},
+
+{id:'jk04',r:'jk',name:'Chadar (Frozen Zanskar)',icon:'🧊',lat:33.600,lng:76.600,alt:3600,km:62,days:8,diff:'extreme',
+season:'Jan – Feb ONLY',
+desc:'Walk on a frozen river — one of the most unique treks on Earth. Zanskar River freezes to -25°C forming a jade-green ice highway. The traditional winter route used by Zanskar villagers to reach Leh.',
+wps:[
+  {n:'Chilling',a:3100,t:'start',lat:33.952,lng:77.438,note:'1hr from Leh. Start walking on frozen Zanskar.'},
+  {n:'Tilat Sumdo',a:3200,t:'camp',lat:33.870,lng:77.218,note:'Day 1 camp on ice or in cave shelter.'},
+  {n:'Gyalpo',a:3250,t:'camp',lat:33.800,lng:76.998,note:'Day 2. River bends dramatically through canyon.'},
+  {n:'Tibb Cave',a:3350,t:'camp',lat:33.720,lng:76.848,note:'Day 3 camp in natural cave. Ancient shelter.'},
+  {n:'Nerak Frozen Waterfall',a:3600,t:'summit',lat:33.600,lng:76.600,note:'Day 4 turnaround. 100ft frozen waterfall.'}
+]},
+
+// ══ NORTHEAST ══
+{id:'ne01',r:'northeast',name:'Sandakphu Trek',icon:'👁️',lat:27.105,lng:88.007,alt:3636,km:50,days:6,diff:'moderate',
+season:'Apr – May, Oct – Nov',
+desc:'The only place on Earth where four of the five highest peaks are visible simultaneously — Everest, Kanchenjunga, Lhotse, Makalu. Highest point in West Bengal at 3636m along the Singalila Ridge.',
+wps:[
+  {n:'Maneybhanjyang',a:2134,t:'start',lat:27.013,lng:88.046,note:'India–Nepal border village. Trek start.'},
+  {n:'Chitrey',a:2440,t:'village',lat:27.025,lng:88.037,note:'Day 1. Singalila National Park entry.'},
+  {n:'Tumling',a:2970,t:'camp',lat:27.043,lng:88.023,note:'Day 1 camp. Classic Kanchenjunga view point.'},
+  {n:'Kalipokhri',a:3184,t:'camp',lat:27.075,lng:88.012,note:'Day 2. Sacred black lake. Dense rhododendron forest.'},
+  {n:'Bikheybhanjyang',a:3100,t:'village',lat:27.092,lng:88.008,note:'Nepal border check-post crossing.'},
+  {n:'Sandakphu Summit',a:3636,t:'summit',lat:27.105,lng:88.007,note:'Day 3. Everest, Lhotse, Makalu, Kanchenjunga all visible.'}
+]},
+
+{id:'ne02',r:'northeast',name:'Dzukou Valley',icon:'🌸',lat:25.547,lng:94.068,alt:2452,km:20,days:3,diff:'moderate',
+season:'Jun – Sep, Dec – Feb',
+desc:'Valley of Flowers of Northeast India on the Nagaland–Manipur border. Dzukou lily blooms in July covering the valley floor. In winter, snow transforms it into a silent white wilderness.',
+wps:[
+  {n:'Viswema Village',a:1900,t:'start',lat:25.480,lng:94.010,note:'25km from Kohima. Nagaland.'},
+  {n:'Dzukou Valley Rim',a:2300,t:'pass',lat:25.510,lng:94.038,note:'Day 1. Bamboo forest. Valley first reveals itself.'},
+  {n:'Dzukou River Camp',a:2400,t:'camp',lat:25.530,lng:94.053,note:'Day 1 camp beside Dzukou stream.'},
+  {n:'Dzukou Valley Center',a:2452,t:'summit',lat:25.547,lng:94.068,note:'Day 2. Full Dzukou lily meadow. No roads.'}
+]},
+
+{id:'ne03',r:'northeast',name:'Goecha La Trek',icon:'🗻',lat:27.449,lng:88.332,alt:4940,km:90,days:11,diff:'difficult',
+season:'Apr – May, Sep – Nov',
+desc:'Face-to-face with Kanchenjunga (8586m). Through Khangchendzonga National Park (UNESCO). Ancient Yuksom monastery, Dzongri plateau at 4020m and the dramatic Goecha La viewpoint of the South face.',
+wps:[
+  {n:'Yuksom',a:1780,t:'start',lat:27.294,lng:88.234,note:'Sikkim\'s first capital. 16th century monastery.'},
+  {n:'Sachen',a:1900,t:'camp',lat:27.310,lng:88.248,note:'Day 1. Forest zone begins.'},
+  {n:'Tsokha',a:2995,t:'camp',lat:27.340,lng:88.266,note:'Day 2. Bamboo forest. Musk deer territory.'},
+  {n:'Dzongri Plateau',a:4020,t:'camp',lat:27.381,lng:88.286,note:'Day 4. Classic Kanchenjunga sunrise viewpoint.'},
+  {n:'Dzongri Top',a:4280,t:'summit',lat:27.388,lng:88.290,note:'Acclimatisation hike. 360° Singalila range view.'},
+  {n:'Lamuney',a:4350,t:'camp',lat:27.415,lng:88.308,note:'Day 6 high camp.'},
+  {n:'Goecha La',a:4940,t:'pass',lat:27.449,lng:88.332,note:'Day 7. Kanchenjunga South face fills the entire sky.'}
+]},
+
+// ══ NEPAL ══
+{id:'np01',r:'nepal',name:'Everest Base Camp',icon:'🏔',lat:27.988,lng:86.925,alt:5364,km:130,days:14,diff:'difficult',
+season:'Mar – May, Sep – Nov',
+desc:'World\'s most iconic trek. Sherpa villages, Buddhist monasteries, yak caravans, Khumbu Icefall, and finally standing at 5364m. Kala Patthar (5555m) gives the finest open view of Everest\'s summit.',
+wps:[
+  {n:'Lukla Airport',a:2860,t:'start',lat:27.686,lng:86.728,note:'35min flight from Kathmandu. World\'s most thrilling runway.'},
+  {n:'Phakding',a:2610,t:'camp',lat:27.738,lng:86.714,note:'Day 1. Several suspension bridge crossings over Dudh Kosi.'},
+  {n:'Namche Bazaar',a:3440,t:'camp',lat:27.805,lng:86.714,note:'Day 2–3 (2 nights). Sherpa capital. Acclimatisation stop.'},
+  {n:'Tengboche Monastery',a:3867,t:'camp',lat:27.836,lng:86.764,note:'Day 5. Largest Khumbu monastery. Ama Dablam backdrop.'},
+  {n:'Dingboche',a:4410,t:'camp',lat:27.895,lng:86.831,note:'Day 6–7 (2 nights). 2nd acclimatisation. Chhukung hike.'},
+  {n:'Lobuche',a:4940,t:'camp',lat:27.949,lng:86.807,note:'Day 8. Lateral moraine of Khumbu Glacier.'},
+  {n:'Gorak Shep',a:5164,t:'camp',lat:27.980,lng:86.830,note:'Day 9. Last settlement. Sandy windswept plateau.'},
+  {n:'Everest Base Camp',a:5364,t:'summit',lat:27.988,lng:86.925,note:'Day 9 afternoon. Khumbu Icefall beside you.'},
+  {n:'Kala Patthar',a:5555,t:'summit',lat:27.986,lng:86.831,note:'Day 10 dawn. Finest open view of Everest\'s summit.'}
+]},
+
+{id:'np02',r:'nepal',name:'Annapurna Circuit',icon:'🔄',lat:28.597,lng:83.830,alt:5416,km:160,days:14,diff:'difficult',
+season:'Mar – May, Oct – Nov',
+desc:'Greatest long-distance Himalayan trek. Circles the entire Annapurna massif crossing Thorong La (5416m) — world\'s highest regularly-crossed trekking pass. Forests, gorges, Tibetan plateau, Hindu and Buddhist cultures.',
+wps:[
+  {n:'Besisahar',a:760,t:'start',lat:28.230,lng:84.388,note:'Lamjung district. Bus from Kathmandu.'},
+  {n:'Chame',a:2710,t:'camp',lat:28.546,lng:84.228,note:'Day 4. Apple orchards. District headquarters.'},
+  {n:'Pisang',a:3300,t:'camp',lat:28.580,lng:84.160,note:'Day 6. Upper vs Lower Pisang split trail.'},
+  {n:'Manang',a:3519,t:'camp',lat:28.668,lng:84.018,note:'Day 8–9 (2 nights). Acclimatisation. Ice Lake hike option.'},
+  {n:'Thorong Phedi',a:4450,t:'camp',lat:28.726,lng:83.939,note:'Day 10. 3am start next day for pass crossing.'},
+  {n:'Thorong La Pass',a:5416,t:'pass',lat:28.597,lng:83.830,note:'Day 11. World\'s highest frequently-crossed trekking pass.'},
+  {n:'Muktinath Temple',a:3710,t:'village',lat:28.817,lng:83.872,note:'Day 11 afternoon. Sacred Hindu–Buddhist site.'},
+  {n:'Jomsom',a:2720,t:'end',lat:28.780,lng:83.727,note:'Day 13. Airport for Pokhara flight.'}
+]},
+
+{id:'np03',r:'nepal',name:'Annapurna Base Camp',icon:'🏟️',lat:28.530,lng:83.877,alt:4130,km:110,days:10,diff:'moderate',
+season:'Mar – May, Oct – Nov',
+desc:'The Annapurna Sanctuary — glacial amphitheatre enclosed by ten peaks over 7000m. Most dramatic mountain cirque accessible by trail on Earth. Through rhododendron forests, past Poon Hill for famous sunrise views.',
+wps:[
+  {n:'Nayapul',a:1070,t:'start',lat:28.382,lng:83.712,note:'Bus from Pokhara. 42km.'},
+  {n:'Tikhedhunga',a:1480,t:'village',lat:28.397,lng:83.710,note:'Day 1. Stone staircase begins.'},
+  {n:'Ghorepani',a:2860,t:'camp',lat:28.401,lng:83.699,note:'Day 2. Sunset Annapurna views. Poon Hill sunrise (3210m).'},
+  {n:'Chhomrong',a:2170,t:'camp',lat:28.468,lng:83.816,note:'Day 4. Gateway village to Annapurna Sanctuary.'},
+  {n:'Bamboo Camp',a:2310,t:'camp',lat:28.487,lng:83.831,note:'Day 5. Dense rhododendron and bamboo forest.'},
+  {n:'Deurali',a:3230,t:'camp',lat:28.510,lng:83.855,note:'Day 6. Avalanche-prone section. Stay cautious.'},
+  {n:'Machhapuchhre Base',a:3700,t:'camp',lat:28.523,lng:83.867,note:'MBC. Fishtail peak directly above.'},
+  {n:'Annapurna Base Camp',a:4130,t:'summit',lat:28.530,lng:83.877,note:'Day 7. The Sanctuary. 360° Annapurna peaks. Glacial basin.'}
+]},
+
+// ══ TIBET BORDER ══
+{id:'tb01',r:'tibet',name:'Kailash Mansarovar Yatra',icon:'🕉️',lat:31.067,lng:81.312,alt:5630,km:52,days:15,diff:'difficult',
+season:'May – Sep',
+desc:'Holiest trek in Asia — sacred to Hindu, Buddhist, Jain and Bon religions. 52km circumambulation of Mt Kailash (6638m). Dolma La Pass (5630m) is the spiritual crux. Lake Mansarovar at 4556m.',
+wps:[
+  {n:'Hilsa Border',a:3700,t:'start',lat:30.050,lng:81.300,note:'Nepal–Tibet border crossing.'},
+  {n:'Lake Mansarovar',a:4556,t:'lake',lat:30.650,lng:81.450,note:'Sacred lake. 320km circumference. Ritual bath.'},
+  {n:'Darchen',a:4560,t:'camp',lat:31.110,lng:81.289,note:'Kora start town. Base for circumambulation.'},
+  {n:'Dirapuk Monastery',a:5000,t:'camp',lat:31.085,lng:81.267,note:'Day 1 kora camp. North face of Kailash visible.'},
+  {n:'Dolma La Pass',a:5630,t:'pass',lat:31.050,lng:81.310,note:'Day 2 crux. Highest point. Sacred pilgrim site.'},
+  {n:'Zutrulpuk Monastery',a:4760,t:'camp',lat:31.043,lng:81.335,note:'Day 2 camp. Milarepa cave nearby.'},
+  {n:'Kora Complete',a:4560,t:'end',lat:31.110,lng:81.289,note:'Day 3. 52km circumambulation finished.'}
+]},
+
+// ══ HIMACHAL — HIDDEN GEMS ══
+{id:'hp08',r:'himachal',name:'Manimahesh Kailash Trek',icon:'🛕',lat:32.426,lng:76.629,alt:4080,km:28,days:5,diff:'moderate',
+season:'Mid May – Oct',
+desc:'Sacred Shiva pilgrimage second only to Mt Kailash in spiritual importance. Trail follows the Budhil River through dense forest to a glacial lake reflecting the unclimbed Manimahesh Kailash Peak (5653m). Devotees take a holy dip at dawn.',
+wps:[
+  {n:'Hadsar',a:2070,t:'start',lat:32.470,lng:76.560,note:'Final motorable point. Registration & medical checks here.'},
+  {n:'Dhancho',a:2300,t:'camp',lat:32.450,lng:76.585,note:'Day 1 camp. Follows Budhil River. Dhancho Waterfall nearby.'},
+  {n:'Gauri Kund',a:3450,t:'lake',lat:32.435,lng:76.610,note:'Sacred bathing site for women. Shiv Karotri for men nearby.'},
+  {n:'Manimahesh Lake',a:4080,t:'summit',lat:32.426,lng:76.629,note:'Day 2. Reflection of Kailash Peak in the lake. Ritual dip.'},
+  {n:'Dhancho Return',a:2300,t:'camp',lat:32.450,lng:76.585,note:'Day 3 descent camp.'},
+  {n:'Hadsar Return',a:2070,t:'end',lat:32.470,lng:76.560,note:'Day 4. Drive to Bharmour and Chamba.'}
+]},
+
+{id:'hp09',r:'himachal',name:'Sach Pass Trek',icon:'🏍️',lat:33.020,lng:76.330,alt:4425,km:60,days:8,diff:'difficult',
+season:'Jun – Oct',
+desc:'One of the oldest trade routes in Himachal, used by villagers for centuries to cross from Chamba into the remote Pangi Valley. Snow tunnels, glacial streams and vertical cliffs make this one of the wildest crossings in the Pir Panjal range.',
+wps:[
+  {n:'Bairagarh',a:2100,t:'start',lat:32.880,lng:76.250,note:'Last village before the climb begins.'},
+  {n:'Satrundi',a:2900,t:'camp',lat:32.950,lng:76.290,note:'Has a helipad and seasonal dhabas. Gradual ascent through pine forest.'},
+  {n:'Sach Pass',a:4425,t:'pass',lat:33.020,lng:76.330,note:'Toughest stretch — snow walls, ice tunnels, glacial meltwater crossings.'},
+  {n:'Killar',a:2680,t:'village',lat:33.100,lng:76.380,note:'Dramatic descent into Pangi Valley. Chandrabhaga River roars below.'},
+  {n:'Purthi',a:2200,t:'village',lat:33.150,lng:76.420,note:'Remote Pangwala village. Tribal culture untouched by tourism.'}
+]},
+
+{id:'hp10',r:'himachal',name:'Malana – Chanderkhani Pass',icon:'🏛️',lat:32.142,lng:77.270,alt:3660,km:18,days:3,diff:'easy',
+season:'May – Oct',
+desc:'Trek to the mysterious village of Malana — said by legend to be descended from Alexander\'s army, with its own ancient legal system. Crosses the flower-strewn Chanderkhani Pass connecting Naggar and the Malana Valley.',
+wps:[
+  {n:'Naggar',a:1860,t:'start',lat:32.130,lng:77.190,note:'Historic Himachali capital. Castle and temples.'},
+  {n:'Rumsu Village',a:2400,t:'village',lat:32.135,lng:77.220,note:'Day 1. Last village before the climb.'},
+  {n:'Chanderkhani Pass',a:3660,t:'pass',lat:32.142,lng:77.270,note:'Day 2. Wildflower meadow pass. Views of Deo Tibba and Indrasan.'},
+  {n:'Malana Village',a:2652,t:'end',lat:32.150,lng:77.310,note:'Isolated village with its own legal & cultural system. Sacred to Jamlu Devta.'}
+]},
+
+{id:'hp11',r:'himachal',name:'Bhaba Pass Trek',icon:'🌉',lat:31.850,lng:78.230,alt:4865,km:65,days:8,diff:'difficult',
+season:'Jul – Sep',
+desc:'Offbeat crossing linking the green valleys of Kinnaur to the barren high-desert of Spiti. Lush meadows, multiple river crossings, and a wild glaciated pass make this one of Himachal\'s great connector treks — far less crowded than Pin Parvati.',
+wps:[
+  {n:'Kafnu',a:2440,t:'start',lat:31.700,lng:78.100,note:'Kinnaur district roadhead on the Bhaba river.'},
+  {n:'Mulling Camp',a:3150,t:'camp',lat:31.750,lng:78.150,note:'Day 1. Dense forest gives way to open valley.'},
+  {n:'Kara Camp',a:3700,t:'camp',lat:31.800,lng:78.190,note:'Day 2. Wide meadow camp, river crossings.'},
+  {n:'Phuti Runi',a:4300,t:'camp',lat:31.830,lng:78.215,note:'Day 3 high camp before the pass.'},
+  {n:'Bhaba Pass',a:4865,t:'pass',lat:31.850,lng:78.230,note:'Day 4. Glacial crossing. Spiti desert opens up beyond.'},
+  {n:'Mud Village',a:3780,t:'end',lat:31.920,lng:78.280,note:'Pin Valley, Spiti. End of trek.'}
+]},
+
+// ══ UTTARAKHAND — HIDDEN GEMS ══
+{id:'uk07',r:'uttarakhand',name:'Pindari Glacier Trek',icon:'🧊',lat:30.280,lng:80.030,alt:3820,km:50,days:7,diff:'moderate',
+season:'May – Jun, Sep – Nov',
+desc:'Classic Kumaon glacier trek called the "Soul of Kumaon." Through rhododendron forests and the last inhabited village of Khati, culminating at the snout of the Pindari Glacier between Nanda Devi and Nandakot. Genuine cultural interaction along the way.',
+wps:[
+  {n:'Loharkhet',a:1830,t:'start',lat:30.020,lng:79.870,note:'Roadhead near Bageshwar district.'},
+  {n:'Dhakuri',a:2680,t:'camp',lat:30.080,lng:79.920,note:'Day 1. Forested ridge camp with valley views.'},
+  {n:'Khati Village',a:2210,t:'village',lat:30.130,lng:79.960,note:'Largest and last inhabited village on the trail. Wooden houses.'},
+  {n:'Dwali',a:2580,t:'camp',lat:30.190,lng:79.985,note:'Confluence of Pindari & Kafni rivers.'},
+  {n:'Phurkiya',a:3260,t:'camp',lat:30.240,lng:80.010,note:'Last camp before the glacier. Sparse vegetation.'},
+  {n:'Pindari Glacier Zero Point',a:3820,t:'summit',lat:30.280,lng:80.030,note:'Glacier snout. Views of Maiktoli, Panwali Dwar and Nandakot.'}
+]},
+
+{id:'uk08',r:'uttarakhand',name:'Kedartal Trek',icon:'💎',lat:30.998,lng:78.930,alt:4912,km:36,days:6,diff:'difficult',
+season:'May – Jun, Sep – Oct',
+desc:'A pristine emerald lake reflecting Mt Thalaysagar (6904m) and Bhrigupanth — far less crowded than the Kedarnath pilgrim trail despite sharing its name. Loose scree, the famous "Spider Wall" rock section, and dramatic Bhojpatra forests test even seasoned trekkers.',
+wps:[
+  {n:'Gangotri',a:3100,t:'start',lat:30.994,lng:78.940,note:'Char Dham pilgrim town. Source of the Ganges.'},
+  {n:'Bhoj Kharak',a:3780,t:'camp',lat:30.998,lng:78.935,note:'Day 1. Steep climb along Kedar Ganga gorge. Bhojpatra forest.'},
+  {n:'Kedar Kharak',a:4350,t:'camp',lat:31.000,lng:78.932,note:'Day 2. Sloping ledge campsite. Mt Thalaysagar views.'},
+  {n:'Kedartal Lake',a:4912,t:'summit',lat:30.998,lng:78.930,note:'Day 3. Emerald glacial lake mirroring Thalaysagar. Crosses "Spider Wall."'}
+]},
+
+{id:'uk09',r:'uttarakhand',name:'Khaliya Top Trek',icon:'🐑',lat:30.130,lng:80.150,alt:3500,km:12,days:2,diff:'easy',
+season:'Year-round (snow Dec–Mar)',
+desc:'A short, steep Kumaon gem near Munsiyari — rolling shepherd meadows at arm\'s length from snow peaks. Views of Panchachuli, Rajrambha and Hardeol fill the horizon. Proof you don\'t need weeks to feel the high Himalayas.',
+wps:[
+  {n:'Munsiyari',a:2200,t:'start',lat:30.070,lng:80.240,note:'Pithoragarh district gateway town.'},
+  {n:'Balanti Camp',a:2900,t:'camp',lat:30.100,lng:80.200,note:'Day 1. Dense forest trail begins.'},
+  {n:'Bhujani Camp',a:3048,t:'camp',lat:30.115,lng:80.175,note:'Khaliya Top base camp. Shepherd huts on rolling meadows.'},
+  {n:'Khaliya Top',a:3500,t:'summit',lat:30.130,lng:80.150,note:'Day 2. Panchachuli, Rajrambha, Hardeol views. Short, steep final push.'}
+]},
+
+{id:'uk10',r:'uttarakhand',name:'Auden\'s Col Trek',icon:'⚔️',lat:30.870,lng:78.870,alt:5490,km:55,days:11,diff:'extreme',
+season:'Jun – Sep',
+desc:'One of the toughest technical treks in India — a narrow gap between Gangotri III and Jogin I connecting the Gangotri and Kedarnath valleys via the Khatling Glacier. Near-vertical descents requiring rope-fixing. Only a handful of groups attempt it each year.',
+wps:[
+  {n:'Gangotri',a:3100,t:'start',lat:30.994,lng:78.940,note:'Trek begins at the holy town.'},
+  {n:'Nandanvan',a:4400,t:'camp',lat:30.920,lng:78.900,note:'Day 3. Glacial meadow camp with Bhagirathi peaks towering above.'},
+  {n:'Vasuki Tal',a:4800,t:'lake',lat:30.890,lng:78.885,note:'Alpine lake en route. Reflections of Vasuki Parbat.'},
+  {n:'Auden\'s Col',a:5490,t:'pass',lat:30.870,lng:78.870,note:'Day 5 crux. Near-vertical descent. Rope fixing mandatory.'},
+  {n:'Masar Tal',a:4250,t:'lake',lat:30.840,lng:78.840,note:'Day 7. Second alpine lake after Khatling Glacier crossing.'},
+  {n:'Gangi Village',a:2070,t:'end',lat:30.760,lng:78.800,note:'Kedarnath valley. End of trek via Khatling Glacier.'}
+]},
+
+// ══ NORTHEAST — HIDDEN GEM ══
+{id:'ne04',r:'northeast',name:'Singalila Ridge to Phalut',icon:'🐼',lat:27.130,lng:88.020,alt:3636,km:60,days:7,diff:'moderate',
+season:'Mar – May, Oct – Dec',
+desc:'The full ridge walk along the India–Nepal border through Singalila National Park, extending past Sandakphu to remote Phalut. Rare red panda and musk deer habitat, with views of four of the five highest peaks on Earth on a clear day.',
+wps:[
+  {n:'Maneybhanjyang',a:2134,t:'start',lat:27.013,lng:88.046,note:'Border village. Common Singalila trailhead.'},
+  {n:'Tumling',a:2970,t:'camp',lat:27.043,lng:88.023,note:'Day 1. Classic Kanchenjunga viewpoint.'},
+  {n:'Sandakphu',a:3636,t:'camp',lat:27.105,lng:88.007,note:'Day 2. Highest point in West Bengal. Everest-Kanchenjunga panorama.'},
+  {n:'Sabargram',a:3500,t:'camp',lat:27.118,lng:88.012,note:'Day 3 ridge camp option, depending on group size.'},
+  {n:'Phalut',a:3600,t:'summit',lat:27.130,lng:88.020,note:'Day 3. Tabletop plateau. Closer mountain views than Sandakphu due to northerly position.'},
+  {n:'Gorkhey Village',a:2300,t:'village',lat:27.095,lng:88.060,note:'Day 4. Picturesque village at confluence of two streams.'},
+  {n:'Rimbik',a:2290,t:'end',lat:27.030,lng:88.130,note:'Day 5. Trail end, drive to Kalimpong or Darjeeling.'}
+]},
+
+// ══ NEPAL — HIDDEN GEMS ══
+{id:'np06',r:'nepal',name:'Mardi Himal Trek',icon:'🌄',lat:28.516,lng:83.880,alt:4500,km:45,days:6,diff:'moderate',
+season:'Mar – May, Oct – Nov',
+desc:'A quiet ridge-line alternative to the crowded Annapurna trails, opened only in 2012. Intimate, close-up views of Machhapuchhre (Fishtail) and Annapurna South from a narrow forested ridge most trekkers never discover.',
+wps:[
+  {n:'Kande',a:1770,t:'start',lat:28.330,lng:83.850,note:'Drive from Pokhara. Trailhead via Australian Camp.'},
+  {n:'Forest Camp',a:2550,t:'camp',lat:28.420,lng:83.860,note:'Day 1-2. Rhododendron and oak forest. 7-8 teahouses.'},
+  {n:'Low Camp',a:2970,t:'camp',lat:28.460,lng:83.868,note:'Gradual climb with improving mountain views.'},
+  {n:'Badal Danda',a:3300,t:'camp',lat:28.485,lng:83.873,note:'"Hill above the clouds" — frequent mist-covered atmosphere.'},
+  {n:'High Camp',a:3580,t:'camp',lat:28.500,lng:83.876,note:'Perched on a narrow ridge-top. Thrilling exposure.'},
+  {n:'Mardi Himal Base Camp',a:4500,t:'summit',lat:28.516,lng:83.880,note:'Day 4. Intimate views of Machhapuchhre, Annapurna South, Hiunchuli.'}
+]},
+
+{id:'np07',r:'nepal',name:'Gokyo Valley Trek',icon:'💚',lat:27.951,lng:86.693,alt:5357,km:90,days:12,diff:'difficult',
+season:'Mar – May, Sep – Nov',
+desc:'The Everest region\'s best-kept secret. Emerald glacial lakes, the longest glacier in Nepal, and Gokyo Ri (5357m) — a viewpoint showing four peaks above 8000m at once: Everest, Lhotse, Makalu and Cho Oyu.',
+wps:[
+  {n:'Lukla',a:2860,t:'start',lat:27.686,lng:86.728,note:'Standard Khumbu entry point by flight.'},
+  {n:'Namche Bazaar',a:3440,t:'camp',lat:27.805,lng:86.714,note:'Acclimatisation stop, shared with EBC route.'},
+  {n:'Dole',a:4200,t:'camp',lat:27.870,lng:86.700,note:'Trail diverges from main EBC route here toward Gokyo.'},
+  {n:'Machhermo',a:4470,t:'camp',lat:27.905,lng:86.695,note:'Quiet yak-herding settlement.'},
+  {n:'Gokyo Village',a:4790,t:'lake',lat:27.951,lng:86.693,note:'Beside the largest of six glacial lakes. Ngozumpa Glacier — Nepal\'s longest.'},
+  {n:'Gokyo Ri',a:5357,t:'summit',lat:27.958,lng:86.690,note:'Dawn summit. Everest, Lhotse, Makalu, Cho Oyu all visible at once.'}
+]},
+
+// ══ MAHARASHTRA — SAHYADRI FORT TREKS ══
+{id:'mh01',r:'maharashtra',name:'Kalsubai Peak Trek',icon:'⛰',lat:19.611,lng:73.711,alt:1646,km:13,days:1,diff:'moderate',
+season:'Oct – Jun (avoid heavy monsoon)',
+desc:'The "Everest of Maharashtra" — the state\'s highest peak. Iron ladders and chains bolted onto near-vertical rock faces lead to a hilltop temple of the goddess Kalsubai. Sunrise summit views stretch across the entire Sahyadri range.',
+wps:[
+  {n:'Bari Village',a:732,t:'start',lat:19.580,lng:73.700,note:'Base village, Ahmednagar district. Farmland and paddy fields at the start.'},
+  {n:'Jahagirdarwadi',a:760,t:'village',lat:19.590,lng:73.705,note:'Alternate base village. Homestays available.'},
+  {n:'Iron Ladder Section',a:1300,t:'pass',lat:19.600,lng:73.708,note:'Four steep iron ladders bolted to vertical rock. The trek\'s signature thrill.'},
+  {n:'Kalsubai Summit',a:1646,t:'summit',lat:19.611,lng:73.711,note:'Maharashtra\'s highest point. Small Kalsubai Devi temple. 360° Sahyadri panorama including Harishchandragad, AMK, Ratangad.'}
+]},
+
+{id:'mh02',r:'maharashtra',name:'Harishchandragad Trek',icon:'🏔',lat:19.388,lng:73.776,alt:1424,km:11,days:2,diff:'moderate',
+season:'Oct – Feb (post-monsoon, winter)',
+desc:'One of the most iconic forts in the Western Ghats, dating to the 6th century. Home to the concave Konkan Kada cliff, the ancient Kedareshwar Cave with a Shiva lingam surrounded by water, and Taramati Peak — Maharashtra\'s 4th highest point.',
+wps:[
+  {n:'Khireshwar Village',a:680,t:'start',lat:19.420,lng:73.730,note:'Most scenic but longer base route. Nageshwar temple here.'},
+  {n:'Tolar Khind',a:950,t:'pass',lat:19.405,lng:73.750,note:'Steep rock patch crossing seven hills en route.'},
+  {n:'Kedareshwar Cave',a:1390,t:'camp',lat:19.385,lng:73.773,note:'Ancient cave temple, Shiva lingam encircled by cold water year-round.'},
+  {n:'Konkan Kada',a:1400,t:'lake',lat:19.382,lng:73.770,note:'Concave cliff overlooking the Konkan plain. Famous for cloud illusions at sunset.'},
+  {n:'Taramati Peak',a:1450,t:'summit',lat:19.390,lng:73.780,note:'Maharashtra\'s 4th highest peak. Sunrise viewpoint over the entire Naneghat region.'}
+]},
+
+{id:'mh03',r:'maharashtra',name:'Sandhan Valley Trek',icon:'🪢',lat:19.555,lng:73.700,alt:1297,km:9,days:1,diff:'moderate',
+season:'Oct – Feb (avoid monsoon — flash flood risk)',
+desc:'The "Valley of Shadows" — a 200ft deep, 2km long water-carved canyon between the Alang-Madan-Kulang and Ratangad-Kalsubai massifs. Narrow rock corridors so tight sunlight rarely touches the floor. Includes rappelling and wading through pools.',
+wps:[
+  {n:'Samrad Village',a:1020,t:'start',lat:19.560,lng:73.690,note:'Ahmednagar district base village near Bhandardara/Ghatghar.'},
+  {n:'Canyon Entry',a:1000,t:'village',lat:19.557,lng:73.695,note:'Trail descends into the narrow gorge, wading through water pools.'},
+  {n:'Deep Gorge Section',a:950,t:'pass',lat:19.555,lng:73.698,note:'Walls narrow to under 3 feet in places. The valley\'s namesake "shadow" zone.'},
+  {n:'Rappelling Point',a:920,t:'pass',lat:19.553,lng:73.700,note:'100-120ft rappel down a rocky cliff face with guide and gear.'},
+  {n:'Dehne Village (Exit)',a:850,t:'end',lat:19.550,lng:73.705,note:'Full-descent exit point, opposite end from Samrad.'}
+]},
+
+{id:'mh04',r:'maharashtra',name:'Rajmachi Fort Trek',icon:'🏯',lat:18.748,lng:73.434,alt:838,km:16,days:2,diff:'easy',
+season:'Jun – Sep (monsoon greenery) / Year-round',
+desc:'Twin forts — Shrivardhan and Manaranjan — guarding the historic Borghat trade pass between Lonavala and Karjat. Built by the Satavahanas, fortified under Shivaji Maharaj. Monsoon transforms the route with the roaring Kataldhar waterfall visible from the summit.',
+wps:[
+  {n:'Lonavala',a:625,t:'start',lat:18.751,lng:73.406,note:'Common starting hill station. Longer, gentler 15km route via Shirota forest.'},
+  {n:'Udhewadi Village',a:820,t:'camp',lat:18.745,lng:73.430,note:'Base village at the southern foot of the fort. Homestays and camping.'},
+  {n:'Kal Bhairav Temple',a:830,t:'village',lat:18.747,lng:73.432,note:'Ancient temple in the gorge between the two forts.'},
+  {n:'Manaranjan Fort',a:765,t:'summit',lat:18.744,lng:73.428,note:'Lower of the twin forts. Three gates, large ramparts. Karnala Fort visible.'},
+  {n:'Shrivardhan Fort',a:838,t:'summit',lat:18.748,lng:73.434,note:'Higher twin fort. Watch-tower structure with two water tanks.'}
+]},
+
+{id:'mh05',r:'maharashtra',name:'Rajgad Fort Trek',icon:'👑',lat:18.247,lng:73.667,alt:1376,km:9,days:1,diff:'moderate',
+season:'Year-round (best post-monsoon to winter)',
+desc:'Shivaji Maharaj\'s capital for 26 years before Raigad. Three serpentine fortified ridgelines — Padmavati, Suvela and Sanjeevani Machi — radiate from the Balekilla summit. On a clear day over twenty other Sahyadri forts are visible from the top.',
+wps:[
+  {n:'Gunjavane Village',a:823,t:'start',lat:18.230,lng:73.650,note:'Primary base village. Most popular and well-marked trail.'},
+  {n:'Chor Darwaza',a:1250,t:'pass',lat:18.240,lng:73.660,note:'"Thief\'s Gate" — hidden entrance built into the rock, leads to Padmavati Machi.'},
+  {n:'Padmavati Machi',a:1300,t:'camp',lat:18.244,lng:73.663,note:'Main plateau. Padmavati Temple, lake, and popular camping ground.'},
+  {n:'Suvela Machi',a:1350,t:'village',lat:18.250,lng:73.670,note:'Eastern fortified ridge. Hanuman temple and natural rock "Nedh" formation.'},
+  {n:'Sanjeevani Machi',a:1340,t:'village',lat:18.245,lng:73.655,note:'Southwest ridge, 2.5km of triple-layer fortification and water cisterns.'},
+  {n:'Balekilla',a:1376,t:'summit',lat:18.247,lng:73.667,note:'Highest point. Birthplace of Shivaji\'s son Rajaram. 20+ forts visible.'}
+]},
+
+{id:'mh06',r:'maharashtra',name:'Harihar Fort Trek',icon:'🪜',lat:19.978,lng:73.523,alt:1120,km:5,days:1,diff:'difficult',
+season:'Oct – Feb (avoid crowded monsoon weekends)',
+desc:'A triangular prism of rock with near-vertical faces, famous for 117 hand-carved rock steps climbing an 80-90° rock face in a single-file staircase. Built by the Yadava dynasty to guard the Gonda Ghat trade route. Not for those with a fear of heights.',
+wps:[
+  {n:'Nirgudpada Village',a:600,t:'start',lat:19.960,lng:73.510,note:'Kotamwadi base village, Nashik district, Trimbakeshwar region.'},
+  {n:'Forest Approach',a:850,t:'village',lat:19.968,lng:73.515,note:'Fields, bushes and streams for the first 30-45 minutes.'},
+  {n:'The Plateau',a:1000,t:'camp',lat:19.973,lng:73.519,note:'Rest point before the iconic steps. Small snack stall available.'},
+  {n:'Rock-Cut Staircase',a:1080,t:'pass',lat:19.976,lng:73.521,note:'117 near-vertical steps carved directly into the rock face. The fort\'s signature feature.'},
+  {n:'Harihar Summit',a:1120,t:'summit',lat:19.978,lng:73.523,note:'Triangular prism summit. Grain storage ruins, water cisterns, Sahyadri panorama.'}
+]},
+
+{id:'mh07',r:'maharashtra',name:'Kalu Waterfall Trek',icon:'💦',lat:19.470,lng:73.700,alt:760,km:14,days:1,diff:'moderate',
+season:'Sep – Oct (post-monsoon, avoid heavy rain)',
+desc:'A five-tier, 1200ft cascade in "God\'s Valley" near Malshej Ghat — the largest waterfall in the region, originating from the Harishchandragad plateau. Only the first and last tiers are visible on foot; rappellers see all five. Mist-wrapped cliffs that locals say swallow sound itself.',
+wps:[
+  {n:'Sawarne Village',a:520,t:'start',lat:19.450,lng:73.680,note:'Base village in Junnar Taluka, Thane district.'},
+  {n:'Forest Trail',a:600,t:'village',lat:19.458,lng:73.690,note:'Rolling meadows and paddies, migratory bird zone (flamingos Jul–Sep).'},
+  {n:'River Crossing',a:680,t:'pass',lat:19.465,lng:73.695,note:'Cross the Kalu River, multiple stream crossings en route.'},
+  {n:'Kalu Waterfall Viewpoint',a:760,t:'summit',lat:19.470,lng:73.700,note:'1200ft five-tier cascade. First rappelled in 1993. Viewing distance ~1.5km from base of falls.'}
+]},
+
+{id:'mh08',r:'maharashtra',name:'Aadrai Jungle Trek',icon:'🌳',lat:19.440,lng:73.715,alt:759,km:8,days:1,diff:'easy',
+season:'Jul – Oct (monsoon, for full forest experience)',
+desc:'"Aadrai" means uninterrupted flow / deep forest in Marathi — one of the Sahyadri\'s most untouched jungles. A near-continuous green canopy blocks sunlight for most of the trail, discovered by a villager who lost his way while hunting. Hidden waterfalls, ancient caves, and a top-down view of Kalu Waterfall.',
+wps:[
+  {n:'Khireshwar Village',a:680,t:'start',lat:19.420,lng:73.730,note:'Shared base with Harishchandragad. Also gateway to Naneghat.'},
+  {n:'Dense Canopy Entry',a:720,t:'village',lat:19.428,lng:73.722,note:'Forest floor rarely sees sunlight — full green canopy overhead.'},
+  {n:'Nageshwar Temple Cave',a:740,t:'camp',lat:19.433,lng:73.718,note:'Ancient cave temple en route, one of several historic sites in the jungle.'},
+  {n:'Kalu Waterfall Top View',a:759,t:'summit',lat:19.440,lng:73.715,note:'Elevated viewpoint over Kalu Waterfall from deep within the forest — the trek\'s highlight.'}
+]},
+
+{id:'mh09',r:'maharashtra',name:'Andharban Jungle Trek',icon:'🌲',lat:18.310,lng:73.430,alt:659,km:13,days:1,diff:'moderate',
+season:'Jul – Sep (monsoon — trail is dry/closed otherwise)',
+desc:'"Andharban" means Dark Forest — a rare descending trek (most Sahyadri treks climb). Drops from the Western Ghats crest through Sudhagad Wildlife Sanctuary into the Konkan, ending at Bhira Dam\'s backwaters. Passes Devkund waterfall views and the Kundalika Valley, with three major stream crossings.',
+wps:[
+  {n:'Pimpri Village (Independence Point)',a:658,t:'start',lat:18.380,lng:73.400,note:'Tamhini Ghat, Pune district. Trail entry closes 11am on weekends due to crowding.'},
+  {n:'Dense Forest Descent',a:550,t:'village',lat:18.360,lng:73.410,note:'Canopy darkens progressively. Three major stream crossings, rope assistance in heavy rain.'},
+  {n:'Kundalika Valley Ridge',a:480,t:'camp',lat:18.345,lng:73.415,note:'Ridge walk with sweeping views of Kundalika Valley and Devkund waterfall in the distance.'},
+  {n:'Hirdi Village',a:420,t:'village',lat:18.330,lng:73.420,note:'Only village on the route. Food and refreshments from locals.'},
+  {n:'Bhira Dam Backwaters',a:200,t:'end',lat:18.310,lng:73.430,note:'Trail terminus. Arrange vehicle pickup in advance — point-to-point trek.'}
+]},
+
+{id:'mh10',r:'maharashtra',name:'Ratangad Fort Trek',icon:'💍',lat:19.610,lng:73.730,alt:1296,km:12,days:1,diff:'moderate',
+season:'Jun – Feb (monsoon greenery, winter clear views)',
+desc:'The "Jewel of the Sahyadris" — famous for the Nedhe, a natural rock formation with a hole at the summit known as the "Eye of the Needle." 400-year-old fort captured by Shivaji Maharaj, ringed by Kalsubai, Alang-Madan-Kulang and overlooking the Bhandardara backwaters.',
+wps:[
+  {n:'Ratanwadi Village',a:823,t:'start',lat:19.580,lng:73.745,note:'Base village. Reachable by road or boat across Bhandardara lake.'},
+  {n:'Amruteshwar Temple',a:830,t:'village',lat:19.582,lng:73.743,note:'1000-year-old Hemadpanti-style Shiva temple. Trail starts opposite it.'},
+  {n:'Pravara River Crossing',a:950,t:'pass',lat:19.595,lng:73.738,note:'Cross the river near a small dam, keeping the river on your left thereafter.'},
+  {n:'Trimbak Darwaza',a:1200,t:'camp',lat:19.605,lng:73.733,note:'One of four fort gates. Iron ladder sections nearby aid the final ascent.'},
+  {n:'Nedhe (Eye of the Needle)',a:1296,t:'summit',lat:19.610,lng:73.730,note:'Natural rock cavity at the summit. 360° views of Kalsubai, AMK range, Bhandardara lake.'}
+]},
+
+{id:'mh11',r:'maharashtra',name:'Devkund Waterfall Trek',icon:'🛁',lat:18.295,lng:73.395,alt:600,km:11,days:1,diff:'easy',
+season:'Jul – Feb',
+desc:'The "Bathing Pond of Gods" — a sacred two-tier waterfall near Bhira in the Tamhini Ghat region. A gentle, family-friendly trail through jungles, river crossings on wooden bridges, and a hydroelectric pipeline, ending at a natural emerald pool below the falls.',
+wps:[
+  {n:'Bhira Village',a:240,t:'start',lat:18.260,lng:73.380,note:'Raigad district base, near Kolad. Close to Andharban trail.'},
+  {n:'Stream Crossings',a:350,t:'village',lat:18.270,lng:73.385,note:'3-4 stream crossings via small wooden bridges, open fields.'},
+  {n:'Hydroelectric Pipeline',a:450,t:'pass',lat:18.280,lng:73.390,note:'Trail passes alongside a hydroelectric project pipeline.'},
+  {n:'Devkund Waterfall',a:600,t:'summit',lat:18.295,lng:73.395,note:'Two-tier sacred falls. Natural pool for bathing — considered holy by locals.'}
+]},
+
+{id:'mh12',r:'maharashtra',name:'Alang-Madan-Kulang (AMK) Range',icon:'⚡',lat:19.680,lng:73.760,alt:1646,km:20,days:3,diff:'extreme',
+season:'Oct – Feb (technical climbing, avoid monsoon)',
+desc:'The toughest fort trek in Maharashtra — three connected peaks (Alang, Madan, Kulang) requiring rock climbing, rope-fixing and exposed rock-face traverses. Narrow pathways and dense forest cover guard forts built during the Satvahana era, later held by the Peshwas.',
+wps:[
+  {n:'Ambewadi Village',a:850,t:'start',lat:19.640,lng:73.740,note:'Base village near Kalsubai-Harishchandragad Wildlife Sanctuary.'},
+  {n:'Alang Base Camp',a:1200,t:'camp',lat:19.655,lng:73.748,note:'Day 1 camp before the rock-climbing ascent of Alang fort.'},
+  {n:'Alang Fort',a:1500,t:'summit',lat:19.660,lng:73.750,note:'First peak. Temple ruins, technical rock patches with fixed ropes.'},
+  {n:'Madangad Traverse',a:1350,t:'pass',lat:19.670,lng:73.755,note:'Exposed ridge traverse connecting Alang to Madan — the most technical section.'},
+  {n:'Kulang Fort',a:1646,t:'summit',lat:19.680,lng:73.760,note:'Highest and final peak. Narrow rock-cut steps, caves, water cisterns.'}
+]},
+
+{id:'mh13',r:'maharashtra',name:'Torna Fort Trek',icon:'🛡️',lat:18.278,lng:73.617,alt:1403,km:7,days:1,diff:'difficult',
+season:'Year-round (best Oct – Feb)',
+desc:'The first fort captured by a 16-year-old Shivaji Maharaj in 1643, kickstarting the Maratha empire. Originally named "Prachandagad" (formidable fort) for its imposing scale — the highest fort in the Pune district, often climbed together with neighbouring Rajgad.',
+wps:[
+  {n:'Velhe Village',a:900,t:'start',lat:18.260,lng:73.600,note:'Base village, Pune district. Can be combined with Rajgad trek via ridge.'},
+  {n:'Budhla Machi',a:1150,t:'pass',lat:18.268,lng:73.608,note:'Fortified ridge approach to the main fort gate.'},
+  {n:'Binny Darwaza',a:1300,t:'camp',lat:18.273,lng:73.613,note:'Main entrance gate. Zunjar Machi and Kothi Darwaza nearby.'},
+  {n:'Torna Summit (Prachandagad)',a:1403,t:'summit',lat:18.278,lng:73.617,note:'Highest fort in Pune district. Temple of Goddess Tornai, Mengai Devi temple.'}
+]},
+
+{id:'mh14',r:'maharashtra',name:'Matheran Hill Trek',icon:'🚂',lat:18.987,lng:73.270,alt:803,km:11,days:1,diff:'easy',
+season:'Oct – May (post-monsoon especially scenic)',
+desc:'Asia\'s only automobile-free hill station — explored entirely on foot, horseback, or the heritage 1907 narrow-gauge toy train. Dense forest trails climb from Neral through monkey-filled canopy to a red-laterite plateau with 38 named viewpoints, the most famous being Panorama Point.',
+wps:[
+  {n:'Neral Railway Station',a:39,t:'start',lat:19.027,lng:73.318,note:'Base point. Catch the historic toy train or start the road/rail-track walk.'},
+  {n:'Dasturi Naka',a:740,t:'village',lat:18.990,lng:73.280,note:'Vehicle parking limit — no motor vehicles allowed beyond this point.'},
+  {n:'One Tree Hill Point',a:780,t:'camp',lat:18.985,lng:73.275,note:'Alternate trekking entry via Ambewadi village, less crowded route.'},
+  {n:'Charlotte Lake',a:800,t:'lake',lat:18.982,lng:73.272,note:'Matheran\'s water lifeline, scenic temple and small dam on one end.'},
+  {n:'Panorama Point',a:803,t:'summit',lat:18.987,lng:73.270,note:'Farthest point on the plateau. Best sunrise viewpoint with 360° Sahyadri views.'}
+]},
+
+{id:'mh15',r:'maharashtra',name:'Lohagad Fort Trek',icon:'🦂',lat:18.713,lng:73.479,alt:1033,km:6,days:1,diff:'easy',
+season:'Jun – Sep (monsoon greenery) / Year-round',
+desc:'One of the easiest and most popular forts near Pune-Mumbai — a simple staircase climb of roughly 300 steps. Twin fort to neighbouring Visapur, famous for the dramatic Vinchu Kata (Scorpion\'s Tail), a 1500m narrow fortified ridge resembling a scorpion\'s sting, with sweeping views of Pawna Lake.',
+wps:[
+  {n:'Malavli Railway Station',a:630,t:'start',lat:18.733,lng:73.453,note:'Nearest train station on the Pune-Lonavala line.'},
+  {n:'Lohagadwadi Village',a:700,t:'village',lat:18.720,lng:73.465,note:'Base village, reached by shared jeep or 45-min walk from Malavli.'},
+  {n:'Stone Staircase',a:900,t:'pass',lat:18.716,lng:73.472,note:'Main 300-step ascent. Stable in dry conditions, slippery when wet.'},
+  {n:'Lohagad Fort Gate',a:1020,t:'camp',lat:18.713,lng:73.478,note:'Laxmi Kothi treasury ruins, old cannons, water cisterns inside.'},
+  {n:'Vinchu Kata',a:1033,t:'summit',lat:18.713,lng:73.479,note:'"Scorpion\'s Tail" — narrow 1500m fortified ridge. Panoramic Pawna Lake views.'}
+]},
+
+{id:'mh16',r:'maharashtra',name:'Sinhagad Fort Trek',icon:'🦁',lat:18.366,lng:73.755,alt:1312,km:5,days:1,diff:'easy',
+season:'Year-round (best Oct – Feb)',
+desc:'"Lion\'s Fort" — site of the legendary 1670 battle where Maratha commander Tanaji Malusare scaled the cliffs using a trained monitor lizard and reclaimed the fort, dying in the process. Shivaji Maharaj\'s famous words "the fort is won, but the lion is lost" gave it its name. A favorite quick trek for Pune locals, famous for kanda bhajji at the summit.',
+wps:[
+  {n:'Donje Village',a:750,t:'start',lat:18.350,lng:73.745,note:'Classic/beginner route base, also called the Atitkar Route.'},
+  {n:'Pune Darwaza',a:1100,t:'pass',lat:18.358,lng:73.750,note:'Main entrance gate facing Pune, intricate stonework and bastions.'},
+  {n:'Tanaji Malusare Memorial',a:1250,t:'camp',lat:18.362,lng:73.752,note:'350-year-old memorial to the warrior who died capturing the fort.'},
+  {n:'Kalyan Darwaza',a:1290,t:'village',lat:18.364,lng:73.754,note:'Second gate, opens toward the Konkan side, steeper alternate route.'},
+  {n:'Sinhagad Summit',a:1312,t:'summit',lat:18.366,lng:73.755,note:'Khadakwasla Dam views on one side, Torna Fort visible on the other.'}
+]},
+
+// ══ NORTHEAST — MORE HIDDEN GEMS ══
+{id:'ne05',r:'northeast',name:'Mawryngkhang Bamboo Trail',icon:'🎋',lat:25.295,lng:91.795,alt:884,km:7,days:1,diff:'moderate',
+season:'Year-round (best Oct – Apr, bridges may close post-heavy-rain repair)',
+desc:'One of the most spectacular and nerve-wracking treks in India — a trail of hand-built bamboo bridges tied with cane rope, hanging over mountain ridges, gorges and a roaring river. Opened by Khasi villagers in 2016, it ends at U Mawryngkhang, the "King of Stones" — Meghalaya\'s largest standalone rock, steeped in Khasi legend.',
+wps:[
+  {n:'Wahkhen Village',a:884,t:'start',lat:25.310,lng:91.780,note:'East Khasi Hills, Pynursla tehsil. 42km from Shillong. Has a traditional Khasi music school.'},
+  {n:'Wahrew River Descent',a:750,t:'pass',lat:25.305,lng:91.785,note:'Trail descends toward the river — first bamboo bridge crossing begins here.'},
+  {n:'Mawkhlieng Cliff',a:700,t:'pass',lat:25.300,lng:91.790,note:'Bamboo bridge clings to a sheer cliff face, gorge visible directly below.'},
+  {n:'Mawmoit Viewpoint',a:720,t:'camp',lat:25.298,lng:91.793,note:'Natural pools for a refreshing dip mid-trek. Panoramic ridge views.'},
+  {n:'U Mawryngkhang (King of Stones)',a:884,t:'summit',lat:25.295,lng:91.795,note:'100m-tall standalone rock — largest in Meghalaya. Legendary site of a mythical stone battle.'}
+]},
+
+{id:'ne06',r:'northeast',name:'Phawngpui (Blue Mountain) Trek',icon:'🏔',lat:22.6315,lng:93.0388,alt:2157,km:20,days:2,diff:'difficult',
+season:'Nov – Mar (clear skies, dry trails)',
+desc:'Mizoram\'s highest peak, sacred to the Mizo people and steeped in folklore about local deities. A remote 10km ridge near the Myanmar border, ringed by the dramatic semi-circular cliffs of Thlazuang Kham. Rich in orchids, rhododendrons and rare birds like Blyth\'s tragopan.',
+wps:[
+  {n:'Sangau Village',a:1100,t:'start',lat:22.520,lng:92.950,note:'Closest settlement, 229km from Aizawl. Tourist lodge & forest rest house available.'},
+  {n:'Tiau Chhuah Confluence',a:1200,t:'village',lat:22.540,lng:92.970,note:'Where the Tiau and Tuipui rivers converge to form the Chhimtuipui River.'},
+  {n:'Farpak Entrance',a:1700,t:'camp',lat:22.580,lng:93.000,note:'Main gateway to Phawngpui National Park, named after a sacred pine tree legend.'},
+  {n:'Thaltlang Campsite',a:1950,t:'camp',lat:22.605,lng:93.020,note:'High camp before the summit push. Rhododendron forest surrounds the site.'},
+  {n:'Thlazuang Kham Cliffs',a:2100,t:'pass',lat:22.620,lng:93.030,note:'Dramatic semi-circular cliff formation, believed by locals to be haunted by spirits.'},
+  {n:'Phawngpui Summit',a:2157,t:'summit',lat:22.6315,lng:93.0388,note:'Highest point in Mizoram. 10km ridge, Myanmar hill ranges visible beyond the Chhimtuipui valley.'}
+]},
+
+{id:'ne07',r:'northeast',name:'Nongriat Double Decker Root Bridge Trek',icon:'🌉',lat:25.252,lng:91.701,alt:380,km:6,days:1,diff:'moderate',
+season:'Oct – Apr (avoid peak monsoon flooding)',
+desc:'A descent of roughly 3500 stone steps from Tyrna village leads to the legendary Umshiang Double Decker Living Root Bridge — two bridges of living tree roots stacked one above the other, engineered by Khasi villagers over generations. Continue further to the turquoise pools of Rainbow Falls.',
+wps:[
+  {n:'Tyrna Village',a:1220,t:'start',lat:25.270,lng:91.715,note:'Near Cherrapunji (Sohra). Trailhead and small maintenance-fee collection point.'},
+  {n:'Single Decker Root Bridge',a:900,t:'village',lat:25.262,lng:91.708,note:'Roughly midpoint — shops selling lime juice and instant noodles, smaller root bridge nearby.'},
+  {n:'Umshiang Double Decker Root Bridge',a:380,t:'lake',lat:25.252,lng:91.701,note:'The main attraction — two living root bridges stacked vertically. Small entry fee (~₹20).'},
+  {n:'Nongriat Village',a:380,t:'camp',lat:25.250,lng:91.700,note:'Several homestays (₹200-400/night). Last permanent settlement on the trail.'},
+  {n:'Rainbow Falls',a:300,t:'summit',lat:25.245,lng:91.695,note:'Turquoise waterfall pool, named for the rainbow that forms in its spray on sunny days.'}
+]},
+
+// ══ SOUTH INDIA — WESTERN GHATS ══
+{id:'si01',r:'southindia',name:'Kumara Parvatha Trek',icon:'⛰️',lat:12.633,lng:75.650,alt:1712,km:20,days:1,diff:'extreme',
+season:'Oct – Feb (permits unavailable in monsoon/summer)',
+desc:'Widely regarded as the toughest single-day trek in the Western Ghats. A continuous, gruelling ascent through Pushpagiri Wildlife Sanctuary — dense jungle, open shola grasslands and bouldery ridges — to Karnataka\'s 5th highest peak, with a strict 12-hour permit window enforced by the Forest Department.',
+wps:[
+  {n:'Kukke Subramanya Temple',a:100,t:'start',lat:12.620,lng:75.620,note:'Temple town and trailhead. Online permits via Aranya Vihaara portal mandatory, capped at 150 trekkers/day.'},
+  {n:'Bhattara Mane',a:700,t:'camp',lat:12.624,lng:75.630,note:'Only reliable water/food stop before the sanctuary checkpost. Overnight camping no longer permitted.'},
+  {n:'Girigadde Checkpost',a:900,t:'pass',lat:12.627,lng:75.636,note:'Pushpagiri Wildlife Sanctuary entry — mandatory registration point.'},
+  {n:'Shesha Parvatha',a:1620,t:'pass',lat:12.630,lng:75.645,note:'Towering ridge point visible for most of the trek, just before the final push.'},
+  {n:'Kallu Mantapa',a:1680,t:'camp',lat:12.632,lng:75.648,note:'Rocky outcrop near the summit, final landmark before Kumara Parvatha.'},
+  {n:'Kumara Parvatha Summit (Pushpagiri)',a:1712,t:'summit',lat:12.633,lng:75.650,note:'5th highest peak in Karnataka. 360° views of misty valleys and layered Western Ghats ridges.'}
+]},
+
+{id:'si02',r:'southindia',name:'Kudremukh Trek',icon:'🐴',lat:13.196,lng:75.260,alt:1894,km:22,days:1,diff:'moderate',
+season:'Oct – Feb (avoid Jun–Sep monsoon, leech-heavy)',
+desc:'Karnataka\'s 3rd highest peak, named for its "horse-face" profile when viewed from a distance. Inside Kudremukh National Park, the trail crosses Asia-scale shola grasslands, river streams and dense forest — no overnight camping allowed, making it a demanding single-day there-and-back.',
+wps:[
+  {n:'Mullodi Village',a:700,t:'start',lat:13.140,lng:75.220,note:'Forest office and base camp, 15km from Kalasa town via jeep track.'},
+  {n:'Forest Stream Crossings',a:950,t:'village',lat:13.155,lng:75.232,note:'Multiple stream crossings — fill water bottles here, no reliable source after this point.'},
+  {n:'Open Shola Grasslands',a:1400,t:'pass',lat:13.172,lng:75.245,note:'Rolling high-altitude meadows reminiscent of Himalayan bugyals, panoramic ridge views.'},
+  {n:'Kudremukh Summit',a:1894,t:'summit',lat:13.196,lng:75.260,note:'3rd highest peak in Karnataka. Sweeping views across Kudremukh National Park, Western Ghats horizon.'}
+]},
+
+{id:'si03',r:'southindia',name:'Chembra Peak Trek',icon:'💚',lat:11.567,lng:76.067,alt:2100,km:9,days:1,diff:'easy',
+season:'Oct – May (avoid heavy monsoon — slippery)',
+desc:'Wayanad\'s most iconic trek and the highest point in the district. Famous for the naturally heart-shaped Hridayathadakam (lake), reached through tea plantations, thick forest and overgrown grassland. The true summit is now restricted for wildlife conservation — the lake remains the main goal.',
+wps:[
+  {n:'Meppadi Forest Office',a:1100,t:'start',lat:11.580,lng:76.080,note:'Permit and guide arranged here via Chembra Peak VSS, South Wayanad Forest Department.'},
+  {n:'Watchtower',a:1300,t:'village',lat:11.576,lng:76.075,note:'Trail\'s formal starting point — tea estate views stretch out below.'},
+  {n:'Forest & Grassland Transition',a:1700,t:'pass',lat:11.572,lng:76.071,note:'Thick forest opens into overgrown rolling grassland — the trail steepens here.'},
+  {n:'Hridayathadakam (Heart-Shaped Lake)',a:1900,t:'lake',lat:11.568,lng:76.068,note:'Perennial heart-shaped lake — the trek\'s signature highlight and current trekking limit.'},
+  {n:'Chembra Peak',a:2100,t:'summit',lat:11.567,lng:76.067,note:'Highest point in Wayanad — currently access-restricted, visible from the lake viewpoint.'}
+]},
+
+{id:'si04',r:'southindia',name:'Meesapulimala Trek',icon:'🌺',lat:10.143,lng:77.220,alt:2640,km:16,days:2,diff:'moderate',
+season:'Sep – May (avoid Jun–Aug monsoon)',
+desc:'Second-highest peak in the Western Ghats after Anamudi, straddling the Kerala-Tamil Nadu border across eight rolling hills. Named for its moustache-like ("meesa") rock silhouette, the trail winds through the rhododendron-rich Rhodo Valley and passes the legendary Pandava Cave.',
+wps:[
+  {n:'Mountain Base Camp (via Mattupetty)',a:1900,t:'start',lat:10.120,lng:77.180,note:'Reached via Aruvikkara Estate near Munnar. Forest Department bookings mandatory.'},
+  {n:'Pandava Cave',a:2100,t:'village',lat:10.128,lng:77.195,note:'Legendary cave linked to Mahabharata folklore, visible en route to Rhodo Valley.'},
+  {n:'Rhodo Valley',a:2300,t:'camp',lat:10.135,lng:77.205,note:'Overnight camp — named for rhododendron blooms. Vehicles cannot go beyond this point.'},
+  {n:'Eight Hills Ridge Walk',a:2500,t:'pass',lat:10.140,lng:77.215,note:'Day 2 — undulating ridge traversing all eight hills, Kerala-Tamil Nadu border views.'},
+  {n:'Meesapulimala Summit',a:2640,t:'summit',lat:10.143,lng:77.220,note:'2nd highest peak in the Western Ghats. Panoramic views into Kottakudi Valley, Tamil Nadu.'}
+]},
+
+{id:'si05',r:'southindia',name:'Kodachadri Trek',icon:'🛕',lat:13.866,lng:74.825,alt:1343,km:15,days:1,diff:'moderate',
+season:'Sep – Feb (clear views) / Jun – Aug (lush monsoon greenery)',
+desc:'A sacred rainforest peak inside Mookambika Wildlife Sanctuary, said to be where the 8th-century philosopher Adi Shankaracharya meditated. The trail from Nittur crosses seven cascading Hidlumane Falls before reaching the small Sarvajna Peetha shrine, with Arabian Sea views on a clear day.',
+wps:[
+  {n:'Nittur Village',a:200,t:'start',lat:13.800,lng:74.780,note:'Shimoga district base village, forest checkpost for permits and plastic-count registration.'},
+  {n:'Paddy-Fringed Forest Trail',a:400,t:'village',lat:13.815,lng:74.792,note:'Trail follows village paddy fields into the dense Mookambika Wildlife Sanctuary.'},
+  {n:'Hidlumane Falls',a:700,t:'lake',lat:13.832,lng:74.802,note:'Series of seven gushing waterfalls — popular rest and lunch stop, wet rock scramble required.'},
+  {n:'Kodachadri Temple',a:1250,t:'camp',lat:13.858,lng:74.818,note:'Stone-built temple to Goddess Mookambika — overnight stay/camping possible with permission.'},
+  {n:'Sarvajna Peetha Summit',a:1343,t:'summit',lat:13.866,lng:74.825,note:'Adi Shankaracharya\'s meditation shrine. Clear-day views of the Arabian Sea over the Western Ghats.'}
+]},
+
+{id:'si06',r:'southindia',name:'Narasimha Parvatha & Barkana Falls',icon:'🦁',lat:13.520,lng:75.090,alt:1150,km:14,days:2,diff:'difficult',
+season:'Oct – Feb (avoid Jun–Sep, leech-heavy monsoon)',
+desc:'Agumbe\'s highest peak — the "Cherrapunji of South India" — inside Someshwara Wildlife Sanctuary, part of Kudremukh National Park. Dense rainforest leads to a clifftop view of Barkana Falls, an 850ft cascade and one of India\'s ten tallest waterfalls, seen from both its base and its dramatic source.',
+wps:[
+  {n:'Mallandur Base Camp',a:560,t:'start',lat:13.470,lng:75.050,note:'Reached by vehicle from Agumbe village, the UNESCO-recognised rainforest research region.'},
+  {n:'Dense Forest Canopy',a:750,t:'village',lat:13.485,lng:75.062,note:'Ancient trees allow almost no sunlight through — true rainforest immersion for the first 8km.'},
+  {n:'Barkana Falls Top (Sita River)',a:950,t:'lake',lat:13.500,lng:75.075,note:'Sita River plunges 850ft here — view the falls from its slippery rocky source, extreme caution required.'},
+  {n:'Open Grasslands',a:1080,t:'pass',lat:13.512,lng:75.083,note:'Forest opens into windswept grasslands stretching across the Agumbe hills.'},
+  {n:'Narasimha Parvatha Summit',a:1150,t:'summit',lat:13.520,lng:75.090,note:'Highest peak in the Agumbe Ghats. Overnight camping possible at the top, sweeping forest views.'},
+  {n:'Kigga Descent',a:650,t:'end',lat:13.495,lng:75.110,note:'Alternate descent route, 6km through steep forest patches ending near Sringeri.'}
+]},
+
+{id:'si07',r:'southindia',name:'Brahmagiri Peak Trek',icon:'🐘',lat:11.950,lng:75.950,alt:1608,km:16,days:1,diff:'difficult',
+season:'Dec – Feb (avoid monsoon)',
+desc:'A true hidden gem straddling the Karnataka-Kerala border inside Brahmagiri Wildlife Sanctuary — alpine-like shola grasslands compared to Himalayan meadows. The route follows the Lakshmana Tirtha River past the historic Narimale Forest Rest House, with a brutal final 500ft scramble rewarded by views stretching to Kerala\'s Chembra Peak.',
+wps:[
+  {n:'Iruppu (Rameshwara Temple)',a:900,t:'start',lat:11.910,lng:75.900,note:'Karnataka-side trailhead, Kodagu district. Forest Department guide mandatory due to elephant presence.'},
+  {n:'Iruppu Falls',a:950,t:'lake',lat:11.915,lng:75.905,note:'Sacred waterfall on the Lakshmana Tirtha River, linked to Ramayana legend.'},
+  {n:'Narimale Forest Rest House',a:1300,t:'camp',lat:11.930,lng:75.925,note:'Historic rest house marking the midpoint, surrounded by shola-meadow mosaic.'},
+  {n:'Negilu Hole Stream Crossing',a:1450,t:'pass',lat:11.940,lng:75.938,note:'Final stream crossing before the grasslands open up dramatically.'},
+  {n:'Brahmagiri Summit',a:1608,t:'summit',lat:11.950,lng:75.950,note:'360° views of Mullayanagiri, Baba Budangiri, Kumara Parvatha and Kerala\'s Chembra Peak on clear days.'}
+]},
+
+{id:'si08',r:'southindia',name:'Kolli Hills – Agaya Gangai Falls Trek',icon:'🌊',lat:11.267,lng:78.394,alt:396,km:3,days:1,diff:'easy',
+season:'Year-round (best post-monsoon, Oct – Feb)',
+desc:'A lesser-known Eastern Ghats hill station in Tamil Nadu, reached via 70 dramatic hairpin bends. The signature trek descends roughly 1000 ancient stone steps through dense forest to Agaya Gangai — "Ganges of the Sky" — a 300ft waterfall hidden inside a steep canyon, passing two mystical Siddhar meditation caves.',
+wps:[
+  {n:'Arapaleeswarar Temple',a:1300,t:'start',lat:11.260,lng:78.380,note:'Ancient Shiva temple built by King Valvil Ori (~1st-2nd century AD), trailhead for the descent.'},
+  {n:'Stone Step Descent',a:900,t:'pass',lat:11.264,lng:78.388,note:'Nearly 1000 hand-cut stone steps wind through dense Eastern Ghats forest.'},
+  {n:'Siddhar Caves',a:600,t:'village',lat:11.266,lng:78.391,note:'Korakkar Siddhar and Kalaanginatha Siddhar caves — believed sites of ancient meditation and herbal medicine.'},
+  {n:'Agaya Gangai Waterfalls',a:396,t:'summit',lat:11.267,lng:78.394,note:'"Ganges of the Sky" — 300ft falls fed by the Aiyaru River, set in a dramatic canyon ringed by mountains.'}
+]},
+
+// ══ UTTARAKHAND — MORE FAMOUS TREKS ══
+{id:'uk11',r:'uttarakhand',name:'Kuari Pass Trek',icon:'👑',lat:30.460,lng:79.720,alt:3815,km:28,days:6,diff:'moderate',
+season:'Year-round (snow Dec–Mar, clearest Oct–Nov)',
+desc:'Known as "Lord Curzon\'s Trail" after the British Viceroy who popularised it in 1905. A beginner-friendly classic through ancient oak and rhododendron forests opening into the vast Gorson Bugyal meadow, with constant views of Nanda Devi, Dronagiri, Kamet and Trishul — one of the most accessible high-altitude panoramas in Garhwal.',
+wps:[
+  {n:'Joshimath',a:1890,t:'start',lat:30.559,lng:79.564,note:'Drive from Rishikesh (255km). Shankaracharya temple, base for several Garhwal treks.'},
+  {n:'Tugasi Village',a:2280,t:'village',lat:30.530,lng:79.610,note:'Short drive from Joshimath via Dhak. Gateway hamlet with terrace farms.'},
+  {n:'Gulling Top',a:2850,t:'camp',lat:30.500,lng:79.650,note:'Day 2 camp. Views of Dronagiri and Hathi-Ghoda Parvat from the campsite.'},
+  {n:'Khullara / Tali Campsite',a:3050,t:'camp',lat:30.480,lng:79.680,note:'Base camp for both Kuari Pass and neighbouring Pangarchulla. Dense fir and oak forest.'},
+  {n:'Kuari Pass',a:3815,t:'pass',lat:30.460,lng:79.720,note:'Summit day. 360° panorama of Nanda Devi, Dronagiri, Kamet, Trishul and Chaukhamba.'},
+  {n:'Gorson Bugyal',a:3050,t:'pass',lat:30.520,lng:79.575,note:'Vast skiing meadow on the return route, descending toward Auli.'},
+  {n:'Auli',a:2519,t:'end',lat:30.524,lng:79.572,note:'Famous ski resort. Cable car or drive back down to Joshimath.'}
+]},
+
+{id:'uk12',r:'uttarakhand',name:'Bali Pass Trek',icon:'⚔️',lat:31.040,lng:78.470,alt:4950,km:60,days:8,diff:'extreme',
+season:'May – Jun, Sep – Oct',
+desc:'One of the most thrilling high-altitude crossings in Uttarakhand, connecting the legendary Har Ki Dun valley with the sacred Yamunotri region across a knife-edge ridge. Passes the glacial Ruinsara Tal lake and the historic mountaineering route to Bandarpoonch and Kalanag, said to be where Bali — Lord Hanuman\'s brother — once rested.',
+wps:[
+  {n:'Sankri',a:1920,t:'start',lat:31.096,lng:78.076,note:'Common Garhwal trailhead, drive from Dehradun via Mussoorie (200km).'},
+  {n:'Taluka to Seema',a:2700,t:'village',lat:31.130,lng:78.250,note:'Day 2. Drive to Taluka, then trek through Gangad and Osla villages toward Seema.'},
+  {n:'Devsu Bugyal',a:3100,t:'pass',lat:31.080,lng:78.350,note:'Wide alpine meadow en route — a highlight in its own right with panoramic peak views.'},
+  {n:'Ruinsara Tal',a:3600,t:'lake',lat:31.060,lng:78.530,note:'Glacial lake ringed by rhododendron meadows. Camping now restricted; nearby Unti Gad used instead.'},
+  {n:'Odari / Bali Pass Base',a:4000,t:'camp',lat:31.030,lng:78.480,note:'Swargarohini peak dominates the skyline. Limited water sources — carry extra.'},
+  {n:'Bali Pass',a:4950,t:'pass',lat:31.040,lng:78.470,note:'Knife-edge Narma Kandi ridge crossing. Views of Bandarpoonch, Kalanag and Panchachuli on clear days.'},
+  {n:'Upper Dhamni',a:3700,t:'camp',lat:31.010,lng:78.450,note:'Steep boulder descent from the pass into alpine meadows.'},
+  {n:'Yamunotri / Janki Chatti',a:3291,t:'end',lat:30.989,lng:78.441,note:'Sacred pilgrimage site, source of the Yamuna river. Trek concludes here.'}
+]},
+
+// ══ HIMACHAL — MORE FAMOUS TREKS ══
+{id:'hp12',r:'himachal',name:'Triund Trek',icon:'🏕️',lat:32.260,lng:76.362,alt:2875,km:9,days:2,diff:'easy',
+season:'Year-round (snow Dec–Feb)',
+desc:'One of the most popular and accessible treks in the Indian Himalayas — a short, scenic ridge above McLeod Ganj with the snow-clad Dhauladhar range on one side and the sprawling Kangra Valley on the other. Perfect for beginners and a frequent first taste of Himalayan trekking.',
+wps:[
+  {n:'McLeod Ganj',a:1770,t:'start',lat:32.236,lng:76.323,note:'Tibetan settlement and trekking hub near Dharamshala. Buses from Delhi/Chandigarh.'},
+  {n:'Gallu Devi Temple',a:2100,t:'village',lat:32.245,lng:76.335,note:'Common trek starting point, reachable by taxi from McLeod Ganj. Small tea stall nearby.'},
+  {n:'Forest Section',a:2400,t:'pass',lat:32.252,lng:76.348,note:'Trail through dense oak, pine, rhododendron and deodar forest — rich birdlife.'},
+  {n:'Triund Top',a:2875,t:'summit',lat:32.260,lng:76.362,note:'Wide grassy ridge with sweeping Dhauladhar and Kangra Valley views. Iconic sunrise/sunset spot. Camping restricted at the very top.'}
+]},
+
+{id:'hp13',r:'himachal',name:'Prashar Lake Trek',icon:'🪞',lat:31.743,lng:77.067,alt:2730,km:16,days:2,diff:'easy',
+season:'Apr – Jul, Sep – Nov (snow Dec–Feb)',
+desc:'A mystical lake in Mandi district famous for its floating island that shifts position throughout the year, said to be where Sage Parashara meditated. A 14th-century pagoda-style temple stands at its edge, with panoramic views of the Dhauladhar, Pir Panjal and Kinnaur ranges.',
+wps:[
+  {n:'Mandi',a:1050,t:'start',lat:31.708,lng:76.932,note:'Comfortable acclimatisation start. Drive ~30km to Baggi Village.'},
+  {n:'Baggi Village',a:1900,t:'village',lat:31.720,lng:77.000,note:'Trek base, small shops for last-minute supplies before entering the forest.'},
+  {n:'Pine & Cedar Forest',a:2300,t:'pass',lat:31.730,lng:77.030,note:'Gradual ascent through dense pine and cedar, streams and birdlife along the way.'},
+  {n:'Open Meadows',a:2550,t:'camp',lat:31.738,lng:77.050,note:'Forest opens into wide meadows with distant Dhauladhar and Pir Panjal views.'},
+  {n:'Prashar Lake',a:2730,t:'lake',lat:31.743,lng:77.067,note:'Mystical floating island and 14th-century Prashar Rishi temple. Semi-frozen in winter.'}
+]},
+
+{id:'hp14',r:'himachal',name:'Jalori Pass – Serolsar Lake Trek',icon:'🐍',lat:31.538,lng:77.417,alt:3120,km:11,days:1,diff:'easy',
+season:'Mar – Jun, Sep – Dec (snow access Dec–Apr)',
+desc:'One of Himachal\'s best beginner treks, connecting the Kullu and Shimla valleys via a historic pass. A short forest walk leads to the sacred Serolsar Lake, guarded by the legendary serpent goddess Budhi Nagin, with a bonus 360° viewpoint higher than the pass itself.',
+wps:[
+  {n:'Jalori Pass',a:3120,t:'start',lat:31.520,lng:77.360,note:'Drive from Shimla (100km) or Kullu. Historic pass connecting two valleys, snowbound in winter.'},
+  {n:'Forest Trail',a:3180,t:'pass',lat:31.528,lng:77.385,note:'Golden oak and pine forest, well-marked path with gentle gradient.'},
+  {n:'360° Viewpoint Detour',a:3300,t:'pass',lat:31.530,lng:77.400,note:'Steep 300m detour climb — highest point of the trek, Pir Panjal and Greater Himalaya views.'},
+  {n:'Serolsar Lake',a:3100,t:'lake',lat:31.538,lng:77.417,note:'Sacred lake said to be tended by birds. Budhi Nagin temple on its bank, changes colour by season.'}
+]},
+
+{id:'uk13',r:'uttarakhand',name:'Dayara Bugyal Trek',icon:'🌾',lat:30.869,lng:78.474,alt:3604,km:18,days:4,diff:'easy',
+season:'Apr – Jun (greenery), Dec – Mar (snow/skiing)',
+desc:'One of the largest and most beautiful high-altitude meadows in the Garhwal Himalayas — a vast rolling grassland above the treeline with sweeping views of Bandarpunch, Gangotri and Black Peak. A favourite for both summer wildflower walks and winter skiing camps.',
+wps:[
+  {n:'Raithal Village',a:2100,t:'start',lat:30.800,lng:78.430,note:'Ancient Garhwali village with traditional wooden architecture, reached via Uttarkashi.'},
+  {n:'Gui Campsite',a:2700,t:'camp',lat:30.830,lng:78.450,note:'Day 1 camp through ancient oak and rhododendron corridors.'},
+  {n:'Barnala Tal',a:3200,t:'lake',lat:30.850,lng:78.465,note:'Serene high-altitude lake central to local folklore and seasonal rituals.'},
+  {n:'Dayara Bugyal Meadow',a:3604,t:'summit',lat:30.869,lng:78.474,note:'Sprawling alpine meadow, hosts local skiing festivals in winter. Bandarpunch and Gangotri group views.'},
+  {n:'Raithal Return',a:2100,t:'end',lat:30.800,lng:78.430,note:'Descent back to base village, alternate route possible via Barsu.'}
+]},
+
+{id:'uk14',r:'uttarakhand',name:'Nag Tibba Trek',icon:'🐉',lat:30.967,lng:78.260,alt:3022,km:16,days:2,diff:'easy',
+season:'Year-round (snow Dec–Feb)',
+desc:'The "Serpent\'s Peak" — highest point in the Lesser Himalayas and the most popular weekend trek near Dehradun and Mussoorie. A short, accessible summit with sweeping views of Bandarpoonch, Swargarohini, Kalanag and the Gangotri group, named for an ancient temple to the snake god atop the ridge.',
+wps:[
+  {n:'Pantwari Village',a:1450,t:'start',lat:30.870,lng:78.220,note:'Drive from Dehradun via Mussoorie (~100km). Small hamlet, trek starting point.'},
+  {n:'Camp 1 (Forest Clearing)',a:2300,t:'camp',lat:30.910,lng:78.235,note:'Dense oak and rhododendron forest clearing, first night camp.'},
+  {n:'Nag Tibba Base Camp',a:2700,t:'camp',lat:30.945,lng:78.248,note:'Alternate camp via Dev Thach route, river drainage and birdsong along the trail.'},
+  {n:'Nag Tibba Summit',a:3022,t:'summit',lat:30.967,lng:78.260,note:'Highest peak in the Lesser Himalayas. Nag Devta temple at the top. Bandarpoonch, Kedarnath and Gangotri ranges visible.'}
+]},
+
+// ══ PANCH KEDAR — 5 individual temple pins ══
+{id:'sp01',r:'spiritual',name:'Kedarnath Temple',icon:'🕉️',lat:30.735,lng:79.067,alt:3583,km:16,days:2,diff:'moderate',
+season:'May – Oct (closed in winter)',
+desc:'The most revered of the Panch Kedar — where the hump of Shiva\'s bull form appeared. Also one of the 12 Jyotirlingas and part of the Char Dham. Ancient stone temple set against the Kedarnath peak in the Mandakini valley, rebuilt after the 2013 floods.',
+wps:[
+  {n:'Sonprayag',a:1829,t:'start',lat:30.612,lng:78.960,note:'Road head, registration and biometric check-in point.'},
+  {n:'Gaurikund',a:1982,t:'village',lat:30.628,lng:78.978,note:'Trek officially begins here, 5km from Sonprayag.'},
+  {n:'Linchauli',a:2900,t:'camp',lat:30.690,lng:79.020,note:'Midway rest point with shops and basic stays.'},
+  {n:'Kedarnath Temple',a:3583,t:'temple',lat:30.735,lng:79.067,note:'16km paved path from Gaurikund. Kedarnath peak rises directly behind the shrine.'}
+]},
+
+{id:'sp02',r:'spiritual',name:'Tungnath Temple',icon:'🕉️',lat:30.488,lng:79.217,alt:3680,km:4,days:1,diff:'easy',
+season:'May – Oct (closed in winter)',
+desc:'Where the arms of Shiva\'s bull form appeared — the highest Shiva temple in the world. The shortest and most accessible Panch Kedar trek, often combined with a short extension to Chandrashila peak for sweeping Himalayan views.',
+wps:[
+  {n:'Chopta',a:2900,t:'start',lat:30.477,lng:79.187,note:'"Mini Switzerland of India," roadhead and trek base.'},
+  {n:'Forest Trail',a:3300,t:'pass',lat:30.483,lng:79.205,note:'Steep but well-defined path through rhododendron forest opening into meadows.'},
+  {n:'Tungnath Temple',a:3680,t:'temple',lat:30.488,lng:79.217,note:'Ancient stone shrine — the arms of Shiva\'s bull form appeared here.'}
+]},
+
+{id:'sp03',r:'spiritual',name:'Rudranath Temple',icon:'🕉️',lat:30.480,lng:79.320,alt:2286,km:20,days:3,diff:'difficult',
+season:'May – Oct (closed in winter)',
+desc:'Where the face of Shiva\'s bull form appeared, carved into natural rock. The longest and most strenuous Panch Kedar trek — raw wilderness through dense forest, alpine meadows and isolated trails far from any road.',
+wps:[
+  {n:'Sagar Village',a:1700,t:'start',lat:30.380,lng:79.250,note:'Chamoli district roadhead, gateway to the wilderness trail.'},
+  {n:'Pung Bugyal',a:2400,t:'pass',lat:30.420,lng:79.280,note:'Alpine meadow midpoint, dense forest gives way to open grassland.'},
+  {n:'Panar Bugyal',a:3100,t:'camp',lat:30.450,lng:79.300,note:'High camp, isolated terrain with few other trekkers on the trail.'},
+  {n:'Rudranath Temple',a:2286,t:'temple',lat:30.480,lng:79.320,note:'Natural rock-carved shrine — the face of Shiva\'s bull form appeared here. Anusuya Devi temple nearby.'}
+]},
+
+{id:'sp04',r:'spiritual',name:'Madhyamaheshwar Temple',icon:'🕉️',lat:30.650,lng:79.200,alt:3490,km:24,days:3,diff:'difficult',
+season:'May – Oct (closed in winter)',
+desc:'Where the navel of Shiva\'s bull form appeared. Set in Mansoona village amid a beautiful green valley, surrounded by peaks including Kedarnath, Neelkanth and Chaukhamba — one of the most scenic Panch Kedar approaches.',
+wps:[
+  {n:'Ransi Village',a:2200,t:'start',lat:30.560,lng:79.150,note:'Roadhead via Ukhimath, trek begins here.'},
+  {n:'Gaundhar',a:2700,t:'village',lat:30.600,lng:79.175,note:'Last permanent settlement, basic guesthouses available.'},
+  {n:'Budha Madhyamaheshwar',a:3300,t:'pass',lat:30.630,lng:79.190,note:'Short detour offering a big panoramic view of the surrounding peaks.'},
+  {n:'Madhyamaheshwar Temple',a:3490,t:'temple',lat:30.650,lng:79.200,note:'Navel of Shiva\'s bull form appeared here. Chaukhamba massif dominates the skyline.'}
+]},
+
+{id:'sp05',r:'spiritual',name:'Kalpeshwar Temple',icon:'🕉️',lat:30.622,lng:79.350,alt:2200,km:2,days:1,diff:'easy',
+season:'Year-round (only Panch Kedar temple open in winter)',
+desc:'Where the hair of Shiva\'s bull form appeared. The only Panch Kedar temple accessible year-round, set in the scenic Urgam Valley — a short, easy walk that completes the spiritual circuit without a major trek.',
+wps:[
+  {n:'Helang',a:1500,t:'start',lat:30.610,lng:79.330,note:'On the Chamoli-Joshimath road, trailhead for the short walk.'},
+  {n:'Urgam Village',a:1900,t:'village',lat:30.618,lng:79.340,note:'Picturesque valley village along the Kalpa Ganga stream.'},
+  {n:'Kalpeshwar Temple',a:2200,t:'temple',lat:30.622,lng:79.350,note:'Cave shrine — the hair of Shiva\'s bull form appeared here. Only Panch Kedar temple open all year.'}
+]},
+
+// ══ SAPT BADRI — 7 individual temple pins ══
+{id:'sp06',r:'spiritual',name:'Badrinath Temple (Badri Vishal)',icon:'🛕',lat:30.744,lng:79.493,alt:3133,km:0,days:1,diff:'easy',
+season:'May – Oct (closed in winter, idol moved to Pandukeshwar)',
+desc:'The primary and most revered of the Sapt Badri shrines, dedicated to Vishnu. Part of the Char Dham Yatra, nestled between the Nar and Narayan peaks beside the Alaknanda river, with the sacred Tapt Kund hot spring at its base.',
+wps:[
+  {n:'Badrinath Town',a:3100,t:'start',lat:30.742,lng:79.490,note:'Road-accessible pilgrim town, last stop on the Char Dham circuit.'},
+  {n:'Tapt Kund',a:3120,t:'village',lat:30.743,lng:79.492,note:'Sacred hot spring where pilgrims bathe before entering the temple.'},
+  {n:'Badrinath Temple',a:3133,t:'temple',lat:30.744,lng:79.493,note:'Primary Sapt Badri shrine between Nar and Narayan peaks. Neelkanth peak visible behind.'}
+]},
+
+{id:'sp07',r:'spiritual',name:'Yogadhyan Badri Temple',icon:'🛕',lat:30.652,lng:79.444,alt:1920,km:0,days:1,diff:'easy',
+season:'Year-round (road accessible)',
+desc:'Birthplace of the Pandavas in Mahabharata legend — King Pandu meditated here to atone for killing two mating deer who were ascetics in disguise. Holds a bronze meditating Vishnu idol in Pandukeshwar village.',
+wps:[
+  {n:'Pandukeshwar Village',a:1920,t:'start',lat:30.650,lng:79.442,note:'On the main Badrinath road, en route from Govindghat.'},
+  {n:'Yogadhyan Badri Temple',a:1920,t:'temple',lat:30.652,lng:79.444,note:'Bronze meditating Vishnu idol. Surya Kund nearby, where Karna is said to have been born.'}
+]},
+
+{id:'sp08',r:'spiritual',name:'Bhavishya Badri Temple',icon:'🛕',lat:30.540,lng:79.450,alt:2744,km:17,days:2,diff:'moderate',
+season:'May – Oct',
+desc:'Believed to be the future seat of Badrinath, when Nar and Narayan peaks are said to block the route to the main shrine at the end of Kali Yuga. Houses an idol of Narasimha, an incarnation of Vishnu.',
+wps:[
+  {n:'Joshimath',a:1890,t:'start',lat:30.559,lng:79.564,note:'Chamoli district town, base for the trek to Subhain.'},
+  {n:'Tapovan Village',a:2200,t:'village',lat:30.545,lng:79.500,note:'Midway village on the trail to Subhain.'},
+  {n:'Subhain Village',a:2600,t:'village',lat:30.538,lng:79.448,note:'Final approach village, 17km from Joshimath.'},
+  {n:'Bhavishya Badri Temple',a:2744,t:'temple',lat:30.540,lng:79.450,note:'Future seat of Badrinath. Narasimha idol housed within.'}
+]},
+
+{id:'sp09',r:'spiritual',name:'Vridha Badri Temple',icon:'🛕',lat:30.450,lng:79.480,alt:1380,km:0,days:1,diff:'easy',
+season:'Year-round (road accessible)',
+desc:'Dedicated to Vishnu in his elder ("Vridha") form, where legend says he appeared as an old man to meet sage Narada. A peaceful riverside shrine on the banks of the Alaknanda, near Animath village.',
+wps:[
+  {n:'Animath Village',a:1380,t:'start',lat:30.448,lng:79.478,note:'Roadside village on the Joshimath-Badrinath highway.'},
+  {n:'Vridha Badri Temple',a:1380,t:'temple',lat:30.450,lng:79.480,note:'Riverside shrine to Vishnu\'s elder form, on the banks of the Alaknanda.'}
+]},
+
+{id:'sp10',r:'spiritual',name:'Adi Badri Temple',icon:'🛕',lat:30.108,lng:79.328,alt:1280,km:0,days:1,diff:'easy',
+season:'Year-round (road accessible)',
+desc:'The oldest temple in the Sapt Badri circuit — a Gupta-era complex of 16 ancient shrines near Karnaprayag. Devotees worship here whenever the main Badrinath temple is closed for winter.',
+wps:[
+  {n:'Karnaprayag',a:1450,t:'start',lat:30.260,lng:79.215,note:'Confluence town of the Pindar and Alaknanda rivers, gateway to Adi Badri.'},
+  {n:'Adi Badri Village',a:1280,t:'village',lat:30.110,lng:79.330,note:'Short drive from Karnaprayag.'},
+  {n:'Adi Badri Temple Complex',a:1280,t:'temple',lat:30.108,lng:79.328,note:'16 ancient Gupta-era shrines, oldest in the Sapt Badri circuit.'}
+]},
+
+{id:'sp11',r:'spiritual',name:'Dhyan Badri Temple',icon:'🛕',lat:30.610,lng:79.370,alt:2130,km:2,days:1,diff:'easy',
+season:'Year-round (road + short walk)',
+desc:'The meditative form of Vishnu, located in the scenic Urgam Valley near Kalpeshwar, on the banks of the Kalpa Ganga stream — often visited together with the nearby Kalpeshwar Panch Kedar temple.',
+wps:[
+  {n:'Helang',a:1500,t:'start',lat:30.610,lng:79.330,note:'Shared trailhead with Kalpeshwar, on the Chamoli-Joshimath road.'},
+  {n:'Urgam Valley',a:1900,t:'village',lat:30.616,lng:79.355,note:'Scenic valley walk along the Kalpa Ganga stream.'},
+  {n:'Dhyan Badri Temple',a:2130,t:'temple',lat:30.610,lng:79.370,note:'Meditative Vishnu form, on the banks of the Kalpa Ganga.'}
+]},
+
+{id:'sp12',r:'spiritual',name:'Ardha Badri Temple',icon:'🛕',lat:30.230,lng:79.300,alt:1230,km:0,days:1,diff:'easy',
+season:'Year-round (road accessible)',
+desc:'"Half Badri" — the smallest of the seven Sapt Badri shrines, with a correspondingly smaller Vishnu idol said to date to mythological times. A quiet, lesser-visited stop near Nandprayag.',
+wps:[
+  {n:'Nandprayag',a:1358,t:'start',lat:30.300,lng:79.320,note:'Confluence town of the Nandakini and Alaknanda rivers.'},
+  {n:'Ardha Badri Temple',a:1230,t:'temple',lat:30.230,lng:79.300,note:'Smallest of the seven Sapt Badri shrines, near Nandprayag.'}
+]},
+
+// ══ PANCH KAILASH — 5 individual peak pins ══
+{id:'sp13',r:'spiritual',name:'Mount Kailash (Tibet)',icon:'🏔️',lat:31.067,lng:81.312,alt:6638,km:52,days:15,diff:'difficult',
+season:'May – Sep',
+desc:'The 1st and most sacred of the Panch Kailash — the ultimate cosmic abode of Shiva in Tibet, sacred to four religions. The 52km Kora (circumambulation) crosses the Dolma La Pass (5630m), with Lake Mansarovar nearby.',
+wps:[
+  {n:'Darchen',a:4560,t:'start',lat:31.110,lng:81.289,note:'Kora start town, reached via Nepal-Tibet border crossing at Hilsa or overland from Lhasa.'},
+  {n:'Dirapuk Monastery',a:5000,t:'camp',lat:31.085,lng:81.267,note:'Day 1 kora camp, north face of Kailash directly visible.'},
+  {n:'Dolma La Pass',a:5630,t:'pass',lat:31.050,lng:81.310,note:'Highest point of the Kora, spiritual crux of the pilgrimage.'},
+  {n:'Mount Kailash',a:6638,t:'temple',lat:31.067,lng:81.312,note:'Unclimbed sacred peak — cosmic center in Hindu, Buddhist, Jain and Bon traditions.'}
+]},
+
+{id:'sp14',r:'spiritual',name:'Adi Kailash (Chhota Kailash)',icon:'🏔️',lat:30.327,lng:80.236,alt:5945,km:20,days:8,diff:'moderate',
+season:'May – Sep',
+desc:'The 2nd most sacred Kailash, also called Chhota Kailash or Jolingkong peak, near the Indo-Tibet border in Pithoragarh district. Closely resembles the original Mount Kailash in shape, with Gauri Kund (Jolingkong Lake) and Parvati Tal at its base.',
+wps:[
+  {n:'Dharchula',a:940,t:'start',lat:29.847,lng:80.539,note:'Pithoragarh district roadhead, Inner Line Permit checkpoint.'},
+  {n:'Gunji Village',a:3100,t:'village',lat:30.180,lng:80.180,note:'High-altitude Bhotiya village, acclimatisation stop.'},
+  {n:'Jolingkong (Gauri Kund)',a:5180,t:'lake',lat:30.310,lng:80.220,note:'Sacred lake at the base of Adi Kailash, mirrors the peak\'s reflection.'},
+  {n:'Adi Kailash',a:5945,t:'temple',lat:30.327,lng:80.236,note:'"Chhota Kailash" — close resemblance to the original Mount Kailash shape.'}
+]},
+
+{id:'sp15',r:'spiritual',name:'Shrikhand Mahadev Kailash',icon:'🏔️',lat:31.713,lng:77.750,alt:5155,km:32,days:5,diff:'extreme',
+season:'Jul – Aug (Saavan month pilgrimage)',
+desc:'The 3rd Panch Kailash and one of the toughest treks in India — a natural 75ft Shivlinga at the summit, believed to be where Shiva and Parvati reside together. Thousands attempt it annually during the sacred Saavan month.',
+wps:[
+  {n:'Jaon Village',a:2100,t:'start',lat:31.530,lng:77.650,note:'Near Rampur Bushahr, Kullu district trailhead.'},
+  {n:'Thachru',a:3100,t:'camp',lat:31.580,lng:77.680,note:'Day 1 camp, dense forest gives way to alpine terrain.'},
+  {n:'Parvati Bagh',a:4200,t:'camp',lat:31.650,lng:77.710,note:'High camp meadow, named for Parvati\'s mythological garden.'},
+  {n:'Shrikhand Mahadev Summit',a:5155,t:'temple',lat:31.713,lng:77.750,note:'Natural 75ft Shivlinga — believed abode where Shiva and Parvati reside together.'}
+]},
+
+{id:'sp16',r:'spiritual',name:'Kinnaur Kailash',icon:'🏔️',lat:31.563,lng:78.300,alt:6050,km:28,days:6,diff:'difficult',
+season:'Jun – Sep',
+desc:'The 4th Panch Kailash, sacred to both Hindus and Tibetan Buddhists in the Kinnaur Valley. Famous for a natural 79ft rock formation resembling a Shivlinga that appears to change colour through the day. The Parikrama (circumambulation) is a major annual pilgrimage.',
+wps:[
+  {n:'Kalpa',a:2960,t:'start',lat:31.540,lng:78.258,note:'Kinnaur district town with views of the Kinner Kailash range.'},
+  {n:'Rakcham Village',a:3100,t:'village',lat:31.550,lng:78.275,note:'Picturesque village en route, popular acclimatisation stop.'},
+  {n:'Charang Pass',a:5260,t:'pass',lat:31.555,lng:78.290,note:'High pass on the Parikrama route around the sacred peak.'},
+  {n:'Kinnaur Kailash',a:6050,t:'temple',lat:31.563,lng:78.300,note:'Natural 79ft rock Shivlinga, sacred to both Hindus and Buddhists.'}
+]},
+
+{id:'sp17',r:'spiritual',name:'Manimahesh Kailash',icon:'🏔️',lat:32.483,lng:76.629,alt:5653,km:14,days:5,diff:'moderate',
+season:'Mid May – Oct',
+desc:'The 5th and most accessible Panch Kailash — easiest introduction to the circuit. Sacred Manimahesh Lake at its base reflects the peak and is believed to be Shiva\'s mirror. Helicopter services available during the yatra period for those unable to trek.',
+wps:[
+  {n:'Hadsar',a:2070,t:'start',lat:32.470,lng:76.560,note:'Final motorable point, registration and medical checks.'},
+  {n:'Dhancho',a:2300,t:'camp',lat:32.450,lng:76.585,note:'Day 1 camp along the Budhil River.'},
+  {n:'Gauri Kund',a:3450,t:'lake',lat:32.435,lng:76.610,note:'Sacred bathing site before the final approach.'},
+  {n:'Manimahesh Lake & Peak',a:4080,t:'temple',lat:32.483,lng:76.629,note:'Sacred lake mirrors Manimahesh Kailash peak (5653m) — easiest of the five Kailash yatras.'}
+]},
+
+// ══ 12 JYOTIRLINGAS — 12 individual temple pins ══
+{id:'sp18',r:'spiritual',name:'Somnath Jyotirlinga',icon:'🪔',lat:20.888,lng:70.401,alt:10,km:0,days:1,diff:'easy',
+season:'Year-round (best Oct – Feb)',
+desc:'1st of the 12 Jyotirlingas. Coastal temple in Gujarat destroyed and rebuilt many times throughout history — a powerful symbol of unending faith and resilience, on the shore of the Arabian Sea.',
+wps:[
+  {n:'Veraval Town',a:5,t:'start',lat:20.905,lng:70.368,note:'Nearest railway station and town, short drive to the temple.'},
+  {n:'Somnath Temple',a:10,t:'temple',lat:20.888,lng:70.401,note:'Coastal shrine, rebuilt many times. Symbol of restoration and eternal faith.'}
+]},
+
+{id:'sp19',r:'spiritual',name:'Mallikarjuna Jyotirlinga',icon:'🪔',lat:16.073,lng:78.868,alt:476,km:0,days:1,diff:'easy',
+season:'Year-round',
+desc:'2nd of the 12 Jyotirlingas, known as the "Kailash of the South" at Srisailam on the Krishna river in Andhra Pradesh — represents the union of Shiva and Parvati in a single shrine.',
+wps:[
+  {n:'Srisailam Town',a:470,t:'start',lat:16.075,lng:78.866,note:'Pilgrim town in the Nallamala Hills, Andhra Pradesh.'},
+  {n:'Mallikarjuna Temple',a:476,t:'temple',lat:16.073,lng:78.868,note:'"Kailash of the South" — union of Shiva and Parvati on the Krishna river.'}
+]},
+
+{id:'sp20',r:'spiritual',name:'Mahakaleshwar Jyotirlinga',icon:'🪔',lat:23.182,lng:75.768,alt:494,km:0,days:1,diff:'easy',
+season:'Year-round',
+desc:'3rd of the 12 Jyotirlingas, in Ujjain, Madhya Pradesh — the only south-facing (Dakshinamukhi) Jyotirlinga, famed for its pre-dawn Bhasma Aarti ritual using sacred ash.',
+wps:[
+  {n:'Ujjain City',a:490,t:'start',lat:23.183,lng:75.766,note:'Ancient Vedic city on the banks of the Kshipra river.'},
+  {n:'Mahakaleshwar Temple',a:494,t:'temple',lat:23.182,lng:75.768,note:'Only south-facing Jyotirlinga. Famous 4am Bhasma Aarti ceremony.'}
+]},
+
+{id:'sp21',r:'spiritual',name:'Omkareshwar Jyotirlinga',icon:'🪔',lat:22.245,lng:76.151,alt:288,km:1,days:1,diff:'easy',
+season:'Year-round',
+desc:'4th of the 12 Jyotirlingas, on Mandhata Island in the Narmada river, Madhya Pradesh — the island itself is shaped like the sacred Om symbol, with two temples on either bank.',
+wps:[
+  {n:'Omkareshwar Town',a:280,t:'start',lat:22.246,lng:76.148,note:'Riverside pilgrim town on the Narmada.'},
+  {n:'Mandhata Island Bridge',a:285,t:'pass',lat:22.246,lng:76.150,note:'Short walk/bridge crossing to the temple island.'},
+  {n:'Omkareshwar Temple',a:288,t:'temple',lat:22.245,lng:76.151,note:'Island shaped like the Om symbol, on the sacred Narmada river.'}
+]},
+
+{id:'sp22',r:'spiritual',name:'Bhimashankar Jyotirlinga',icon:'🪔',lat:19.073,lng:73.535,alt:925,km:0,days:1,diff:'easy',
+season:'Year-round (lush in monsoon)',
+desc:'6th of the 12 Jyotirlingas, hidden in the misty Sahyadri hills near Pune, Maharashtra — believed to be the source of the sacred Bhima river, where Shiva defeated the demon Tripurasura.',
+wps:[
+  {n:'Bhimashankar Village',a:920,t:'start',lat:19.072,lng:73.533,note:'Wildlife sanctuary township in the Western Ghats.'},
+  {n:'Bhimashankar Temple',a:925,t:'temple',lat:19.073,lng:73.535,note:'Source of the sacred Bhima river. Surrounded by dense Sahyadri forest.'}
+]},
+
+{id:'sp23',r:'spiritual',name:'Kashi Vishwanath Jyotirlinga',icon:'🪔',lat:25.310,lng:83.011,alt:80,km:0,days:1,diff:'easy',
+season:'Year-round',
+desc:'7th of the 12 Jyotirlingas, in Varanasi on the banks of the Ganga — one of the oldest continuously inhabited cities on Earth. Believed that dying here grants moksha, liberation from the cycle of rebirth.',
+wps:[
+  {n:'Varanasi Ghats',a:75,t:'start',lat:25.308,lng:83.009,note:'Ancient riverside ghats along the sacred Ganga.'},
+  {n:'Kashi Vishwanath Temple',a:80,t:'temple',lat:25.310,lng:83.011,note:'Rebuilt in the 18th century by Queen Ahilyabai Holkar. Believed to grant moksha.'}
+]},
+
+{id:'sp24',r:'spiritual',name:'Trimbakeshwar Jyotirlinga',icon:'🪔',lat:19.933,lng:73.528,alt:639,km:0,days:1,diff:'easy',
+season:'Year-round',
+desc:'8th of the 12 Jyotirlingas, near Nashik, Maharashtra — at the source of the sacred Godavari river, where Rishi Gautam performed penance, set against the Brahmagiri hills.',
+wps:[
+  {n:'Trimbak Town',a:630,t:'start',lat:19.932,lng:73.527,note:'Pilgrim town beneath the Brahmagiri hills, Nashik district.'},
+  {n:'Trimbakeshwar Temple',a:639,t:'temple',lat:19.933,lng:73.528,note:'Source of the sacred Godavari river. Rishi Gautam\'s penance site.'}
+]},
+
+{id:'sp25',r:'spiritual',name:'Vaidyanath Jyotirlinga',icon:'🪔',lat:24.485,lng:86.700,alt:240,km:0,days:1,diff:'easy',
+season:'Year-round',
+desc:'9th of the 12 Jyotirlingas, in Deoghar, Jharkhand — known as the "healer" form of Shiva, and also counted among the Shakti Peethas, making it doubly sacred.',
+wps:[
+  {n:'Deoghar Town',a:235,t:'start',lat:24.483,lng:86.698,note:'Pilgrim town in Jharkhand, well connected by rail.'},
+  {n:'Vaidyanath Temple',a:240,t:'temple',lat:24.485,lng:86.700,note:'"Healer" form of Shiva, also a Shakti Peetha — doubly sacred site.'}
+]},
+
+{id:'sp26',r:'spiritual',name:'Nageshwar Jyotirlinga',icon:'🪔',lat:22.305,lng:68.973,alt:10,km:0,days:1,diff:'easy',
+season:'Year-round',
+desc:'10th of the 12 Jyotirlingas, near Dwarka, Gujarat — believed to protect devotees from poison and snake-related fears, with a towering 25m statue of Shiva visible from afar.',
+wps:[
+  {n:'Dwarka Town',a:8,t:'start',lat:22.236,lng:68.967,note:'Ancient coastal city, also home to the Dwarkadhish temple.'},
+  {n:'Nageshwar Temple',a:10,t:'temple',lat:22.305,lng:68.973,note:'Protects devotees from poison and snakes. Massive Shiva statue at the entrance.'}
+]},
+
+{id:'sp27',r:'spiritual',name:'Rameshwaram Jyotirlinga',icon:'🪔',lat:9.288,lng:79.313,alt:3,km:0,days:1,diff:'easy',
+season:'Year-round (best Oct – Apr)',
+desc:'11th of the 12 Jyotirlingas, on Rameshwaram island, Tamil Nadu — southernmost of all twelve, linked to Lord Rama\'s journey to Lanka in the Ramayana. Famous for its 1200m pillared corridor, the longest in any Hindu temple.',
+wps:[
+  {n:'Rameshwaram Town',a:3,t:'start',lat:9.286,lng:79.311,note:'Island town connected to the mainland by the Pamban Bridge.'},
+  {n:'Ramanathaswamy Temple',a:3,t:'temple',lat:9.288,lng:79.313,note:'Linked to Rama\'s journey to Lanka. Longest pillared corridor of any Hindu temple (1200m).'}
+]},
+
+{id:'sp28',r:'spiritual',name:'Grishneshwar Jyotirlinga',icon:'🪔',lat:20.023,lng:75.179,alt:610,km:0,days:1,diff:'easy',
+season:'Year-round',
+desc:'12th and final of the 12 Jyotirlingas, near the Ellora Caves in Aurangabad, Maharashtra — the smallest yet most richly carved of the twelve shrines, often visited together with the UNESCO World Heritage Ellora cave complex.',
+wps:[
+  {n:'Ellora Village',a:605,t:'start',lat:20.026,lng:75.179,note:'Adjacent to the UNESCO World Heritage Ellora Caves.'},
+  {n:'Grishneshwar Temple',a:610,t:'temple',lat:20.023,lng:75.179,note:'Smallest yet most richly carved of the 12 Jyotirlingas.'}
+]}
+
+]; // end TREKS
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let logged  = JSON.parse(localStorage.getItem('sl3_logged')||'{}');
+let pinned  = JSON.parse(localStorage.getItem('sl3_pinned')||'[]');
+let customs = JSON.parse(localStorage.getItem('sl3_customs')||'[]');
+let current = null;
+let activeR = 'all';
+let mRating = 0;
+let mkrs    = {};
+let trailL  = [];
+let addMode = false;
+let editingPin = null;
+let pmDiff = 'easy';
+let pmWaypoints = [];
+let wpIdSeq = 0;
+
+const RNAMES = {himachal:'Himachal Pradesh',uttarakhand:'Uttarakhand',jk:'J&K / Ladakh',northeast:'Seven Sisters NE',nepal:'Nepal Himalaya',tibet:'Tibet / China Border',maharashtra:'Maharashtra Sahyadris',southindia:'South India Western Ghats',spiritual:'Spiritual Yatras'};
+const DFPCT  = {easy:25,moderate:52,difficult:78,extreme:100};
+const DCOLS  = {start:'#2ea043',village:'#7d8590',camp:'#f97316',pass:'#a371f7',lake:'#388bfd',summit:'#f85149',end:'#f85149',temple:'#d29922'};
+const DTAG   = {start:'tv',village:'tv',camp:'tc',pass:'tp',lake:'tl',summit:'ts',end:'tv',temple:'tc'};
+
+// ═══════════════════════════════════════════════════
+// MAP — CartoDB Voyager (works everywhere, no key)
+// ═══════════════════════════════════════════════════
+const MAP_AVAILABLE = typeof L !== 'undefined';
+if (!MAP_AVAILABLE) {
+  document.getElementById('map').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#7d8590;font-size:14px;text-align:center;padding:20px">⚠️ Map library failed to load.<br>Check your internet connection and reload.<br><br><span style="font-size:12px;opacity:.7">Search and browsing still work below.</span></div>';
+}
+const CLUSTERING_AVAILABLE = MAP_AVAILABLE && typeof L.markerClusterGroup === 'function';
+
+// All map object creation/usage is guarded — if Leaflet failed to load,
+// `map` stays null and every map-touching function checks MAP_AVAILABLE
+// first, so the rest of the app (search, tabs, region popovers, modals,
+// logging, pinning) keeps working even without a map.
+let map = null;
+if (MAP_AVAILABLE) {
+  map = L.map('map',{center:[30.5,80],zoom:5,zoomControl:false,attributionControl:false});
+
+  // Leaflet sometimes caches a wrong container size if the DOM isn't fully
+  // settled at init time (causes squished rendering / wrong cluster radius).
+  // Force it to re-measure shortly after load and on every window resize.
+  setTimeout(()=> map.invalidateSize(), 100);
+  setTimeout(()=> map.invalidateSize(), 500);
+  window.addEventListener('resize', ()=> map.invalidateSize());
+  window.addEventListener('orientationchange', ()=> setTimeout(()=>map.invalidateSize(), 200));
+  if('ResizeObserver' in window){
+    const mapEl = document.getElementById('map');
+    let roTimer=null;
+    new ResizeObserver(()=>{
+      clearTimeout(roTimer);
+      roTimer = setTimeout(()=> map.invalidateSize(), 50);
+    }).observe(mapEl);
+  }
+
+  const primaryTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+    subdomains:'abcd', maxZoom:19
+  });
+
+  let tilesFailed = 0;
+  primaryTiles.on('tileerror', () => {
+    tilesFailed++;
+    if (tilesFailed === 1) {
+      // Swap to OpenStreetMap as fallback after first failure batch
+      map.removeLayer(primaryTiles);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+        subdomains:'abc', maxZoom:19
+      }).addTo(map);
+    }
+  });
+  primaryTiles.addTo(map);
+
+  L.control.zoom({position:'topright'}).addTo(map);
+} // end if(MAP_AVAILABLE)
+
+// ═══════════════════════════════════════════════════
+// MARKERS
+// ═══════════════════════════════════════════════════
+function mkIcon(t, delay){
+  const cls = logged[t.id]?'mkg':pinned.includes(t.id)?'mkp':'mko';
+  const sel = current && current.id===t.id ? ' selected' : '';
+  return L.divIcon({
+    className:'',
+    html:`<div class="mkwrap ${cls}${sel}" style="animation-delay:${delay}ms"><div class="mkshadow"></div><div class="mknub"></div><div class="mkbody"><span class="mkicon">${t.icon}</span></div></div>`,
+    iconSize:[34,42],
+    iconAnchor:[17,40]
+  });
+}
+function allTreks(){ return TREKS.concat(customs); }
+
+let clusterGroup = null;
+function makeClusterGroup(){
+  return L.markerClusterGroup({
+    maxClusterRadius: 55,
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true,
+    disableClusteringAtZoom: 11,
+    spiderLegPolylineOptions: { weight: 1.5, color: '#f97316', opacity: 0.6 },
+    iconCreateFunction: function(cluster){
+      const count = cluster.getChildCount();
+      const children = cluster.getAllChildMarkers();
+      const loggedCount = children.filter(m=>m._trekRef && logged[m._trekRef.id]).length;
+      const allLogged = loggedCount===count;
+      const someLogged = loggedCount>0 && !allLogged;
+      const sizeClass = count>=20?'cl-lg':count>=8?'cl-md':'cl-sm';
+      const colorClass = allLogged?'cl-done':someLogged?'cl-mix':'cl-default';
+
+      // Pull up to 4 real trek icons to render as a stacked deck
+      const icons = children.slice(0,4).map(m=> (m._trekRef && m._trekRef.icon) ? m._trekRef.icon : '⛰');
+      const cards = icons.map(ic=>`<div class="clcard">${ic}</div>`).join('');
+      const dim = sizeClass==='cl-lg'?68:sizeClass==='cl-md'?64:56;
+
+      return L.divIcon({
+        className:'',
+        html:`<div class="clwrap ${sizeClass} ${colorClass}"><div class="clstack">${cards}</div><div class="clcount">${count}</div></div>`,
+        iconSize:[dim,dim],
+        iconAnchor:[dim/2,dim/2]
+      });
+    }
+  });
+}
+
+function buildMkrs(){
+  if(!MAP_AVAILABLE) return;
+  if(clusterGroup){ map.removeLayer(clusterGroup); }
+  mkrs={};
+  const list = activeR==='all'?allTreks():allTreks().filter(t=>t.r===activeR);
+
+  if(CLUSTERING_AVAILABLE){
+    clusterGroup = makeClusterGroup();
+    list.forEach((t,i)=>{
+      const m=L.marker([t.lat,t.lng],{icon:mkIcon(t, Math.min(i*10,300))});
+      m._trekRef = t;
+      m.on('click',(e)=>{ L.DomEvent.stopPropagation(e); openSheet(t); });
+      mkrs[t.id]=m;
+      clusterGroup.addLayer(m);
+    });
+    map.addLayer(clusterGroup);
+  } else {
+    // Fallback: plain markers, no clustering
+    clusterGroup = L.layerGroup();
+    list.forEach((t,i)=>{
+      const m=L.marker([t.lat,t.lng],{icon:mkIcon(t, Math.min(i*10,300))});
+      m._trekRef = t;
+      m.on('click',(e)=>{ L.DomEvent.stopPropagation(e); openSheet(t); });
+      mkrs[t.id]=m;
+      clusterGroup.addLayer(m);
+    });
+    map.addLayer(clusterGroup);
+  }
+}
+
+// Refresh marker visuals (selection/logged state) without rebuilding the whole cluster tree
+function refreshMkrIcon(id){
+  if(!MAP_AVAILABLE) return;
+  const m = mkrs[id];
+  if(!m || !m._trekRef) return;
+  m.setIcon(mkIcon(m._trekRef, 0));
+}
+
+// ═══════════════════════════════════════════════════
+// TRAIL
+// ═══════════════════════════════════════════════════
+function drawTrail(t){
+  if(!MAP_AVAILABLE) return;
+  trailL.forEach(l=>map.removeLayer(l));
+  trailL=[];
+  const wps=t.wps||[];
+  if(wps.length<2){
+    if(wps.length===1){
+      map.flyTo([wps[0].lat,wps[0].lng],11,{duration:1});
+    } else {
+      map.flyTo([t.lat,t.lng],11,{duration:1});
+    }
+    return;
+  }
+  const coords=wps.map(w=>[w.lat,w.lng]);
+  const col=t.custom ? '#a371f7' : (logged[t.id]?'#2ea043':'#f97316');
+
+  const glow = L.polyline(coords,{color:col,weight:11,opacity:.16,lineJoin:'round',lineCap:'round'}).addTo(map);
+  trailL.push(glow);
+
+  // Animated "drawing" trail line — reveals progressively
+  const fullLatLngs = coords.map(c=>L.latLng(c[0],c[1]));
+  const mainLine = L.polyline([fullLatLngs[0]],{color:col,weight:3.5,opacity:.95,dashArray:'9 6',lineJoin:'round',lineCap:'round'}).addTo(map);
+  trailL.push(mainLine);
+  let step=1;
+  const totalSteps=60;
+  const drawAnim = setInterval(()=>{
+    step++;
+    const progress = Math.min(step/totalSteps,1);
+    const segCount = fullLatLngs.length-1;
+    const exactPos = progress*segCount;
+    const segIdx = Math.min(Math.floor(exactPos), segCount-1);
+    const segFrac = exactPos-segIdx;
+    const interp = [];
+    for(let i=0;i<=segIdx;i++) interp.push(fullLatLngs[i]);
+    if(segIdx+1 < fullLatLngs.length){
+      const a=fullLatLngs[segIdx], b=fullLatLngs[segIdx+1];
+      interp.push(L.latLng(a.lat+(b.lat-a.lat)*segFrac, a.lng+(b.lng-a.lng)*segFrac));
+    }
+    mainLine.setLatLngs(interp);
+    if(progress>=1) clearInterval(drawAnim);
+  },14);
+
+  wps.forEach((wp,i)=>{
+    const isKey=wp.t==='summit'||wp.t==='pass'||wp.t==='start'||wp.t==='end'||wp.t==='temple';
+    const wpColor = DCOLS[wp.t]||'#f97316';
+    const size = isKey?16:11;
+    const icon = L.divIcon({
+      className:'',
+      html:`<div class="wpdot ${isKey?'wpdot-key':''}" style="--wpc:${wpColor};width:${size}px;height:${size}px;animation-delay:${i*40}ms"></div>`,
+      iconSize:[size,size],
+      iconAnchor:[size/2,size/2]
+    });
+    const c=L.marker([wp.lat,wp.lng],{icon, zIndexOffset: isKey?500:0}).addTo(map);
+    c.bindPopup(`<div style="font-size:13px;font-weight:700;margin-bottom:3px">${wp.n}</div><div style="font-size:11px;color:#9ca3af">${wp.a?wp.a.toLocaleString()+'m':''}${wp.note?' — '+wp.note:''}</div>`,{maxWidth:240});
+    trailL.push(c);
+  });
+
+  map.fitBounds(L.latLngBounds(coords),{padding:[70,70],maxZoom:13,animate:true,duration:1.2});
+}
+
+// ═══════════════════════════════════════════════════
+// ELEVATION CANVAS
+// ═══════════════════════════════════════════════════
+function drawElev(t){
+  const cv=document.getElementById('ecanv'); if(!cv)return;
+  const alts=(t.wps||[]).filter(w=>w.a).map(w=>w.a);
+  if(alts.length<2){ cv.style.display='none'; return; }
+  cv.style.display='block';
+  cv.width=cv.offsetWidth*2; cv.height=136;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,pd=22;
+  const mn=Math.min(...alts),mx=Math.max(...alts);
+  const xf=i=>pd+(i/(alts.length-1))*(W-pd*2);
+  const yf=a=>H-pd-((a-mn)/(mx-mn))*(H-pd*2-10);
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'rgba(249,115,22,.6)'); g.addColorStop(1,'rgba(249,115,22,0)');
+  ctx.beginPath(); ctx.moveTo(xf(0),H);
+  alts.forEach((a,i)=>ctx.lineTo(xf(i),yf(a)));
+  ctx.lineTo(xf(alts.length-1),H); ctx.closePath();
+  ctx.fillStyle=g; ctx.fill();
+  ctx.beginPath(); alts.forEach((a,i)=>i?ctx.lineTo(xf(i),yf(a)):ctx.moveTo(xf(i),yf(a)));
+  ctx.strokeStyle='#f97316'; ctx.lineWidth=3; ctx.lineJoin='round'; ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.45)'; ctx.font='18px monospace'; ctx.textAlign='center';
+  [0,Math.floor(alts.length/2),alts.length-1].forEach(i=>ctx.fillText(alts[i].toLocaleString()+'m',xf(i),H-2));
+}
+
+// ═══════════════════════════════════════════════════
+// SHEET
+// ═══════════════════════════════════════════════════
+function openSheet(t){
+  const prevId = current ? current.id : null;
+  current=t;
+  // Refresh marker selection highlight (re-render icon so it works even inside clusters)
+  if(prevId && prevId!==t.id) refreshMkrIcon(prevId);
+  refreshMkrIcon(t.id);
+  const done=!!logged[t.id], ld=logged[t.id]||{};
+  const wps = t.wps || [];
+  document.getElementById('sbody').innerHTML=`
+    <div class="s-reg">${RNAMES[t.r]||t.r}${t.custom?'<span class="custom-badge">YOUR PIN</span>':''}</div>
+    <div class="s-name">${t.name}</div>
+    <div class="s-season">${t.season?'📅 Best Season: '+t.season:''}</div>
+    <div class="s-stats">
+      <div class="ss"><div class="ssv">${t.alt?t.alt.toLocaleString()+'m':'—'}</div><div class="ssl">Max Alt</div></div>
+      <div class="ss"><div class="ssv">${t.km?t.km+'km':'—'}</div><div class="ssl">Distance</div></div>
+      <div class="ss"><div class="ssv">${t.days?t.days+'d':'—'}</div><div class="ssl">Days</div></div>
+      <div class="ss"><div class="ssv">${wps.length}</div><div class="ssl">Stops</div></div>
+    </div>
+    <div class="dfrow">
+      <span class="dfl">Difficulty</span>
+      <div class="dft"><div class="dfb ${t.diff}" id="dfb-fill" data-w="${DFPCT[t.diff]||25}"></div></div>
+      <span class="dfn" style="color:${t.diff==='easy'?'#2ea043':t.diff==='moderate'?'#d29922':t.diff==='difficult'?'#f97316':'#f85149'}">${t.diff||'easy'}</span>
+    </div>
+    <canvas id="ecanv"></canvas>
+    ${t.desc?`<div class="s-desc">${t.desc}</div>`:''}
+    ${wps.length?`<div class="wpt">🗺 Trail — Campsites & Waypoints</div>
+    <div class="wpl">
+      ${wps.map((w,i)=>`
+        <div class="wpi">
+          <div class="wpleft">
+            <div class="wpd" style="background:${DCOLS[w.t]||'#f97316'}"></div>
+            ${i<wps.length-1?'<div class="wpline"></div>':''}
+          </div>
+          <div class="wpinfo">
+            <div class="wpn">${w.n}<span class="wptag ${DTAG[w.t]||'tc'}">${w.t}</span></div>
+            <div class="wps">${w.a?w.a.toLocaleString()+'m · ':''} ${w.note||''}</div>
+          </div>
+        </div>`).join('')}
+    </div>`:''}
+    ${done?`<div class="logbox" style="margin-top:16px">
+      <span style="color:#2ea043;font-weight:700">✓ Summit Logged</span>
+      ${ld.date?' · '+ld.date:''} ${ld.rating?' · '+'★'.repeat(ld.rating):''}
+      ${ld.notes?`<div style="color:#9ca3af;margin-top:4px">${ld.notes}</div>`:''}
+    </div>`:''}
+    <div class="sacts">
+      <button class="btn ${done?'bd':'bp'}" id="slog">${done?'✓ Logged — Update':'+ Log This Summit'}</button>
+      ${t.custom?'<button class="btn bsec" id="sedit">✏️</button>':''}
+      <button class="btn bsec" id="spin">${pinned.includes(t.id)?'📌':'🔖'}</button>
+    </div>`;
+  document.getElementById('sheet').classList.add('up');
+  document.getElementById('sheetbackdrop').classList.add('up');
+  drawElev(t); drawTrail(t);
+  requestAnimationFrame(()=>{
+    const fill = document.getElementById('dfb-fill');
+    if(fill) requestAnimationFrame(()=>{ fill.style.width = fill.dataset.w+'%'; });
+  });
+  document.getElementById('slog').onclick=()=>openModal(t);
+  document.getElementById('spin').onclick=()=>togglePin(t);
+  if(t.custom){
+    document.getElementById('sedit').onclick=()=>openPinModal(t.lat,t.lng,t);
+  }
+}
+
+function closeSheet(){
+  document.getElementById('sheet').classList.remove('up');
+  document.getElementById('sheetbackdrop').classList.remove('up');
+  if(MAP_AVAILABLE) trailL.forEach(l=>map.removeLayer(l));
+  trailL=[];
+  if(current) refreshMkrIcon(current.id);
+  current=null;
+}
+if(MAP_AVAILABLE) map.on('click',(e)=>{
+  if(addMode){
+    exitAddMode();
+    openPinModal(e.latlng.lat, e.latlng.lng, null);
+  } else {
+    closeSheet();
+  }
+});
+document.getElementById('sheetbackdrop').addEventListener('click', closeSheet);
+let ty=0;
+const sheet=document.getElementById('sheet');
+sheet.addEventListener('touchstart',e=>{ty=e.touches[0].clientY},{passive:true});
+sheet.addEventListener('touchend',e=>{if(e.changedTouches[0].clientY-ty>80)closeSheet()},{passive:true});
+
+// ═══════════════════════════════════════════════════
+// ADD-PIN MODE
+// ═══════════════════════════════════════════════════
+const addBtn = document.getElementById('addbtn');
+const addBanner = document.getElementById('addbanner');
+function enterAddMode(){
+  addMode = true;
+  addBtn.classList.add('active');
+  addBanner.classList.add('show');
+  document.getElementById('map').style.cursor = 'crosshair';
+  closeSheet();
+}
+function exitAddMode(){
+  addMode = false;
+  addBtn.classList.remove('active');
+  addBanner.classList.remove('show');
+  document.getElementById('map').style.cursor = '';
+}
+addBtn.onclick = ()=> addMode ? exitAddMode() : enterAddMode();
+document.getElementById('addcancel').onclick = exitAddMode;
+
+// ═══════════════════════════════════════════════════
+// PIN EDITOR MODAL — create or edit a custom pin
+// ═══════════════════════════════════════════════════
+const pinModal = document.getElementById('pinmodal');
+
+function wpTypeOptions(sel){
+  const types=[['start','Start'],['village','Village'],['camp','Campsite'],['pass','Pass'],['lake','Lake'],['summit','Summit'],['end','End']];
+  return types.map(([v,l])=>`<option value="${v}" ${v===sel?'selected':''}>${l}</option>`).join('');
+}
+
+function renderWpEditor(){
+  const list=document.getElementById('pm-wp-list');
+  if(!pmWaypoints.length){
+    list.innerHTML = '<div style="font-size:11px;color:var(--mute);padding:8px 0">No waypoints yet — add campsites, passes, lakes or the summit below.</div>';
+    return;
+  }
+  list.innerHTML = pmWaypoints.map((w,i)=>`
+    <div class="wp-edit-row" data-idx="${i}">
+      <div class="mf"><label>Name</label><input type="text" class="wp-n" value="${w.n.replace(/"/g,'&quot;')}" placeholder="Camp name"></div>
+      <div class="mf" style="flex:0 0 80px"><label>Alt (m)</label><input type="number" class="wp-a" value="${w.a||''}" placeholder="3200"></div>
+      <div class="mf" style="flex:0 0 100px"><label>Type</label><select class="wp-t">${wpTypeOptions(w.t)}</select></div>
+      <button class="wp-remove" type="button" title="Remove">✕</button>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.wp-edit-row').forEach(row=>{
+    const idx = +row.dataset.idx;
+    row.querySelector('.wp-n').oninput = e=> pmWaypoints[idx].n = e.target.value;
+    row.querySelector('.wp-a').oninput = e=> pmWaypoints[idx].a = +e.target.value || null;
+    row.querySelector('.wp-t').onchange = e=> pmWaypoints[idx].t = e.target.value;
+    row.querySelector('.wp-remove').onclick = ()=>{ pmWaypoints.splice(idx,1); renderWpEditor(); };
+  });
+}
+
+document.getElementById('wp-add-btn').onclick = ()=>{
+  if(!editingPin && !window._pmLatLng) return;
+  const base = editingPin || window._pmLatLng;
+  pmWaypoints.push({n:'New Waypoint',a:null,t:'camp',lat:base.lat,lng:base.lng});
+  renderWpEditor();
+};
+
+document.querySelectorAll('#pm-diff-select .diff-opt').forEach(opt=>{
+  opt.onclick = ()=>{
+    pmDiff = opt.dataset.d;
+    document.querySelectorAll('#pm-diff-select .diff-opt').forEach(o=>o.className='diff-opt');
+    opt.className = 'diff-opt sel-'+pmDiff;
+  };
+});
+
+function openPinModal(lat, lng, existing){
+  editingPin = existing;
+  window._pmLatLng = {lat, lng};
+  pmDiff = (existing && existing.diff) || 'easy';
+  pmWaypoints = existing ? JSON.parse(JSON.stringify(existing.wps||[])) : [];
+
+  document.getElementById('pm-title').textContent = existing ? 'Edit Your Pin' : 'New Trek Pin';
+  document.getElementById('pm-coords').textContent = `📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  document.getElementById('pm-name').value = existing ? existing.name : '';
+  document.getElementById('pm-region').value = existing ? existing.r : 'himachal';
+  document.getElementById('pm-icon').value = existing ? existing.icon : '📍';
+  document.getElementById('pm-alt').value = existing ? (existing.alt||'') : '';
+  document.getElementById('pm-km').value = existing ? (existing.km||'') : '';
+  document.getElementById('pm-days').value = existing ? (existing.days||'') : '';
+  document.getElementById('pm-season').value = existing ? (existing.season||'') : '';
+  document.getElementById('pm-desc').value = existing ? (existing.desc||'') : '';
+  document.getElementById('pm-delete').style.display = existing ? 'block' : 'none';
+
+  document.querySelectorAll('#pm-diff-select .diff-opt').forEach(o=>{
+    o.className = o.dataset.d===pmDiff ? 'diff-opt sel-'+pmDiff : 'diff-opt';
+  });
+
+  renderWpEditor();
+  pinModal.classList.add('on');
+}
+
+document.getElementById('pm-cancel').onclick = ()=>{
+  pinModal.classList.remove('on');
+  editingPin = null;
+};
+
+document.getElementById('pm-save').onclick = ()=>{
+  const name = document.getElementById('pm-name').value.trim();
+  if(!name){ toast('Please enter a name','#f85149'); return; }
+  const alt = +document.getElementById('pm-alt').value || 0;
+  const {lat,lng} = window._pmLatLng;
+
+  const pinData = {
+    id: editingPin ? editingPin.id : 'custom_'+Date.now(),
+    custom: true,
+    r: document.getElementById('pm-region').value,
+    name,
+    icon: document.getElementById('pm-icon').value.trim() || '📍',
+    lat, lng,
+    alt,
+    km: +document.getElementById('pm-km').value || 0,
+    days: +document.getElementById('pm-days').value || 0,
+    diff: pmDiff,
+    season: document.getElementById('pm-season').value.trim(),
+    desc: document.getElementById('pm-desc').value.trim(),
+    wps: pmWaypoints.filter(w=>w.n && w.n.trim())
+  };
+
+  if(editingPin){
+    const idx = customs.findIndex(c=>c.id===editingPin.id);
+    if(idx!==-1) customs[idx]=pinData;
+  } else {
+    customs.push(pinData);
+  }
+  localStorage.setItem('sl3_customs', JSON.stringify(customs));
+
+  pinModal.classList.remove('on');
+  editingPin = null;
+  buildMkrs();
+  updateBadge();
+  openSheet(pinData);
+  toast(`📍 ${name} saved!`,'#a371f7');
+};
+
+document.getElementById('pm-delete').onclick = ()=>{
+  if(!editingPin) return;
+  if(!confirm(`Delete "${editingPin.name}"? This cannot be undone.`)) return;
+  customs = customs.filter(c=>c.id!==editingPin.id);
+  localStorage.setItem('sl3_customs', JSON.stringify(customs));
+  delete logged[editingPin.id];
+  localStorage.setItem('sl3_logged', JSON.stringify(logged));
+  pinModal.classList.remove('on');
+  editingPin = null;
+  closeSheet();
+  buildMkrs();
+  updateBadge();
+  toast('Pin deleted','#7d8590');
+};
+
+// ═══════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════
+function openModal(t){
+  current=t; const ld=logged[t.id]||{};
+  mRating=ld.rating||0;
+  document.getElementById('mname').textContent=t.name;
+  document.getElementById('mdate').value=ld.date||new Date().toISOString().split('T')[0];
+  document.getElementById('mnotes').value=ld.notes||'';
+  updateStars(); document.getElementById('modal').classList.add('on');
+}
+document.getElementById('mcancel').onclick=()=>document.getElementById('modal').classList.remove('on');
+document.getElementById('msave').onclick=()=>{
+  if(!current)return;
+  logged[current.id]={date:document.getElementById('mdate').value,notes:document.getElementById('mnotes').value,rating:mRating};
+  localStorage.setItem('sl3_logged',JSON.stringify(logged));
+  document.getElementById('modal').classList.remove('on');
+  updateBadge(); buildMkrs(); openSheet(current);
+  toast(`🏔 ${current.name} logged!`,'#2ea043');
+};
+document.querySelectorAll('.star').forEach(s=>s.onclick=()=>{mRating=+s.dataset.v;updateStars()});
+function updateStars(){document.querySelectorAll('.star').forEach(s=>s.classList.toggle('on',+s.dataset.v<=mRating))}
+
+// ═══════════════════════════════════════════════════
+// PIN
+// ═══════════════════════════════════════════════════
+function togglePin(t){
+  const i=pinned.indexOf(t.id);
+  if(i===-1){pinned.push(t.id);toast('📌 Pinned for later','#a371f7')}
+  else{pinned.splice(i,1);toast('Unpinned','#7d8590')}
+  localStorage.setItem('sl3_pinned',JSON.stringify(pinned));
+  buildMkrs(); openSheet(t);
+}
+
+// ═══════════════════════════════════════════════════
+// SEARCH
+// ═══════════════════════════════════════════════════
+const srch=document.getElementById('srch'), sres=document.getElementById('sres');
+srch.oninput=()=>{
+  const q=srch.value.trim().toLowerCase();
+  if(!q){sres.style.display='none';return}
+  const hits=allTreks().filter(t=>t.name.toLowerCase().includes(q)||(RNAMES[t.r]||'').toLowerCase().includes(q)||t.r.includes(q)||(t.desc||'').toLowerCase().includes(q)).slice(0,8);
+  if(!hits.length){sres.style.display='none';return}
+  sres.innerHTML=hits.map(t=>`<div class="sri ${logged[t.id]?'ok':''}" data-id="${t.id}"><span class="sri-ico">${t.icon}</span><div><div class="sri-name">${t.name}</div><div class="sri-meta">${RNAMES[t.r]} · ${t.alt.toLocaleString()}m · ${t.diff}</div></div></div>`).join('');
+  sres.style.display='block';
+};
+sres.onclick=e=>{
+  const el=e.target.closest('.sri'); if(!el)return;
+  const t=allTreks().find(x=>x.id===el.dataset.id); if(!t)return;
+  srch.value=t.name; sres.style.display='none'; openSheet(t);
+};
+document.addEventListener('click',e=>{if(!e.target.closest('.swrap'))sres.style.display='none'});
+
+// ═══════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════
+const FLY={all:[30.5,80,5],himachal:[32,77.2,8],uttarakhand:[30.5,79.5,8],jk:[34,77,7],northeast:[26.5,92,7],nepal:[28.2,84.5,7],tibet:[30.5,81,7],maharashtra:[19.0,73.5,8],southindia:[11.5,76.5,7],spiritual:[22.5,79.0,5]};
+
+function switchRegion(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  tab.classList.add('on'); activeR=tab.dataset.r;
+  buildMkrs(); closeSheet();
+  if(MAP_AVAILABLE){
+    const [la,lo,z]=FLY[activeR]||FLY.all;
+    map.flyTo([la,lo],z,{duration:1.5});
+  }
+}
+
+// ── Region popover (hover on desktop, tap-to-preview on touch) ──
+const regionPop = document.getElementById('regionpop');
+let popHideTimer = null;
+let popOpenForTab = null;
+const DIFF_ICON_CLASS = t => logged[t.id] ? 'ico-done' : pinned.includes(t.id) ? 'ico-pin' : 'ico-default';
+
+function buildPopoverList(region){
+  const list = region==='all' ? allTreks() : allTreks().filter(t=>t.r===region);
+  return list;
+}
+
+function showRegionPopover(tab){
+  clearTimeout(popHideTimer);
+  const region = tab.dataset.r;
+  popOpenForTab = tab;
+  const list = buildPopoverList(region);
+  const label = tab.textContent.trim();
+
+  regionPop.innerHTML = `
+    <div class="rpop-card">
+      <div class="rpop-head">
+        <div class="rpop-title">${label}</div>
+        <div class="rpop-count">${list.length} trek${list.length!==1?'s':''} — tap to jump</div>
+      </div>
+      <div class="rpop-list">
+        ${list.map((t,i)=>`
+          <div class="rpop-item" data-id="${t.id}" style="animation-delay:${Math.min(i*22,300)}ms">
+            <div class="rpop-ico ${DIFF_ICON_CLASS(t)}">${t.icon}</div>
+            <div class="rpop-info">
+              <div class="rpop-name">${t.name}</div>
+              <div class="rpop-meta">${t.alt?t.alt.toLocaleString()+'m':''}${t.diff?' · '+t.diff:''}</div>
+            </div>
+            ${logged[t.id]?'<span class="rpop-check">✓</span>':''}
+          </div>
+        `).join('') || '<div style="padding:16px;text-align:center;color:var(--mute);font-size:12px">No treks yet</div>'}
+      </div>
+    </div>
+  `;
+
+  // Position above the tab, clamped to viewport
+  const r = tab.getBoundingClientRect();
+  const popW = 240;
+  let left = r.left + r.width/2 - popW/2;
+  left = Math.max(8, Math.min(left, window.innerWidth - popW - 8));
+  regionPop.style.left = left + 'px';
+  regionPop.style.setProperty('--arrow-x', (r.left + r.width/2 - left) + 'px');
+
+  regionPop.classList.remove('closing');
+  regionPop.classList.add('show');
+
+  regionPop.querySelectorAll('.rpop-item').forEach(item=>{
+    item.onclick = (e)=>{
+      e.stopPropagation();
+      const t = allTreks().find(x=>x.id===item.dataset.id);
+      if(!t) return;
+      hideRegionPopover(true);
+      // Also switch the active region tab to match, so the map context is consistent
+      if(activeR !== t.r){
+        const matchTab = document.querySelector(`.tab[data-r="${t.r}"]`);
+        if(matchTab) switchRegion(matchTab);
+      }
+      setTimeout(()=> openSheet(t), activeR!==t.r ? 350 : 0);
+    };
+  });
+}
+
+function hideRegionPopover(instant){
+  clearTimeout(popHideTimer);
+  document.querySelectorAll('.tab-chev').forEach(c=>c.classList.remove('chev-open'));
+  if(!regionPop.classList.contains('show')) return;
+  if(instant){
+    regionPop.classList.remove('show','closing');
+    popOpenForTab=null;
+    return;
+  }
+  regionPop.classList.add('closing');
+  popHideTimer = setTimeout(()=>{
+    regionPop.classList.remove('show','closing');
+    popOpenForTab = null;
+  },160);
+}
+
+document.querySelectorAll('.tab').forEach(tab=>{
+  const chev = tab.querySelector('.tab-chev');
+
+  // Main tab body: tap always navigates immediately — no double-tap confusion
+  tab.onclick=(e)=>{
+    if(e.target.closest('.tab-chev')) return; // handled separately below
+    switchRegion(tab);
+    if(popOpenForTab===tab) hideRegionPopover(true);
+  };
+
+  // Chevron: independent toggle for the "preview treks in this region" list
+  if(chev){
+    chev.onclick=(e)=>{
+      e.stopPropagation();
+      if(popOpenForTab===tab){
+        hideRegionPopover();
+      } else {
+        showRegionPopover(tab);
+        chev.classList.add('chev-open');
+      }
+    };
+  }
+});
+
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#tabs') && !e.target.closest('#regionpop')){
+    hideRegionPopover();
+  }
+});
+
+// Close popover on tab-bar scroll — its position is anchored to a tab
+// that may have moved, and dragging to scroll shouldn't leave it stuck open
+document.getElementById('tabs').addEventListener('scroll', ()=> hideRegionPopover(true), { passive:true });
+
+// ═══════════════════════════════════════════════════
+// BADGE & TOAST
+// ═══════════════════════════════════════════════════
+function updateBadge(){document.getElementById('bdg').textContent=`${Object.keys(logged).length} / ${TREKS.length+customs.length}`}
+function toast(msg,bg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.style.background=bg||'#2ea043';
+  el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2500);
+}
+document.getElementById('bdg').onclick=()=>toast(`${Object.keys(logged).length} logged · ${pinned.length} pinned · ${TREKS.length} total`,'#f97316');
+
+// ═══════════════════════════════════════════════════
+// PWA SERVICE WORKER
+// ═══════════════════════════════════════════════════
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/summitlog/sw.js').catch(()=>{});
+}
+
+// ═══════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════
+buildMkrs();
+updateBadge();
+</script>
+</body>
+</html>
