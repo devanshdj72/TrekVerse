@@ -35,6 +35,55 @@
   --bord:rgba(255,255,255,0.08);--txt:#e6edf3;--mute:#7d8590;
   --ora:#f97316;--grn:#2ea043;--blu:#388bfd;--pur:#a371f7;--red:#f85149;--yel:#d29922;
 }
+
+/* ── LIGHT THEME ── */
+[data-theme="light"]{
+  --bg:#f0f4f8;--surf:#ffffff;--glass:rgba(240,244,248,0.95);
+  --bord:rgba(0,0,0,0.10);--txt:#1a2332;--mute:#5a6a7e;
+  --ora:#e8620a;--grn:#1a7a32;--blu:#1a65d6;--pur:#7c3aed;--red:#cc2a25;--yel:#a87a00;
+}
+[data-theme="light"] html,
+[data-theme="light"] body{ background:var(--bg);color:var(--txt) }
+[data-theme="light"] #navbar{ background:rgba(240,244,248,0.96);border-bottom:1px solid var(--bord);box-shadow:0 2px 12px rgba(0,0,0,.08) }
+[data-theme="light"] #srch{ background:rgba(0,0,0,0.06);border:1px solid var(--bord);color:var(--txt) }
+[data-theme="light"] #srch::placeholder{ color:var(--mute) }
+[data-theme="light"] #sresults{ background:var(--surf);box-shadow:0 8px 32px rgba(0,0,0,.12) }
+[data-theme="light"] .sri:hover{ background:rgba(0,0,0,.04) }
+[data-theme="light"] .sri{ border-bottom:1px solid var(--bord) }
+[data-theme="light"] #tabbar{ background:rgba(240,244,248,0.96);border-top:1px solid var(--bord) }
+[data-theme="light"] .tab{ background:rgba(0,0,0,.04);border:1px solid var(--bord);color:var(--mute) }
+[data-theme="light"] .tab:hover:not(.on){ background:rgba(0,0,0,.07);border-color:rgba(0,0,0,.18) }
+[data-theme="light"] #sheet,
+[data-theme="light"] #modal .mbox,
+[data-theme="light"] #pinmodal .mbox{ background:var(--surf);border-color:var(--bord);box-shadow:0 -8px 40px rgba(0,0,0,.12) }
+[data-theme="light"] .mf input,
+[data-theme="light"] .mf textarea,
+[data-theme="light"] .mf select{ background:rgba(0,0,0,.04);border:1px solid var(--bord);color:var(--txt) }
+[data-theme="light"] .mf input::placeholder,
+[data-theme="light"] .mf textarea::placeholder{ color:var(--mute) }
+[data-theme="light"] .btn.bsec{ background:rgba(0,0,0,.06);border:1px solid var(--bord);color:var(--txt) }
+[data-theme="light"] .btn.bsec:hover{ background:rgba(0,0,0,.1) }
+[data-theme="light"] .btn.bd{ background:rgba(26,122,50,.1);border:1px solid rgba(26,122,50,.3);color:var(--grn) }
+[data-theme="light"] .wp-edit-row{ background:rgba(0,0,0,.03);border-color:var(--bord) }
+[data-theme="light"] .wp-edit-row select{ background:rgba(0,0,0,.04);border-color:var(--bord);color:var(--txt) }
+[data-theme="light"] #wp-add-btn{ border-color:var(--bord);color:var(--mute) }
+[data-theme="light"] .diff-opt{ border-color:var(--bord);color:var(--mute) }
+[data-theme="light"] .logbox{ background:rgba(26,122,50,.08);border-color:rgba(26,122,50,.25) }
+[data-theme="light"] #share-inner{ background:var(--surf);border-color:var(--bord) }
+[data-theme="light"] #share-hint{ color:var(--mute) }
+[data-theme="light"] .photo-add-btn{ border-color:var(--bord);color:var(--mute) }
+[data-theme="light"] .photo-thumb{ border-color:var(--bord) }
+
+/* theme toggle button */
+#themebtn{
+  background:rgba(255,255,255,.08);border:1px solid var(--bord);
+  color:var(--txt);font-size:16px;width:36px;height:36px;border-radius:10px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .2s,transform .2s;flex-shrink:0;
+}
+#themebtn:hover{ background:rgba(255,255,255,.15);transform:scale(1.08) }
+[data-theme="light"] #themebtn{ background:rgba(0,0,0,.07);border-color:var(--bord) }
+[data-theme="light"] #themebtn:hover{ background:rgba(0,0,0,.13) }
 html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt)}
 
 /* TOPBAR */
@@ -525,6 +574,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   </div>
   <div id="bdg">0 / 0</div>
   <button id="addbtn" title="Add your own trek/pin">+</button>
+  <button id="themebtn" title="Switch to light mode">🌙</button>
   <button id="hubbtn" title="Journey Hub">☰</button>
 </div>
 
@@ -1851,6 +1901,8 @@ if (MAP_AVAILABLE) {
   const primaryTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
     subdomains:'abcd', maxZoom:19
   });
+  window._activeTileLayer = primaryTiles;
+  window._mapRef = map;
 
   let tilesFailed = 0;
   primaryTiles.on('tileerror', () => {
@@ -2501,10 +2553,54 @@ if('serviceWorker' in navigator){
 }
 
 // ═══════════════════════════════════════════════════
+// THEME SYSTEM
+// ═══════════════════════════════════════════════════
+
+const TILE_DARK  = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+const TILE_LIGHT = 'https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png';
+const THEME_META = document.querySelector('meta[name="theme-color"]');
+
+function applyTheme(theme, swapTiles) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const isLight = theme === 'light';
+  if (THEME_META) THEME_META.content = isLight ? '#f0f4f8' : '#0d1117';
+  const btn = document.getElementById('themebtn');
+  if (btn) { btn.textContent = isLight ? '☀️' : '🌙'; btn.title = isLight ? 'Switch to dark mode' : 'Switch to light mode'; }
+  if (swapTiles && window._mapRef && window._activeTileLayer) {
+    window._mapRef.removeLayer(window._activeTileLayer);
+    window._activeTileLayer = L.tileLayer(isLight ? TILE_LIGHT : TILE_DARK, { subdomains:'abcd', maxZoom:19 });
+    window._activeTileLayer.addTo(window._mapRef);
+  }
+  localStorage.setItem('sl3_theme', theme);
+}
+
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  applyTheme(next, true);
+  toast(next === 'light' ? '☀️ Light mode on' : '🌙 Dark mode on', next === 'light' ? '#e8620a' : '#a371f7');
+}
+
+document.getElementById('themebtn').onclick = toggleTheme;
+
+// Apply saved theme on load (CSS only — no tile swap, map not ready yet)
+(function(){ applyTheme(localStorage.getItem('sl3_theme') || 'dark', false); })();
+
+// ═══════════════════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════════════════
 buildMkrs();
 updateBadge();
+
+// Apply tile layer for saved theme now that map is ready
+(function(){
+  const saved = localStorage.getItem('sl3_theme') || 'dark';
+  if (saved === 'light' && window._mapRef && window._activeTileLayer) {
+    window._mapRef.removeLayer(window._activeTileLayer);
+    window._activeTileLayer = L.tileLayer(TILE_LIGHT, { subdomains:'abcd', maxZoom:19 });
+    window._activeTileLayer.addTo(window._mapRef);
+  }
+})();
 
 // Fit-all button — smooth animated zoom to show all current region's pins
 document.getElementById('fitbtn').onclick = () => {
