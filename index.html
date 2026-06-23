@@ -561,6 +561,69 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .cl-md.clwrap{width:64px;height:64px}
 .cl-lg.clwrap{width:68px;height:68px}
 .leaflet-cluster-spider-leg{opacity:.5!important}
+
+/* ── WEATHER WIDGET ── */
+#wx-modal{position:fixed;inset:0;z-index:7500;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);display:none;align-items:flex-end;justify-content:center}
+#wx-modal.on{display:flex;animation:wxFadeIn .22s ease}
+@keyframes wxFadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+#wx-inner{width:100%;max-width:520px;background:var(--surf);border-radius:22px 22px 0 0;border:1px solid var(--bord);max-height:88dvh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom,0px)}
+#wx-header{display:flex;align-items:center;gap:10px;padding:16px 18px 10px;border-bottom:1px solid var(--bord);position:sticky;top:0;background:var(--surf);z-index:1}
+#wx-title{flex:1;min-width:0}
+#wx-trek-name{font-size:15px;font-weight:800;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#wx-coords{font-size:11px;color:var(--mute);margin-top:1px}
+#wx-close{background:rgba(255,255,255,.08);border:none;color:var(--txt);font-size:18px;width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+[data-theme="light"] #wx-close{background:rgba(0,0,0,.07)}
+#wx-body{padding:16px 18px 24px}
+/* loading */
+.wx-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:48px 0;color:var(--mute);font-size:13px}
+.wx-spinner{width:36px;height:36px;border:3px solid var(--bord);border-top-color:var(--ora);border-radius:50%;animation:wxSpin .7s linear infinite}
+@keyframes wxSpin{to{transform:rotate(360deg)}}
+/* error */
+.wx-error{text-align:center;padding:32px 0;color:var(--mute);font-size:13px;line-height:1.8}
+.wx-error-icon{font-size:36px;margin-bottom:8px}
+/* current conditions card */
+.wx-current{display:flex;align-items:flex-start;gap:16px;background:linear-gradient(135deg,rgba(249,115,22,.1),rgba(249,115,22,.04));border:1px solid rgba(249,115,22,.2);border-radius:16px;padding:16px;margin-bottom:14px}
+.wx-main-icon{font-size:56px;line-height:1;flex-shrink:0}
+.wx-main-info{flex:1;min-width:0}
+.wx-temp-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.wx-temp{font-size:42px;font-weight:800;color:var(--txt);line-height:1}
+.wx-feels{font-size:13px;color:var(--mute);margin-top:2px}
+.wx-desc{font-size:14px;font-weight:600;color:var(--ora);margin:2px 0 8px}
+.wx-detail-row{display:flex;flex-wrap:wrap;gap:8px}
+.wx-chip{font-size:11px;padding:3px 9px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid var(--bord);color:var(--mute);white-space:nowrap}
+[data-theme="light"] .wx-chip{background:rgba(0,0,0,.05)}
+/* altitude note */
+.wx-alt-note{background:rgba(163,113,247,.08);border:1px solid rgba(163,113,247,.2);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#c4b5fd;line-height:1.6}
+/* trek advisory */
+.wx-advisory{border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:12px;line-height:1.6;display:flex;gap:8px;align-items:flex-start}
+.wx-advisory.safe{background:rgba(46,160,67,.08);border:1px solid rgba(46,160,67,.25);color:#4ade80}
+.wx-advisory.caution{background:rgba(210,153,34,.08);border:1px solid rgba(210,153,34,.25);color:#fbbf24}
+.wx-advisory.warning{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);color:#fca5a5}
+/* 7-day forecast strip */
+.wx-forecast-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--mute);margin-bottom:10px}
+.wx-days{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.wx-days::-webkit-scrollbar{display:none}
+.wx-day{flex:0 0 auto;width:72px;background:rgba(255,255,255,.04);border:1px solid var(--bord);border-radius:14px;padding:10px 8px;text-align:center;transition:border-color .15s,background .15s}
+.wx-day.wx-today{border-color:var(--ora);background:rgba(249,115,22,.08)}
+[data-theme="light"] .wx-day{background:rgba(0,0,0,.04)}
+[data-theme="light"] .wx-day.wx-today{background:rgba(232,98,10,.08)}
+.wx-day-name{font-size:10px;font-weight:600;color:var(--mute);text-transform:uppercase;letter-spacing:.5px}
+.wx-day-icon{font-size:24px;margin:5px 0}
+.wx-day-max{font-size:13px;font-weight:700;color:var(--txt)}
+.wx-day-min{font-size:11px;color:var(--mute)}
+.wx-day-rain{font-size:10px;color:var(--blu);margin-top:3px;min-height:14px}
+/* sunrise/sunset */
+.wx-sun-row{display:flex;gap:10px;margin-top:14px}
+.wx-sun-pill{flex:1;background:rgba(255,255,255,.04);border:1px solid var(--bord);border-radius:12px;padding:9px 12px;font-size:12px;color:var(--mute);display:flex;align-items:center;gap:6px}
+[data-theme="light"] .wx-sun-pill{background:rgba(0,0,0,.04)}
+.wx-sun-pill span:first-child{font-size:18px}
+.wx-sun-val{font-weight:600;color:var(--txt)}
+/* last-updated */
+.wx-updated{font-size:10px;color:var(--mute);text-align:center;margin-top:14px;opacity:.7}
+.wx-stale{color:var(--red)!important;opacity:1!important}
+/* refresh button */
+.wx-refresh-btn{width:100%;margin-top:12px;padding:11px;border-radius:12px;border:1px dashed var(--bord);background:transparent;color:var(--mute);font-size:13px;cursor:pointer;font-family:inherit;transition:border-color .2s,color .2s}
+.wx-refresh-btn:hover{border-color:var(--ora);color:var(--ora)}
 </style>
 </head>
 <body>
@@ -618,6 +681,23 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <div class="macts">
       <button class="btn bsec" id="mcancel">Cancel</button>
       <button class="btn bp" id="msave" style="flex:1">✔ Save Summit</button>
+    </div>
+  </div>
+</div>
+
+<!-- WEATHER WIDGET MODAL -->
+<div id="wx-modal">
+  <div id="wx-inner">
+    <div id="wx-header">
+      <div style="font-size:22px;flex-shrink:0">🌤</div>
+      <div id="wx-title">
+        <div id="wx-trek-name">Weather</div>
+        <div id="wx-coords"></div>
+      </div>
+      <button id="wx-close">✕</button>
+    </div>
+    <div id="wx-body">
+      <div class="wx-loading"><div class="wx-spinner"></div>Fetching latest forecast…</div>
     </div>
   </div>
 </div>
@@ -2152,6 +2232,8 @@ function openSheet(t){
       <button class="btn ${done?'bd':'bp'}" id="slog">${done?'✓ Logged — Update':'+ Log This Summit'}</button>
       ${t.custom?'<button class="btn bsec" id="sedit">✏️</button>':''}
       <button class="btn bsec" id="spin">${pinned.includes(t.id)?'📌':'🔖'}</button>
+      <button class="btn bsec" id="swx" title="Live weather forecast">🌤</button>
+      <button class="btn bsec" id="sshare" title="Share Trek Card">📤</button>
     </div>`;
   document.getElementById('sheet').classList.add('up');
   document.getElementById('sheetbackdrop').classList.add('up');
@@ -2162,6 +2244,8 @@ function openSheet(t){
   });
   document.getElementById('slog').onclick=()=>openModal(t);
   document.getElementById('spin').onclick=()=>togglePin(t);
+  document.getElementById('swx').onclick=()=>openWeather(t);
+  document.getElementById('sshare').onclick=()=>openShareCard(t);
   if(t.custom){
     document.getElementById('sedit').onclick=()=>openPinModal(t.lat,t.lng,t);
   }
@@ -2551,6 +2635,250 @@ document.getElementById('bdg').onclick=()=>toast(`${Object.keys(logged).length} 
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('/summitlog/sw.js').catch(()=>{});
 }
+
+// ═══════════════════════════════════════════════════
+// WEATHER WIDGET ENGINE
+// ═══════════════════════════════════════════════════
+
+// WMO code → {emoji, label, trekNote}
+const WMO = {
+  0:  {e:'☀️',  l:'Clear Sky',          n:'Perfect summit conditions.'},
+  1:  {e:'🌤️', l:'Mainly Clear',        n:'Good visibility expected.'},
+  2:  {e:'⛅',  l:'Partly Cloudy',       n:'Some cloud cover. Watch for afternoon buildup.'},
+  3:  {e:'☁️',  l:'Overcast',            n:'Low visibility. Navigation skills needed.'},
+  45: {e:'🌫️', l:'Fog',                 n:'⚠️ Dangerous for exposed ridges. Carry compass/GPS.'},
+  48: {e:'🌫️', l:'Rime Fog',            n:'⚠️ Icy fog — trails may be slippery. Use crampons.'},
+  51: {e:'🌦️', l:'Light Drizzle',       n:'Light rain gear recommended.'},
+  53: {e:'🌦️', l:'Moderate Drizzle',    n:'Rain gear essential.'},
+  55: {e:'🌧️', l:'Dense Drizzle',       n:'⚠️ Trails become slippery. Trekking poles advised.'},
+  56: {e:'🌨️', l:'Freezing Drizzle',    n:'⚠️ Icy conditions. Crampons and ice axe needed.'},
+  57: {e:'🌨️', l:'Heavy Freezing Drizzle', n:'❌ Dangerous icing. Consider postponing.'},
+  61: {e:'🌧️', l:'Slight Rain',         n:'Waterproof jacket and pack cover needed.'},
+  63: {e:'🌧️', l:'Moderate Rain',       n:'⚠️ Stream crossings may be dangerous.'},
+  65: {e:'🌧️', l:'Heavy Rain',          n:'❌ High risk of flash floods and landslides.'},
+  66: {e:'🌨️', l:'Freezing Rain',       n:'⚠️ Extreme slipping hazard on trails.'},
+  67: {e:'🌨️', l:'Heavy Freezing Rain', n:'❌ Do not trek. Ice everywhere.'},
+  71: {e:'🌨️', l:'Slight Snowfall',     n:'Snow possible on higher sections. Gaiters useful.'},
+  73: {e:'❄️',  l:'Moderate Snowfall',   n:'⚠️ Trail may be buried. Navigation difficult.'},
+  75: {e:'❄️',  l:'Heavy Snowfall',      n:'❌ Very high avalanche risk. Do not proceed.'},
+  77: {e:'🌨️', l:'Snow Grains',         n:'Light snow — crampons may help above snowline.'},
+  80: {e:'🌦️', l:'Slight Rain Showers', n:'Intermittent rain — light gear sufficient.'},
+  81: {e:'🌧️', l:'Moderate Showers',    n:'⚠️ Afternoon showers likely. Start early.'},
+  82: {e:'⛈️',  l:'Violent Showers',     n:'❌ Flash flooding risk. Seek shelter immediately.'},
+  85: {e:'🌨️', l:'Slight Snow Showers', n:'Snow flurries. Layering important.'},
+  86: {e:'❄️',  l:'Heavy Snow Showers',  n:'❌ Whiteout risk. Stay put.'},
+  95: {e:'⛈️',  l:'Thunderstorm',        n:'❌ Extreme danger. Lightning on exposed ridges.'},
+  96: {e:'⛈️',  l:'Thunderstorm + Hail', n:'❌ Do not trek. Lethal conditions.'},
+  99: {e:'⛈️',  l:'Heavy Thunderstorm',  n:'❌ Abort trek. Seek solid shelter immediately.'},
+};
+
+function wmoInfo(code) {
+  return WMO[code] || WMO[Math.floor(code/10)*10] || {e:'🌡️', l:'Unknown', n:'Check local forecast before trekking.'};
+}
+
+// Lapse rate: temperature drops ~6.5°C per 1000m above base (default base ~200m)
+function altitudeAdjust(tempC, altM) {
+  const base = 200; // average lowland weather station altitude
+  const delta = ((altM || 0) - base) / 1000 * 6.5;
+  return Math.round(tempC - delta);
+}
+
+// 5-minute local cache to avoid redundant requests
+const _wxCache = {};
+function wxCacheKey(lat, lng) { return `${lat.toFixed(3)},${lng.toFixed(3)}`; }
+
+async function fetchWeather(lat, lng) {
+  const key = wxCacheKey(lat, lng);
+  const cached = _wxCache[key];
+  const now = Date.now();
+  if (cached && (now - cached.ts) < 5 * 60 * 1000) return { data: cached.data, stale: false, fromCache: true };
+
+  const url = `https://api.open-meteo.com/v1/forecast?` +
+    `latitude=${lat}&longitude=${lng}` +
+    `&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,` +
+    `wind_speed_10m,wind_gusts_10m,precipitation,is_day` +
+    `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,` +
+    `wind_speed_10m_max,sunrise,sunset` +
+    `&forecast_days=7&timezone=auto&wind_speed_unit=kmh`;
+
+  try {
+    const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    _wxCache[key] = { data, ts: now };
+    return { data, stale: false, fromCache: false };
+  } catch (err) {
+    // Return stale cache if available, else throw
+    if (cached) return { data: cached.data, stale: true, fromCache: true };
+    throw err;
+  }
+}
+
+function fmtTime(isoStr) {
+  if (!isoStr) return '—';
+  try {
+    const d = new Date(isoStr);
+    return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  } catch { return isoStr.slice(11,16); }
+}
+
+function trekAdvisory(wx, trek) {
+  const code = wx.current.weather_code;
+  const wind = wx.current.wind_speed_10m;
+  const alt = trek.alt || 0;
+  const info = wmoInfo(code);
+
+  // Wind advisory overrides
+  if (wind > 60) return {cls:'warning', icon:'💨', msg:`Extreme winds: ${wind} km/h. Severe danger on exposed ridges.`};
+  if (wind > 40) return {cls:'caution', icon:'💨', msg:`Strong winds: ${wind} km/h. Be cautious on exposed sections.`};
+
+  // WMO-based advisory
+  const msg = info.n;
+  if (msg.startsWith('❌')) return {cls:'warning', icon:'🚨', msg};
+  if (msg.startsWith('⚠️')) return {cls:'caution', icon:'⚠️', msg};
+
+  // Altitude-specific notes
+  if (alt > 5000 && code <= 2) return {cls:'safe', icon:'✅', msg:`Clear at base — expect colder temps and reduced oxygen above ${alt.toLocaleString()}m.`};
+  if (alt > 3500 && (code === 71 || code === 73 || code === 75)) return {cls:'warning', icon:'❄️', msg:`Snow at ${alt.toLocaleString()}m. Avalanche awareness required.`};
+
+  return {cls:'safe', icon:'✅', msg};
+}
+
+function renderWeatherContent(wx, trek, stale) {
+  const c = wx.current;
+  const daily = wx.daily;
+  const info = wmoInfo(c.weather_code);
+  const alt = trek.alt || 0;
+  const adjTemp = alt > 500 ? altitudeAdjust(c.temperature_2m, alt) : null;
+  const advisory = trekAdvisory(wx, trek);
+
+  // Day names
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const today = new Date().getDay();
+
+  const daysHtml = daily.time.map((dt, i) => {
+    const d = new Date(dt);
+    const dayCode = daily.weather_code[i];
+    const di = wmoInfo(dayCode);
+    const rain = daily.precipitation_sum[i];
+    const isToday = i === 0;
+    return `<div class="wx-day ${isToday ? 'wx-today' : ''}">
+      <div class="wx-day-name">${isToday ? 'Today' : dayNames[d.getDay()]}</div>
+      <div class="wx-day-icon">${di.e}</div>
+      <div class="wx-day-max">${Math.round(daily.temperature_2m_max[i])}°</div>
+      <div class="wx-day-min">${Math.round(daily.temperature_2m_min[i])}°</div>
+      <div class="wx-day-rain">${rain > 0.1 ? '💧' + rain.toFixed(1) + 'mm' : ''}</div>
+    </div>`;
+  }).join('');
+
+  const sunrise = daily.sunrise ? fmtTime(daily.sunrise[0]) : '—';
+  const sunset  = daily.sunset  ? fmtTime(daily.sunset[0])  : '—';
+
+  const now = new Date();
+  const updatedStr = stale
+    ? `<span class="wx-stale">⚠️ Offline — showing cached data</span>`
+    : `Updated just now · ${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
+
+  return `
+    <div class="wx-current">
+      <div class="wx-main-icon">${info.e}</div>
+      <div class="wx-main-info">
+        <div class="wx-temp-row">
+          <div class="wx-temp">${Math.round(c.temperature_2m)}°C</div>
+          <div style="font-size:12px;color:var(--mute)">at base</div>
+        </div>
+        <div class="wx-desc">${info.l}</div>
+        <div class="wx-feels">Feels like ${Math.round(c.apparent_temperature)}°C</div>
+        <div class="wx-detail-row" style="margin-top:8px">
+          <span class="wx-chip">💧 ${c.relative_humidity_2m}% humidity</span>
+          <span class="wx-chip">💨 ${Math.round(c.wind_speed_10m)} km/h</span>
+          <span class="wx-chip">💨 gusts ${Math.round(c.wind_gusts_10m)} km/h</span>
+          ${c.precipitation > 0 ? `<span class="wx-chip">🌧 ${c.precipitation} mm now</span>` : ''}
+        </div>
+      </div>
+    </div>
+
+    ${alt > 500 ? `<div class="wx-alt-note">
+      🏔️ <strong>Altitude adjustment for ${alt.toLocaleString()}m:</strong>
+      Estimated summit temperature ≈ <strong>${adjTemp}°C</strong>
+      (lapse rate −6.5°C / 1000m). Acclimatise above 3500m.
+      ${alt > 5000 ? ' Supplemental oxygen may be needed above 5000m.' : ''}
+    </div>` : ''}
+
+    <div class="wx-advisory ${advisory.cls}">
+      <span style="font-size:18px;flex-shrink:0">${advisory.icon}</span>
+      <div><strong>Trek Advisory:</strong> ${advisory.msg}</div>
+    </div>
+
+    <div class="wx-forecast-title">7-Day Forecast</div>
+    <div class="wx-days">${daysHtml}</div>
+
+    <div class="wx-sun-row">
+      <div class="wx-sun-pill"><span>🌅</span><div>Sunrise<br><span class="wx-sun-val">${sunrise}</span></div></div>
+      <div class="wx-sun-pill"><span>🌇</span><div>Sunset<br><span class="wx-sun-val">${sunset}</span></div></div>
+      <div class="wx-sun-pill"><span>🌡️</span><div>Today Range<br><span class="wx-sun-val">${Math.round(daily.temperature_2m_min[0])}° – ${Math.round(daily.temperature_2m_max[0])}°C</span></div></div>
+    </div>
+
+    <button class="wx-refresh-btn" id="wx-refresh-btn">↻ Refresh Forecast</button>
+    <div class="wx-updated">${updatedStr}</div>
+  `;
+}
+
+let _wxCurrentTrek = null;
+
+async function openWeather(trek) {
+  _wxCurrentTrek = trek;
+  const modal = document.getElementById('wx-modal');
+  const body = document.getElementById('wx-body');
+  document.getElementById('wx-trek-name').textContent = trek.name;
+  document.getElementById('wx-coords').textContent =
+    `${trek.lat.toFixed(3)}°N, ${trek.lng.toFixed(3)}°E${trek.alt ? '  ·  ' + trek.alt.toLocaleString() + 'm' : ''}`;
+  body.innerHTML = `<div class="wx-loading"><div class="wx-spinner"></div>Fetching latest forecast…</div>`;
+  modal.classList.add('on');
+  document.body.style.overflow = 'hidden';
+  await loadWeather(trek);
+}
+
+async function loadWeather(trek) {
+  const body = document.getElementById('wx-body');
+  try {
+    const { data, stale } = await fetchWeather(trek.lat, trek.lng);
+    body.innerHTML = renderWeatherContent(data, trek, stale);
+    // Wire refresh button
+    const rb = document.getElementById('wx-refresh-btn');
+    if (rb) rb.onclick = async () => {
+      // Force fresh fetch by clearing cache
+      const key = wxCacheKey(trek.lat, trek.lng);
+      delete _wxCache[key];
+      body.innerHTML = `<div class="wx-loading"><div class="wx-spinner"></div>Refreshing…</div>`;
+      await loadWeather(trek);
+    };
+  } catch (err) {
+    body.innerHTML = `<div class="wx-error">
+      <div class="wx-error-icon">📡</div>
+      <div><strong>Couldn't fetch forecast</strong></div>
+      <div style="margin-top:6px">Check your internet connection and try again.</div>
+      <button class="wx-refresh-btn" style="margin-top:16px" id="wx-retry-btn">↻ Try Again</button>
+    </div>`;
+    document.getElementById('wx-retry-btn').onclick = async () => {
+      body.innerHTML = `<div class="wx-loading"><div class="wx-spinner"></div>Retrying…</div>`;
+      await loadWeather(trek);
+    };
+  }
+}
+
+function closeWeather() {
+  document.getElementById('wx-modal').classList.remove('on');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('wx-close').onclick = closeWeather;
+document.getElementById('wx-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('wx-modal')) closeWeather();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('wx-modal').classList.contains('on')) closeWeather();
+});
 
 // ═══════════════════════════════════════════════════
 // THEME SYSTEM
