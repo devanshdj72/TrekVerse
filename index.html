@@ -429,7 +429,30 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .leaflet-popup-content-wrapper{background:var(--glass)!important;backdrop-filter:blur(16px);border:1px solid var(--bord)!important;border-radius:12px!important;color:var(--txt)!important;box-shadow:0 8px 32px rgba(0,0,0,.7)!important;font-family:-apple-system,sans-serif}
 .leaflet-popup-tip-container{display:none}
 .leaflet-popup-close-button{color:var(--mute)!important;font-size:18px!important;padding:6px 8px!important}
-.leaflet-control-zoom a{background:var(--surf)!important;color:var(--txt)!important;border:1px solid var(--bord)!important}
+.leaflet-control-zoom a{
+  background:var(--glass)!important;color:var(--txt)!important;
+  border:1px solid var(--bord)!important;
+  width:38px!important;height:38px!important;
+  line-height:38px!important;font-size:18px!important;
+  backdrop-filter:blur(12px)!important;
+  -webkit-backdrop-filter:blur(12px)!important;
+  box-shadow:0 2px 8px rgba(0,0,0,.4)!important;
+  transition:background .15s ease!important;
+}
+.leaflet-control-zoom a:hover{background:var(--surf)!important}
+.leaflet-control-zoom{border:none!important;box-shadow:none!important}
+/* Fit-all-pins button */
+#fitbtn{
+  position:fixed;right:10px;top:102px;z-index:800;
+  width:38px;height:38px;border-radius:8px;border:1px solid var(--bord);
+  background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  color:var(--txt);font-size:15px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.4);
+  transition:background .15s, transform .15s;
+}
+#fitbtn:hover{background:var(--surf)}
+#fitbtn:active{transform:scale(.9)}
 .leaflet-control-attribution{display:none}
 
 /* Cluster — stacked deck of trek icons fanning out on hover */
@@ -511,6 +534,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 </div>
 
 <div id="map"></div>
+<button id="fitbtn" title="Fit all pins on screen">⤢</button>
 
 <div id="tabs">
   <button class="tab on" data-r="all"><span class="tab-label">🌏 All</span></button>
@@ -523,6 +547,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   <button class="tab" data-r="maharashtra"><span class="tab-label">⛰ Maharashtra</span><span class="tab-chev">⌃</span></button>
   <button class="tab" data-r="southindia"><span class="tab-label">🌴 South India</span><span class="tab-chev">⌃</span></button>
   <button class="tab" data-r="spiritual"><span class="tab-label">🕉️ Spiritual Yatras</span><span class="tab-chev">⌃</span></button>
+  <button class="tab" data-r="sevensummits"><span class="tab-label">🌐 Seven Summits</span><span class="tab-chev">⌃</span></button>
 </div>
 
 <div id="regionpop"></div>
@@ -568,6 +593,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         <option value="maharashtra">Maharashtra Sahyadris</option>
         <option value="southindia">South India Western Ghats</option>
         <option value="spiritual">Spiritual Yatras</option>
+        <option value="sevensummits">Seven Summits</option>
       </select>
     </div>
 
@@ -1666,6 +1692,97 @@ desc:'12th and final of the 12 Jyotirlingas, near the Ellora Caves in Aurangabad
 wps:[
   {n:'Ellora Village',a:605,t:'start',lat:20.026,lng:75.179,note:'Adjacent to the UNESCO World Heritage Ellora Caves.'},
   {n:'Grishneshwar Temple',a:610,t:'temple',lat:20.023,lng:75.179,note:'Smallest yet most richly carved of the 12 Jyotirlingas.'}
+]},
+
+// ══ SEVEN SUMMITS — HIGHEST PEAK ON EACH CONTINENT ══
+{id:'ss01',r:'sevensummits',name:'Mount Everest (Asia)',icon:'🏔️',lat:27.988,lng:86.925,alt:8849,km:130,days:60,diff:'extreme',
+season:'Apr – May, Sep – Oct',
+desc:'Highest of the Seven Summits and the highest point on Earth, straddling the Nepal-Tibet border. The South Col route from Nepal is the standard line, crossing the treacherous Khumbu Icefall before the final push through the "Death Zone" above 8000m, where oxygen is roughly a third of sea level.',
+wps:[
+  {n:'Lukla',a:2860,t:'start',lat:27.686,lng:86.728,note:'Standard expedition entry by flight from Kathmandu.'},
+  {n:'Namche Bazaar',a:3440,t:'camp',lat:27.805,lng:86.714,note:'Sherpa capital, primary acclimatisation stop.'},
+  {n:'Everest Base Camp',a:5364,t:'camp',lat:27.988,lng:86.925,note:'5-6 week expedition base at the foot of the Khumbu Icefall.'},
+  {n:'Camp 1',a:6065,t:'camp',lat:27.997,lng:86.930,note:'Above the Khumbu Icefall, on the Western Cwm glacier valley.'},
+  {n:'Camp 2 (Advanced Base Camp)',a:6500,t:'camp',lat:28.000,lng:86.930,note:'Main staging camp beneath the Lhotse Face.'},
+  {n:'Camp 3',a:7200,t:'camp',lat:28.000,lng:86.925,note:'Cut into the Lhotse Face itself, fixed ropes throughout.'},
+  {n:'Camp 4 (South Col)',a:7950,t:'camp',lat:27.987,lng:86.930,note:'Edge of the Death Zone — final camp before summit push.'},
+  {n:'Everest Summit',a:8849,t:'summit',lat:27.988,lng:86.925,note:'Highest point on Earth. South Col route via Hillary Step. Supplemental oxygen mandatory above 8000m.'}
+]},
+
+{id:'ss02',r:'sevensummits',name:'Aconcagua (South America)',icon:'⛰️',lat:-32.653,lng:-70.011,alt:6961,km:60,days:18,diff:'extreme',
+season:'Nov – Mar (peak: mid-Dec – end Jan)',
+desc:'Highest peak outside Asia and in the Southern/Western Hemisphere, in Argentina\'s Andes. Known as the "Mountain of Death" for an average of three fatalities per year — mostly from altitude sickness and brutal wind rather than technical difficulty. The Normal Route is non-technical but punishingly high.',
+wps:[
+  {n:'Mendoza',a:760,t:'start',lat:-32.890,lng:-68.845,note:'Gateway city, permits arranged here before heading to the park.'},
+  {n:'Puente del Inca',a:2720,t:'village',lat:-32.823,lng:-69.908,note:'Roadhead, trek begins into Aconcagua Provincial Park.'},
+  {n:'Confluencia',a:3368,t:'camp',lat:-32.789,lng:-69.962,note:'First camp, acclimatisation rotation point.'},
+  {n:'Plaza de Mulas (Base Camp)',a:4300,t:'camp',lat:-32.821,lng:-69.999,note:'Main base camp, largest on the mountain, several days spent here.'},
+  {n:'Camp Canada',a:5050,t:'camp',lat:-32.799,lng:-70.005,note:'First high camp above base.'},
+  {n:'Nido de Condores',a:5570,t:'camp',lat:-32.792,lng:-70.006,note:'"Condor\'s Nest" — major high camp with sweeping Andes views.'},
+  {n:'Camp Berlin (High Camp)',a:5930,t:'camp',lat:-32.775,lng:-70.008,note:'Final camp before summit day, small and exposed.'},
+  {n:'Aconcagua Summit',a:6961,t:'summit',lat:-32.653,lng:-70.011,note:'Highest peak outside Asia. Normal Route via Northwest Ridge — non-technical but extremely high and cold.'}
+]},
+
+{id:'ss03',r:'sevensummits',name:'Denali (North America)',icon:'🏔️',lat:63.069,lng:-151.007,alt:6190,km:30,days:20,diff:'extreme',
+season:'Late Apr – early Jul (peak: May–Jun)',
+desc:'Highest peak in North America, in the Alaska Range. Despite a relatively "moderate" technical rating, Denali is considered one of the coldest mountains on Earth due to its extreme northern latitude — wind chills reach -60°F. The West Buttress is the standard, most climbed route.',
+wps:[
+  {n:'Talkeetna',a:110,t:'start',lat:62.320,lng:-150.117,note:'Mandatory ranger registration, ski-plane departure point.'},
+  {n:'Base Camp (Kahiltna Glacier)',a:2195,t:'camp',lat:63.073,lng:-151.200,note:'Landed by ski plane on the SE Fork of the Kahiltna Glacier.'},
+  {n:'Camp 1',a:2377,t:'camp',lat:63.060,lng:-151.150,note:'First camp, beginning the heavily crevassed glacier travel.'},
+  {n:'Camp 2 (11,000ft)',a:3353,t:'camp',lat:63.040,lng:-151.060,note:'Past Kahiltna Pass, major acclimatisation stop.'},
+  {n:'Camp 3 (14,200ft / Genet Basin)',a:4328,t:'camp',lat:63.069,lng:-151.007,note:'Primary high-altitude base, most expeditions spend several days here.'},
+  {n:'High Camp (17,200ft)',a:5243,t:'camp',lat:63.080,lng:-151.000,note:'Reached via fixed-rope headwall and the West Buttress ridge.'},
+  {n:'Denali Pass',a:5547,t:'pass',lat:63.085,lng:-150.995,note:'Crux of summit day, exposed ridge traverse known as "the Autobahn."'},
+  {n:'Denali Summit',a:6190,t:'summit',lat:63.069,lng:-151.007,note:'Highest peak in North America. West Buttress route — moderate technically, extreme cold and weather.'}
+]},
+
+{id:'ss04',r:'sevensummits',name:'Kilimanjaro (Africa)',icon:'🌋',lat:-3.067,lng:37.353,alt:5895,km:70,days:7,diff:'difficult',
+season:'Jan – Mar, Jun – Oct',
+desc:'Highest peak in Africa and the world\'s tallest free-standing mountain — not part of any range. The most accessible Seven Summit, requiring no ropes or technical skill, but altitude alone causes a meaningful number of climbers to turn back. Five climate zones from rainforest to arctic summit.',
+wps:[
+  {n:'Machame Gate',a:1800,t:'start',lat:-3.270,lng:37.330,note:'Most popular of five routes — "Whiskey Route," scenic rainforest start.'},
+  {n:'Machame Camp',a:3000,t:'camp',lat:-3.180,lng:37.320,note:'Day 1 camp, rainforest gives way to moorland.'},
+  {n:'Shira Camp',a:3840,t:'camp',lat:-3.140,lng:37.290,note:'Open volcanic plateau, alpine desert terrain.'},
+  {n:'Barranco Camp',a:3960,t:'camp',lat:-3.108,lng:37.317,note:'Below the iconic Barranco Wall scramble.'},
+  {n:'Barafu Camp',a:4673,t:'camp',lat:-3.076,lng:37.349,note:'Final camp, summit push begins around midnight.'},
+  {n:'Uhuru Peak',a:5895,t:'summit',lat:-3.067,lng:37.353,note:'Highest point in Africa, on the Kibo volcanic cone. "Roof of Africa."'}
+]},
+
+{id:'ss05',r:'sevensummits',name:'Mount Elbrus (Europe)',icon:'❄️',lat:43.355,lng:42.439,alt:5642,km:20,days:8,diff:'difficult',
+season:'Jun – Sep (peak: Jul)',
+desc:'Highest peak in Europe, a dormant twin-coned volcano in Russia\'s Caucasus range, near the Georgian border. Cable cars and snowcats reach high camps, making it more accessible than other Seven Summits — but unpredictable storms and roughly 25 deaths a year from poor weather decisions remain real risks.',
+wps:[
+  {n:'Terskol',a:2100,t:'start',lat:43.267,lng:42.500,note:'Base village in the Baksan Valley, Kabardino-Balkaria.'},
+  {n:'Azau / Cable Car Base',a:2350,t:'village',lat:43.262,lng:42.487,note:'Lower cable car station, gateway to the mountain.'},
+  {n:'Garabashi (Barrels Camp)',a:3780,t:'camp',lat:43.310,lng:42.455,note:'Reached by cable car + chairlift, iconic barrel-shaped huts.'},
+  {n:'Diesel Hut',a:4100,t:'camp',lat:43.320,lng:42.450,note:'Higher hut option, closer to the standard South Route.'},
+  {n:'Pastukhov Rocks',a:4700,t:'pass',lat:43.340,lng:42.440,note:'Snowcat-assisted high point, start of the glaciated summit push.'},
+  {n:'Saddle (between twin summits)',a:5300,t:'pass',lat:43.350,lng:42.435,note:'Col between Elbrus\'s East and West summits.'},
+  {n:'Elbrus West Summit',a:5642,t:'summit',lat:43.355,lng:42.439,note:'Highest point in Europe, slightly taller than the East summit (5621m).'}
+]},
+
+{id:'ss06',r:'sevensummits',name:'Vinson Massif (Antarctica)',icon:'🧊',lat:-78.525,lng:-85.617,alt:4892,km:25,days:14,diff:'extreme',
+season:'Nov – Jan (Antarctic summer only)',
+desc:'Highest peak in Antarctica, deep in the remote Sentinel Range of the Ellsworth Mountains, just 1200km from the South Pole. Not technically demanding, but among the most logistically extreme expeditions on Earth — reached only by ski-plane from a blue-ice runway, with temperatures to -50°C.',
+wps:[
+  {n:'Punta Arenas, Chile',a:5,t:'start',lat:-53.163,lng:-70.917,note:'Final civilization stop before flying to Antarctica.'},
+  {n:'Union Glacier Camp',a:700,t:'camp',lat:-79.770,lng:-83.280,note:'Blue-ice runway landing, seasonal Antarctic logistics hub.'},
+  {n:'Vinson Base Camp',a:2130,t:'camp',lat:-78.550,lng:-85.650,note:'Flown in by ski-plane, on the Branscomb Glacier.'},
+  {n:'Low Camp',a:2780,t:'camp',lat:-78.540,lng:-85.630,note:'Gentle glacier ascent, sled-hauled loads.'},
+  {n:'High Camp',a:3780,t:'camp',lat:-78.530,lng:-85.620,note:'Reached via fixed ropes on a 40-45° snow arête.'},
+  {n:'Vinson Summit',a:4892,t:'summit',lat:-78.525,lng:-85.617,note:'Highest point in Antarctica. Branscomb Glacier (Shoulder) Route — extreme cold and isolation, moderate technical difficulty.'}
+]},
+
+{id:'ss07',r:'sevensummits',name:'Puncak Jaya (Oceania)',icon:'💎',lat:-4.078,lng:137.158,alt:4884,km:60,days:14,diff:'extreme',
+season:'Jul – Aug (driest window)',
+desc:'Highest peak between the Himalayas and the Andes, in Indonesian Papua. The "Messner list" Seven Summit — by far the most technical of the seven, requiring genuine rock climbing on the sheer Carstensz Pyramid limestone face, plus a remote jungle approach through tribal territory and a helicopter or multi-day trek-in. Far fewer climbers attempt this than any other Seven Summit.',
+wps:[
+  {n:'Timika',a:30,t:'start',lat:-4.528,lng:136.887,note:'Lowland Papua town, gateway via mining-company access roads.'},
+  {n:'Sugapa / Base of Approach',a:1800,t:'village',lat:-4.000,lng:137.000,note:'Trek-in start through dense rainforest and Dani tribal villages.'},
+  {n:'New Zealand Pass',a:4200,t:'pass',lat:-4.085,lng:137.150,note:'High alpine pass before the final approach to base camp.'},
+  {n:'Base Camp (Yellow Valley)',a:4350,t:'camp',lat:-4.082,lng:137.155,note:'Final camp below the sheer limestone face of Carstensz Pyramid.'},
+  {n:'Carstensz Pyramid Summit (Puncak Jaya)',a:4884,t:'summit',lat:-4.078,lng:137.158,note:'Most technical Seven Summit — exposed rock climbing, fixed ropes, multi-pitch traverse required.'}
 ]}
 
 ]; // end TREKS
@@ -1687,7 +1804,7 @@ let pmDiff = 'easy';
 let pmWaypoints = [];
 let wpIdSeq = 0;
 
-const RNAMES = {himachal:'Himachal Pradesh',uttarakhand:'Uttarakhand',jk:'J&K / Ladakh',northeast:'Seven Sisters NE',nepal:'Nepal Himalaya',tibet:'Tibet / China Border',maharashtra:'Maharashtra Sahyadris',southindia:'South India Western Ghats',spiritual:'Spiritual Yatras'};
+const RNAMES = {himachal:'Himachal Pradesh',uttarakhand:'Uttarakhand',jk:'J&K / Ladakh',northeast:'Seven Sisters NE',nepal:'Nepal Himalaya',tibet:'Tibet / China Border',maharashtra:'Maharashtra Sahyadris',southindia:'South India Western Ghats',spiritual:'Spiritual Yatras',sevensummits:'Seven Summits — World'};
 const DFPCT  = {easy:25,moderate:52,difficult:78,extreme:100};
 const DCOLS  = {start:'#2ea043',village:'#7d8590',camp:'#f97316',pass:'#a371f7',lake:'#388bfd',summit:'#f85149',end:'#f85149',temple:'#d29922'};
 const DTAG   = {start:'tv',village:'tv',camp:'tc',pass:'tp',lake:'tl',summit:'ts',end:'tv',temple:'tc'};
@@ -1707,7 +1824,13 @@ const CLUSTERING_AVAILABLE = MAP_AVAILABLE && typeof L.markerClusterGroup === 'f
 // logging, pinning) keeps working even without a map.
 let map = null;
 if (MAP_AVAILABLE) {
-  map = L.map('map',{center:[30.5,80],zoom:5,zoomControl:false,attributionControl:false});
+  map = L.map('map',{
+    center:[30.5,80], zoom:5,
+    minZoom:2, maxZoom:18,
+    zoomSnap:0.5, zoomDelta:1,
+    wheelPxPerZoomLevel:80,
+    zoomControl:false, attributionControl:false
+  });
 
   // Leaflet sometimes caches a wrong container size if the DOM isn't fully
   // settled at init time (causes squished rendering / wrong cluster radius).
@@ -1763,7 +1886,14 @@ function allTreks(){ return TREKS.concat(customs); }
 let clusterGroup = null;
 function makeClusterGroup(){
   return L.markerClusterGroup({
-    maxClusterRadius: 55,
+    // Tighter radius at low zoom (world view) so genuinely distant pins
+    // like the Seven Summits never merge into one blob; looser at high
+    // zoom where dense regional treks should still group sensibly.
+    maxClusterRadius: function(zoom){
+      if (zoom <= 3) return 18;
+      if (zoom <= 5) return 35;
+      return 55;
+    },
     spiderfyOnMaxZoom: true,
     showCoverageOnHover: false,
     zoomToBoundsOnClick: true,
@@ -2224,7 +2354,7 @@ document.addEventListener('click',e=>{if(!e.target.closest('.swrap'))sres.style.
 // ═══════════════════════════════════════════════════
 // TABS
 // ═══════════════════════════════════════════════════
-const FLY={all:[30.5,80,5],himachal:[32,77.2,8],uttarakhand:[30.5,79.5,8],jk:[34,77,7],northeast:[26.5,92,7],nepal:[28.2,84.5,7],tibet:[30.5,81,7],maharashtra:[19.0,73.5,8],southindia:[11.5,76.5,7],spiritual:[22.5,79.0,5]};
+const FLY={all:[30.5,80,5],himachal:[32,77.2,8],uttarakhand:[30.5,79.5,8],jk:[34,77,7],northeast:[26.5,92,7],nepal:[28.2,84.5,7],tibet:[30.5,81,7],maharashtra:[19.0,73.5,8],southindia:[11.5,76.5,7],spiritual:[22.5,79.0,5],sevensummits:[20,10,3]};
 
 function switchRegion(tab){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
@@ -2375,6 +2505,24 @@ if('serviceWorker' in navigator){
 // ═══════════════════════════════════════════════════
 buildMkrs();
 updateBadge();
+
+// Fit-all button — smooth animated zoom to show all current region's pins
+document.getElementById('fitbtn').onclick = () => {
+  if (!MAP_AVAILABLE) return;
+  const list = activeR==='all' ? allTreks() : allTreks().filter(t=>t.r===activeR);
+  if (!list.length) return;
+  const lats = list.map(t=>t.lat), lngs = list.map(t=>t.lng);
+  const bounds = L.latLngBounds(
+    [Math.min(...lats)-2, Math.min(...lngs)-2],
+    [Math.max(...lats)+2, Math.max(...lngs)+2]
+  );
+  map.flyToBounds(bounds, {
+    padding:[60,60], maxZoom:13,
+    animate:true, duration:1.2,
+    easeLinearity:0.25
+  });
+  toast('Fitting all pins…','#388bfd');
+};
 </script>
 <!-- Journey Hub: Timeline, Bucket List, Achievements, Constellation, Oracle, Export/Import.
      All markup is injected by journey-hub.js — kept in a separate file so the
