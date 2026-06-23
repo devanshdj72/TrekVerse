@@ -223,7 +223,6 @@ function renderHub(){
   else if(hubView==='achievements') body.innerHTML = renderAchievements();
   else if(hubView==='constellation') body.innerHTML = renderConstellation();
   else if(hubView==='oracle') body.innerHTML = renderOracle();
-  else if(hubView==='progress') body.innerHTML = renderProgress();
   else if(hubView==='pindetail') body.innerHTML = renderPinDetail(hubView_pinId);
   else if(hubView==='pinform') body.innerHTML = renderPinForm(hubView_editPin);
   else if(hubView==='bucketform') body.innerHTML = renderBucketForm(hubView_editBucket);
@@ -256,7 +255,6 @@ function renderMenu(){
       <button class="btn bsec hub-menu-item" data-go="achievements">🏆<span>Achievements</span></button>
       <button class="btn bsec hub-menu-item" data-go="constellation">✨<span>Constellation</span></button>
       <button class="btn bsec hub-menu-item" data-go="oracle">🔮<span>Ask Oracle</span></button>
-      <button class="btn bsec hub-menu-item" data-go="progress">📋<span>Progress</span></button>
       <button class="btn bsec hub-menu-item" id="hub-new-pin">➕<span>New Memory</span></button>
     </div>
 
@@ -577,178 +575,8 @@ function computeStats(){
 // ════════════════════════════════════════════════════════════════
 // EVENT WIRING (delegated per render since innerHTML is replaced each time)
 // ════════════════════════════════════════════════════════════════
-// ── PROGRESS TRACKER ──
-const CIRCUITS = [
-  {
-    id: 'sevensummits',
-    name: 'Seven Summits',
-    emoji: '🌐',
-    color: '#f97316',
-    desc: 'The highest peak on every continent',
-    ids: ['ss01','ss02','ss03','ss04','ss05','ss06','ss07'],
-    labels: ['Everest (Asia)','Aconcagua (S.America)','Denali (N.America)','Kilimanjaro (Africa)','Elbrus (Europe)','Vinson (Antarctica)','Puncak Jaya (Oceania)']
-  },
-  {
-    id: 'panchkedar',
-    name: 'Panch Kedar',
-    emoji: '🕉️',
-    color: '#d29922',
-    desc: 'Five sacred Shiva shrines of Garhwal',
-    ids: ['sp01','sp02','sp03','sp04','sp05'],
-    labels: ['Kedarnath (Hump)','Tungnath (Arms)','Rudranath (Face)','Madhyamaheshwar (Navel)','Kalpeshwar (Hair)']
-  },
-  {
-    id: 'saptbadri',
-    name: 'Sapt Badri',
-    emoji: '🛕',
-    color: '#388bfd',
-    desc: 'Seven sacred Vishnu shrines of Uttarakhand',
-    ids: ['sp06','sp07','sp08','sp09','sp10','sp11','sp12'],
-    labels: ['Badrinath (Badri Vishal)','Yogadhyan Badri','Bhavishya Badri','Vridha Badri','Adi Badri','Dhyan Badri','Ardha Badri']
-  },
-  {
-    id: 'panchkailash',
-    name: 'Panch Kailash',
-    emoji: '🏔️',
-    color: '#a371f7',
-    desc: 'Five sacred Kailash peaks of the Himalaya',
-    ids: ['sp13','sp14','sp15','sp16','sp17'],
-    labels: ['Mt Kailash (Tibet)','Adi Kailash (Chhota)','Shrikhand Mahadev','Kinnaur Kailash','Manimahesh Kailash']
-  },
-  {
-    id: 'jyotirlinga',
-    name: '12 Jyotirlingas',
-    emoji: '🪔',
-    color: '#f85149',
-    desc: 'Twelve self-manifested Shiva shrines of India',
-    ids: ['sp18','sp19','sp20','sp21','sp22','sp23','sp24','sp25','sp26','sp27','sp28','sp01'],
-    labels: ['Somnath','Mallikarjuna','Mahakaleshwar','Omkareshwar','Kedarnath','Bhimashankar','Kashi Vishwanath','Trimbakeshwar','Vaidyanath','Nageshwar','Rameshwaram','Grishneshwar']
-  }
-];
-
-function progressDone(ids){
-  const lg = JSON.parse(localStorage.getItem('sl3_logged')||'{}');
-  return ids.filter(id => lg[id]);
-}
-
-function renderProgress(){
-  const lg = JSON.parse(localStorage.getItem('sl3_logged')||'{}');
-
-  // Hero summary — total unique circuits with at least 1 done
-  const totalDone = CIRCUITS.reduce((acc, c) => {
-    const done = c.ids.filter(id=>lg[id]).length;
-    return acc + (done===c.ids.length ? 1 : 0);
-  }, 0);
-
-  const circuitsHtml = CIRCUITS.map(c => {
-    const done = c.ids.filter(id=>lg[id]);
-    const pct = Math.round(done.length / c.ids.length * 100);
-    const complete = done.length === c.ids.length;
-
-    const itemsHtml = c.ids.map((id, i) => {
-      const isLogged = !!lg[id];
-      const trek = typeof TREKS !== 'undefined' ? [...TREKS].find(t=>t.id===id) : null;
-      const label = c.labels[i] || (trek ? trek.name : id);
-      const date = isLogged && lg[id].date ? lg[id].date : '';
-      const rating = isLogged && lg[id].rating ? '★'.repeat(lg[id].rating) : '';
-      return `
-        <div class="prog-item ${isLogged?'prog-done':''}" data-trekid="${id}">
-          <div class="prog-check" style="background:${isLogged ? c.color : 'transparent'};border-color:${isLogged ? c.color : 'rgba(255,255,255,.2)'}">
-            ${isLogged ? '✓' : ''}
-          </div>
-          <div class="prog-item-info">
-            <div class="prog-item-name">${isLogged ? '<s style="opacity:.5">'+esc(label)+'</s>' : esc(label)}</div>
-            ${isLogged ? `<div class="prog-item-meta">${date}${rating ? ' · '+rating : ''}</div>` : ''}
-          </div>
-          ${trek ? `<div class="prog-item-jump" data-trekid="${id}" title="View on map">›</div>` : ''}
-        </div>`;
-    }).join('');
-
-    return `
-      <div class="prog-circuit ${complete?'prog-circuit-complete':''}">
-        <div class="prog-circuit-head" data-circuit="${c.id}">
-          <div class="prog-circuit-left">
-            <span class="prog-emoji">${c.emoji}</span>
-            <div>
-              <div class="prog-circuit-name">${c.name} ${complete ? '<span class="prog-badge-done">COMPLETE ✦</span>' : ''}</div>
-              <div class="prog-circuit-sub">${c.desc}</div>
-            </div>
-          </div>
-          <div class="prog-circuit-right">
-            <div class="prog-fraction" style="color:${c.color}">${done.length}<span style="color:var(--mute);font-weight:400">/${c.ids.length}</span></div>
-            <div class="prog-chev" data-circuit="${c.id}">›</div>
-          </div>
-        </div>
-        <div class="prog-bar-wrap">
-          <div class="prog-bar-fill" style="width:${pct}%;background:${c.color};box-shadow:0 0 8px ${c.color}55"></div>
-        </div>
-        <div class="prog-list prog-list-${c.id}" style="display:none">
-          ${itemsHtml}
-        </div>
-      </div>`;
-  }).join('');
-
-  return backBtn('Progress Tracker') + `
-    <div style="margin-bottom:16px">
-      <div class="s-desc" style="margin:0 0 14px">${totalDone} of ${CIRCUITS.length} circuits completed. Tap any circuit to expand its checklist — items are checked automatically when you log a summit.</div>
-      <div class="s-stats" style="grid-template-columns:repeat(${CIRCUITS.length},1fr);gap:6px">
-        ${CIRCUITS.map(c=>{
-          const d = c.ids.filter(id=>lg[id]).length;
-          return `<div class="ss" style="border-color:${d===c.ids.length?c.color:'var(--bord)'}">
-            <div class="ssv" style="color:${c.color}">${d}/${c.ids.length}</div>
-            <div class="ssl">${c.emoji}</div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>
-    <div class="prog-circuits">${circuitsHtml}</div>
-  `;
-}
-
-function wireProgress(body){
-  // Toggle each circuit's expanded list
-  body.querySelectorAll('[data-circuit]').forEach(el => {
-    el.addEventListener('click', e => {
-      const id = el.dataset.circuit;
-      const list = body.querySelector(`.prog-list-${id}`);
-      const chev = body.querySelector(`.prog-chev[data-circuit="${id}"]`);
-      if(!list) return;
-      const open = list.style.display !== 'none';
-      list.style.display = open ? 'none' : 'block';
-      if(chev) chev.style.transform = open ? '' : 'rotate(90deg)';
-    });
-  });
-
-  // Jump to trek on map
-  body.querySelectorAll('.prog-item-jump').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const id = btn.dataset.trekid;
-      const trek = typeof TREKS !== 'undefined' ? [...TREKS].find(t=>t.id===id) : null;
-      if(!trek) return;
-      closeHub();
-      if(typeof openSheet === 'function') setTimeout(()=>openSheet(trek), 200);
-    });
-  });
-
-  // Tap item row also jumps (but not the jump button itself)
-  body.querySelectorAll('.prog-item[data-trekid]').forEach(item => {
-    item.addEventListener('click', e => {
-      if(e.target.classList.contains('prog-item-jump')) return;
-      const id = item.dataset.trekid;
-      const trek = typeof TREKS !== 'undefined' ? [...TREKS].find(t=>t.id===id) : null;
-      if(!trek) return;
-      closeHub();
-      if(typeof openSheet === 'function') setTimeout(()=>openSheet(trek), 200);
-    });
-  });
-}
-
 function wireHubBody(){
   const body = document.getElementById('hubbody');
-
-  // Progress tracker wiring
-  if(hubView==='progress') wireProgress(body);
 
   body.querySelector('#hub-back')?.addEventListener('click', ()=>{
     if(hubView==='pindetail' || hubView==='pinform') goHub('timeline');
@@ -1132,33 +960,6 @@ function injectCSS(){
 .hub-oracle-typing span:nth-child(2){animation-delay:.15s}
 .hub-oracle-typing span:nth-child(3){animation-delay:.3s}
 @keyframes hubBounce{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-4px);opacity:1}}
-
-/* ── PROGRESS TRACKER ── */
-.prog-circuits{display:flex;flex-direction:column;gap:10px;padding-bottom:24px}
-.prog-circuit{background:rgba(255,255,255,.04);border:1px solid var(--bord);border-radius:14px;overflow:hidden;transition:border-color .2s}
-.prog-circuit-complete{border-color:rgba(46,160,67,.35)!important;background:rgba(46,160,67,.04)!important}
-.prog-circuit-head{display:flex;align-items:center;justify-content:space-between;padding:13px 14px 10px;cursor:pointer;user-select:none}
-.prog-circuit-left{display:flex;align-items:center;gap:10px}
-.prog-emoji{font-size:22px;flex-shrink:0}
-.prog-circuit-name{font-size:14px;font-weight:700;color:var(--txt);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.prog-circuit-sub{font-size:11px;color:var(--mute);margin-top:1px}
-.prog-circuit-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.prog-fraction{font-size:18px;font-weight:800;font-family:monospace;line-height:1}
-.prog-chev{font-size:18px;color:var(--mute);transition:transform .22s cubic-bezier(.34,1.56,.64,1);line-height:1}
-.prog-bar-wrap{height:5px;background:rgba(255,255,255,.07);margin:0 14px 12px;border-radius:3px;overflow:hidden}
-.prog-bar-fill{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.16,1,.3,1)}
-.prog-badge-done{font-size:9px;padding:2px 7px;border-radius:8px;background:rgba(46,160,67,.18);color:#4ade80;font-weight:700;letter-spacing:.5px}
-.prog-list{padding:0 10px 10px}
-.prog-item{display:flex;align-items:center;gap:10px;padding:9px 6px;border-radius:10px;cursor:pointer;transition:background .15s,transform .1s}
-.prog-item:hover{background:rgba(255,255,255,.05)}
-.prog-item:active{transform:scale(.98)}
-.prog-check{width:20px;height:20px;border-radius:50%;border:2px solid;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;transition:background .25s,border-color .25s}
-.prog-item-info{flex:1;min-width:0}
-.prog-item-name{font-size:13px;font-weight:500;color:var(--txt)}
-.prog-item-meta{font-size:10px;color:var(--mute);margin-top:1px;font-family:monospace}
-.prog-item-jump{font-size:18px;color:var(--mute);flex-shrink:0;padding:0 4px;transition:color .15s,transform .15s}
-.prog-item:hover .prog-item-jump{color:var(--ora);transform:translateX(2px)}
-.prog-done .prog-item-name{opacity:.65}
 `;
   const style = document.createElement('style');
   style.textContent = css;
