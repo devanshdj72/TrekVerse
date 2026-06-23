@@ -1,7 +1,8 @@
-const CACHE = 'summitlog-v4';
+const CACHE = 'summitlog-v5';
 const ASSETS = [
   '/summitlog/',
   '/summitlog/index.html',
+  '/summitlog/journey-hub.js',
   '/summitlog/manifest.json',
   '/summitlog/icon.svg',
   '/summitlog/icon-192.png',
