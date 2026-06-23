@@ -535,6 +535,17 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 #photo-lightbox-nav{display:flex;gap:16px;align-items:center}
 #photo-lightbox-nav button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;width:40px;height:40px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
 #photo-lightbox-nav button:hover{background:rgba(255,255,255,.22)}
+
+/* ── SHARE CARD ── */
+#share-modal{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);display:none;align-items:flex-end;justify-content:center}
+#share-modal.on{display:flex;animation:sfadeIn .25s ease}
+@keyframes sfadeIn{from{opacity:0}to{opacity:1}}
+#share-inner{width:100%;max-width:500px;background:var(--surf);border-radius:22px 22px 0 0;border:1px solid var(--bord);padding:20px 18px 36px;box-shadow:0 -16px 50px rgba(0,0,0,.6)}
+#share-canvas-wrap{width:100%;aspect-ratio:1;border-radius:14px;overflow:hidden;margin-bottom:14px;background:#0d1117;box-shadow:0 6px 28px rgba(0,0,0,.6)}
+#share-canvas-wrap canvas{width:100%;height:100%;display:block}
+#share-hint{font-size:12px;color:var(--mute);text-align:center;margin-bottom:14px;line-height:1.5}
+#share-actions{display:flex;gap:10px}
+#share-close-btn{position:absolute;top:12px;right:14px;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:18px;width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
 </style>
 </head>
 <body>
@@ -599,6 +610,20 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <div class="macts">
       <button class="btn bsec" id="mcancel">Cancel</button>
       <button class="btn bp" id="msave" style="flex:1">✔ Save Summit</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE CARD MODAL -->
+<div id="share-modal">
+  <div id="share-inner" style="position:relative">
+    <button id="share-close-btn">✕</button>
+    <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:14px;text-align:center;letter-spacing:.5px">📤 SHARE TREK CARD</div>
+    <div id="share-canvas-wrap"><canvas id="share-canvas" width="1080" height="1080"></canvas></div>
+    <div id="share-hint">📱 Tap <b>Download</b> to save — then share to Instagram, WhatsApp, or anywhere.<br>Your card is 1080×1080 px — perfect for stories & posts.</div>
+    <div id="share-actions">
+      <button class="btn bsec" id="share-close-btn2" style="flex:1">✕ Close</button>
+      <button class="btn bp" id="share-download-btn" style="flex:2">⬇ Download Card</button>
     </div>
   </div>
 </div>
@@ -2154,6 +2179,7 @@ function openSheet(t){
       <button class="btn ${done?'bd':'bp'}" id="slog">${done?'✓ Logged — Update':'+ Log This Summit'}</button>
       ${t.custom?'<button class="btn bsec" id="sedit">✏️</button>':''}
       <button class="btn bsec" id="spin">${pinned.includes(t.id)?'📌':'🔖'}</button>
+      <button class="btn bsec" id="sshare" title="Share Trek Card">📤</button>
     </div>`;
   document.getElementById('sheet').classList.add('up');
   document.getElementById('sheetbackdrop').classList.add('up');
@@ -2164,6 +2190,7 @@ function openSheet(t){
   });
   document.getElementById('slog').onclick=()=>openModal(t);
   document.getElementById('spin').onclick=()=>togglePin(t);
+  document.getElementById('sshare').onclick=()=>openShareCard(t);
   if(t.custom){
     document.getElementById('sedit').onclick=()=>openPinModal(t.lat,t.lng,t);
   }
@@ -2775,6 +2802,371 @@ function renderSheetPhotos(trekId){
 window._sheetLbOpen = function(trekId, idx){
   openLightbox(getPhotos(trekId), idx);
 };
+
+// ═══════════════════════════════════════════════════
+// SHARE CARD ENGINE
+// ═══════════════════════════════════════════════════
+
+function openShareCard(trek) {
+  const modal = document.getElementById('share-modal');
+  modal.classList.add('on');
+  document.body.style.overflow = 'hidden';
+  const canvas = document.getElementById('share-canvas');
+  drawShareCard(canvas, trek);
+}
+
+function closeShareCard() {
+  document.getElementById('share-modal').classList.remove('on');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('share-close-btn').onclick = closeShareCard;
+document.getElementById('share-close-btn2').onclick = closeShareCard;
+document.getElementById('share-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('share-modal')) closeShareCard();
+});
+
+document.getElementById('share-download-btn').onclick = () => {
+  const canvas = document.getElementById('share-canvas');
+  const a = document.createElement('a');
+  a.download = (canvas.dataset.trekname || 'trek-card') + '.jpg';
+  canvas.toBlob(blob => {
+    a.href = URL.createObjectURL(blob);
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }, 'image/jpeg', 0.95);
+  toast('📥 Card saved to your downloads!', '#2ea043');
+};
+
+function drawShareCard(canvas, trek) {
+  canvas.dataset.trekname = trek.name.replace(/\s+/g, '-').toLowerCase();
+  const W = 1080, H = 1080;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  const ld = logged[trek.id] || {};
+  const done = !!ld.date;
+  const diff = trek.diff || 'Moderate';
+  const elev = trek.elev || trek.elevation || null;
+  const region = trek.region || trek.cat || '';
+  const dur = trek.dur || trek.duration || '';
+  const dist = trek.dist || trek.distance || '';
+  const waypoints = (trek.waypoints || []).length;
+  const photos = getPhotos(trek.id);
+
+  // ── Background gradient ──
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0,   '#0a0e1a');
+  bg.addColorStop(0.5, '#0d1117');
+  bg.addColorStop(1,   '#111827');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Subtle star field ──
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  const rng = mulberry32(trek.id.split('').reduce((a,c)=>a+c.charCodeAt(0),0));
+  for (let i = 0; i < 180; i++) {
+    const x = rng() * W, y = rng() * (H * 0.55);
+    const r = rng() * 1.4 + 0.3;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+  }
+
+  // ── Mountain silhouette ──
+  drawMountain(ctx, W, H, trek);
+
+  // ── Bottom fade overlay ──
+  const fade = ctx.createLinearGradient(0, H * 0.42, 0, H);
+  fade.addColorStop(0,   'rgba(10,14,26,0)');
+  fade.addColorStop(0.25,'rgba(10,14,26,0.82)');
+  fade.addColorStop(1,   'rgba(10,14,26,1)');
+  ctx.fillStyle = fade;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Top accent line ──
+  const accentGrad = ctx.createLinearGradient(0, 0, W, 0);
+  accentGrad.addColorStop(0,   'rgba(249,115,22,0)');
+  accentGrad.addColorStop(0.3, 'rgba(249,115,22,0.9)');
+  accentGrad.addColorStop(0.7, 'rgba(249,115,22,0.9)');
+  accentGrad.addColorStop(1,   'rgba(249,115,22,0)');
+  ctx.fillStyle = accentGrad;
+  ctx.fillRect(0, 0, W, 4);
+
+  // ── Region label ──
+  if (region) {
+    ctx.font = '500 30px system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(249,115,22,0.9)';
+    ctx.letterSpacing = '3px';
+    ctx.textAlign = 'center';
+    ctx.fillText(region.toUpperCase(), W/2, 610);
+    ctx.letterSpacing = '0px';
+  }
+
+  // ── Trek name ──
+  ctx.textAlign = 'center';
+  const nameSize = trek.name.length > 18 ? 68 : trek.name.length > 12 ? 82 : 96;
+  ctx.font = `800 ${nameSize}px system-ui, sans-serif`;
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowColor = 'rgba(0,0,0,0.8)';
+  ctx.shadowBlur = 24;
+  wrapText(ctx, trek.name, W/2, region ? 685 : 650, W - 100, nameSize * 1.22);
+  ctx.shadowBlur = 0;
+
+  // ── Divider ──
+  const divY = region ? 750 : 730;
+  const divGrad = ctx.createLinearGradient(120, 0, W-120, 0);
+  divGrad.addColorStop(0,   'rgba(255,255,255,0)');
+  divGrad.addColorStop(0.5, 'rgba(255,255,255,0.18)');
+  divGrad.addColorStop(1,   'rgba(255,255,255,0)');
+  ctx.fillStyle = divGrad;
+  ctx.fillRect(120, divY, W-240, 1);
+
+  // ── Stats row ──
+  const stats = [];
+  if (elev)  stats.push({ icon: '▲', label: 'ELEVATION', val: typeof elev === 'number' ? elev.toLocaleString() + ' m' : elev });
+  if (diff)  stats.push({ icon: '⚡', label: 'DIFFICULTY', val: diff });
+  if (dur)   stats.push({ icon: '🕐', label: 'DURATION', val: dur });
+  if (dist)  stats.push({ icon: '↔', label: 'DISTANCE', val: dist });
+  if (!stats.length) stats.push({ icon: '🏔', label: 'TYPE', val: trek.custom ? 'Custom Pin' : 'Trek' });
+
+  const statY = divY + 52;
+  const colW = (W - 120) / Math.min(stats.length, 4);
+  stats.slice(0, 4).forEach((s, i) => {
+    const cx = 60 + colW * i + colW / 2;
+    ctx.textAlign = 'center';
+    ctx.font = '700 38px system-ui, sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(s.val, cx, statY);
+    ctx.font = '500 22px system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.42)';
+    ctx.letterSpacing = '1.5px';
+    ctx.fillText(s.label, cx, statY + 34);
+    ctx.letterSpacing = '0px';
+    // separator
+    if (i < stats.length - 1) {
+      ctx.fillStyle = 'rgba(255,255,255,0.1)';
+      ctx.fillRect(60 + colW * (i+1) - 1, statY - 28, 1, 55);
+    }
+  });
+
+  // ── Elevation profile strip ──
+  const profData = buildElevProfile(trek);
+  if (profData.length > 1) {
+    drawElevProfile(ctx, profData, 80, 880, W - 160, 100);
+  }
+
+  // ── Logged badge ──
+  if (done) {
+    const bx = 80, by = 994;
+    ctx.font = '600 26px system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(46,160,67,0.9)';
+    ctx.textAlign = 'left';
+    ctx.fillText('✓ SUMMIT LOGGED' + (ld.date ? '  ·  ' + ld.date : '') + (ld.rating ? '  ' + '★'.repeat(ld.rating) : ''), bx, by);
+  }
+
+  // ── Waypoints badge ──
+  if (waypoints > 0) {
+    ctx.font = '600 26px system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(163,113,247,0.85)';
+    ctx.textAlign = done ? 'right' : 'left';
+    const wpx = done ? W - 80 : 80;
+    ctx.fillText(`📍 ${waypoints} waypoint${waypoints > 1 ? 's' : ''}`, wpx, 994);
+  }
+
+  // ── Photo count badge ──
+  if (photos.length > 0) {
+    ctx.font = '600 26px system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(249,115,22,0.85)';
+    ctx.textAlign = 'right';
+    ctx.fillText(`📷 ${photos.length} photo${photos.length > 1 ? 's' : ''}`, W - 80, done ? 960 : 994);
+  }
+
+  // ── Branding ──
+  ctx.textAlign = 'center';
+  ctx.font = '500 24px system-ui, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.28)';
+  ctx.fillText('TrekVerse  ·  Your Himalayan Journey', W/2, 1050);
+
+  // ── Corner decorations ──
+  drawCornerAccent(ctx, 0, 0, 60, 'rgba(249,115,22,0.4)');
+  drawCornerAccent(ctx, W, 0, 60, 'rgba(249,115,22,0.4)', true);
+}
+
+// ── Seeded RNG for deterministic stars ──
+function mulberry32(seed) {
+  return function() {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+// ── Mountain silhouette ──
+function drawMountain(ctx, W, H, trek) {
+  const rng = mulberry32((trek.id + 'mtn').split('').reduce((a,c)=>a+c.charCodeAt(0),0));
+  const baseY = H * 0.58;
+  const peaks = 5 + Math.floor(rng() * 3);
+
+  ctx.beginPath();
+  ctx.moveTo(0, baseY);
+
+  // Generate peaks deterministically from trek id
+  const pts = [{x:0, y:baseY}];
+  const mainPeakX = W * (0.38 + rng() * 0.24);
+  const mainPeakY = H * (0.08 + rng() * 0.10);
+  for (let i = 0; i <= peaks; i++) {
+    const t = i / peaks;
+    const x = t * W;
+    const distFromMain = Math.abs(x - mainPeakX) / (W * 0.5);
+    const base = baseY - H * 0.06 * (1 - distFromMain * 0.7);
+    const y = i === Math.floor(peaks * (mainPeakX/W)) ? mainPeakY :
+              base - (rng() * H * 0.12) * (1 - distFromMain * 0.5);
+    pts.push({x, y: Math.min(y, baseY - 20)});
+  }
+  pts.push({x: W, y: baseY});
+
+  // Draw smooth mountain
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length - 1; i++) {
+    const mx = (pts[i].x + pts[i+1].x) / 2;
+    const my = (pts[i].y + pts[i+1].y) / 2;
+    ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+  }
+  ctx.lineTo(W, baseY);
+  ctx.lineTo(W, H); ctx.lineTo(0, H);
+  ctx.closePath();
+
+  const mtnGrad = ctx.createLinearGradient(0, mainPeakY, 0, baseY);
+  mtnGrad.addColorStop(0,   'rgba(30,40,70,0.95)');
+  mtnGrad.addColorStop(0.6, 'rgba(20,28,55,0.85)');
+  mtnGrad.addColorStop(1,   'rgba(15,20,40,0.5)');
+  ctx.fillStyle = mtnGrad;
+  ctx.fill();
+
+  // Snow cap on main peak
+  const snowY = mainPeakY;
+  const snowH = (baseY - snowY) * 0.22;
+  ctx.save();
+  ctx.clip();
+  ctx.beginPath();
+  ctx.moveTo(mainPeakX - snowH * 1.6, snowY + snowH * 1.8);
+  ctx.lineTo(mainPeakX, snowY - 10);
+  ctx.lineTo(mainPeakX + snowH * 1.6, snowY + snowH * 1.8);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(255,255,255,0.82)';
+  ctx.fill();
+  ctx.restore();
+}
+
+// ── Build elevation profile data ──
+function buildElevProfile(trek) {
+  if (trek.elev_profile && trek.elev_profile.length) return trek.elev_profile;
+  // Generate synthetic profile from elevation + difficulty
+  const elev = typeof trek.elev === 'number' ? trek.elev : parseInt(trek.elev) || 4000;
+  const base = elev * 0.55;
+  const diff = (trek.diff || '').toLowerCase();
+  const pts = 20;
+  const profile = [];
+  for (let i = 0; i <= pts; i++) {
+    const t = i / pts;
+    let e;
+    if (diff.includes('easy')) {
+      e = base + (elev - base) * Math.pow(t, 1.4) * (1 + 0.05 * Math.sin(t * Math.PI * 4));
+    } else if (diff.includes('hard') || diff.includes('extreme')) {
+      e = base + (elev - base) * (Math.pow(t, 0.7) + 0.08 * Math.sin(t * Math.PI * 6));
+    } else {
+      e = base + (elev - base) * (0.5 * t + 0.5 * Math.pow(t, 1.8) + 0.06 * Math.sin(t * Math.PI * 5));
+    }
+    profile.push(Math.min(e, elev));
+  }
+  return profile;
+}
+
+// ── Draw elevation profile ──
+function drawElevProfile(ctx, data, x, y, w, h) {
+  if (!data.length) return;
+  const min = Math.min(...data), max = Math.max(...data);
+  const range = max - min || 1;
+  const pts = data.map((v, i) => ({
+    x: x + (i / (data.length - 1)) * w,
+    y: y + h - ((v - min) / range) * h
+  }));
+
+  // Filled area
+  const areaGrad = ctx.createLinearGradient(0, y, 0, y + h);
+  areaGrad.addColorStop(0,   'rgba(249,115,22,0.35)');
+  areaGrad.addColorStop(1,   'rgba(249,115,22,0.02)');
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, y + h);
+  pts.forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.lineTo(pts[pts.length-1].x, y + h);
+  ctx.closePath();
+  ctx.fillStyle = areaGrad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length - 1; i++) {
+    const mx = (pts[i].x + pts[i+1].x) / 2;
+    const my = (pts[i].y + pts[i+1].y) / 2;
+    ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+  }
+  ctx.lineTo(pts[pts.length-1].x, pts[pts.length-1].y);
+  ctx.strokeStyle = 'rgba(249,115,22,0.9)';
+  ctx.lineWidth = 3;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // Summit dot
+  const peak = pts.reduce((a,b) => b.y < a.y ? b : a);
+  ctx.beginPath(); ctx.arc(peak.x, peak.y, 5, 0, Math.PI*2);
+  ctx.fillStyle = '#f97316'; ctx.fill();
+  ctx.beginPath(); ctx.arc(peak.x, peak.y, 9, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(249,115,22,0.4)'; ctx.lineWidth = 2; ctx.stroke();
+
+  // Elevation labels
+  ctx.font = '500 22px system-ui, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.textAlign = 'left';
+  ctx.fillText(Math.round(min).toLocaleString() + ' m', x, y + h + 28);
+  ctx.textAlign = 'right';
+  ctx.fillStyle = 'rgba(249,115,22,0.8)';
+  ctx.fillText('▲ ' + Math.round(max).toLocaleString() + ' m', x + w, y + h + 28);
+
+  // Baseline
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x, y + h); ctx.lineTo(x + w, y + h); ctx.stroke();
+}
+
+// ── Corner accent ──
+function drawCornerAccent(ctx, x, y, size, color, flipX) {
+  ctx.save();
+  if (flipX) { ctx.translate(x, y); ctx.scale(-1, 1); x = 0; }
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x, y + size); ctx.lineTo(x, y); ctx.lineTo(x + size, y);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ── Word wrap helper ──
+function wrapText(ctx, text, cx, y, maxW, lineH) {
+  const words = text.split(' ');
+  let line = '';
+  let lines = [];
+  for (const w of words) {
+    const test = line + (line ? ' ' : '') + w;
+    if (ctx.measureText(test).width > maxW && line) {
+      lines.push(line); line = w;
+    } else { line = test; }
+  }
+  if (line) lines.push(line);
+  const startY = y - (lines.length - 1) * lineH / 2;
+  lines.forEach((l, i) => ctx.fillText(l, cx, startY + i * lineH));
+}
 
 // ═══════════════════════════════════════════════════
 // BOOT
