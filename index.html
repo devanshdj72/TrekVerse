@@ -125,6 +125,10 @@ if (_fbReady && !_fbConfig.apiKey.includes('YOUR')) {
 #themebtn:hover{ background:rgba(255,255,255,.15);transform:scale(1.08) }
 [data-theme="light"] #themebtn{ background:rgba(0,0,0,.07);border-color:var(--bord) }
 [data-theme="light"] #themebtn:hover{ background:rgba(0,0,0,.13) }
+
+#user-chip:hover{ border-color:var(--ora)!important;transform:scale(1.08) }
+[data-theme="light"] #user-chip{ background:rgba(0,0,0,.06)!important;border-color:var(--bord)!important }
+#um-signout:hover{ background:rgba(248,81,73,.1) }
 html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt)}
 
 /* ═══════════════════════════════════════
@@ -132,11 +136,12 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 ═══════════════════════════════════════ */
 #topbar{
   position:fixed;top:0;left:0;right:0;z-index:1000;
-  height:54px;display:flex;align-items:center;gap:8px;
+  height:54px;display:flex;align-items:center;gap:6px;
   padding:0 10px;padding-top:env(safe-area-inset-top,0px);
   background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
   border-bottom:1px solid var(--bord);
   box-shadow:0 4px 24px rgba(0,0,0,.35);
+  overflow:hidden;
 }
 .logo{font-size:clamp(14px,4vw,18px);font-weight:800;color:var(--ora);white-space:nowrap;letter-spacing:.3px;text-shadow:0 0 16px rgba(249,115,22,.4);display:flex;align-items:center;gap:4px;flex-shrink:0}
 .logo .logo-peak{display:inline-block;animation:logoFloat 3s ease-in-out infinite}
@@ -708,10 +713,11 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <div id="topbar">
   <div class="logo"><span class="logo-peak">⛰</span> Trek<em>Verse</em></div>
   <button id="srch-toggle" title="Search treks">🔍</button>
+  <div style="flex:1"></div>
   <div id="bdg">0 / 0</div>
   <button id="addbtn" title="Add your own trek/pin">+</button>
   <button id="themebtn" title="Switch to light mode">🌙</button>
-  <button id="user-chip" title="Account" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--bord);background:rgba(255,255,255,.06);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden;flex-shrink:0;transition:border-color .2s,transform .15s">👤</button>
+  <button id="user-chip" title="Account" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--bord);background:rgba(255,255,255,.06);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden;flex-shrink:0;transition:border-color .2s,transform .15s;color:var(--txt);font-weight:700">👤</button>
   <button id="hubbtn" title="Journey Hub">☰</button>
 </div>
 
