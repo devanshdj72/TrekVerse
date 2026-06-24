@@ -1,14 +1,9 @@
-// ─────────────────────────────────────────────────
-// TREKVERSE FIREBASE CONFIG
-// Replace these placeholder values with your actual
-// Firebase project config from:
-// console.firebase.google.com → Project Settings → Your Apps → Web App
-// ─────────────────────────────────────────────────
 const FIREBASE_CONFIG = {
-  apiKey:            "YOUR_API_KEY",
-  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId:             "YOUR_APP_ID"
+  apiKey:            "AIzaSyA2uK3V1IO7QuyGW4GmZNIDE8jNkgpiWvo",
+  authDomain:        "trekverse-ddbd6.firebaseapp.com",
+  projectId:         "trekverse-ddbd6",
+  storageBucket:     "trekverse-ddbd6.firebasestorage.app",
+  messagingSenderId: "132312232932",
+  appId:             "1:132312232932:web:2eaee2610c928bbd9d4df1",
+  measurementId:     "G-PBSK4QDCBS"
 };
