@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>TrekVerse — Begin Your Journey</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --ora:#f97316;--ora2:#fb923c;--deep:#0a0e1a;--surf:rgba(15,20,35,0.92);
+  --bord:rgba(255,255,255,0.09);--txt:#e6edf3;--mute:#7d8590;
+  --grn:#2ea043;--red:#f85149;--pur:#a371f7;
+}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--deep);color:var(--txt)}
+
+/* ══════════════════════════════
+   CANVAS + SCENE
+══════════════════════════════ */
+#scene{position:fixed;inset:0;z-index:0}
+canvas#bg{position:absolute;inset:0;width:100%;height:100%}
+
+/* ══════════════════════════════
+   MOUNTAINS SVG LAYER
+══════════════════════════════ */
+#mountains{position:absolute;bottom:0;left:0;width:100%;height:70%;pointer-events:none;z-index:1}
+.mtn-layer{position:absolute;bottom:0;left:0;width:100%;height:100%}
+
+/* ══════════════════════════════
+   FOREGROUND TREKKER
+══════════════════════════════ */
+#trekker-wrap{position:absolute;bottom:28%;left:0;right:0;display:flex;justify-content:center;z-index:4;pointer-events:none}
+.trekker{animation:trekkerWalk 0.5s steps(1) infinite}
+@keyframes trekkerWalk{0%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+
+/* ══════════════════════════════
+   PARALLAX PARTICLES
+══════════════════════════════ */
+#particles{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+.star{position:absolute;border-radius:50%;background:#fff;animation:twinkle var(--dur,3s) ease-in-out infinite var(--delay,0s)}
+@keyframes twinkle{0%,100%{opacity:var(--a,0.6);transform:scale(1)}50%{opacity:1;transform:scale(1.4)}}
+.snowflake{position:absolute;font-size:var(--sz,10px);animation:snowfall var(--dur,8s) linear infinite var(--delay,0s);opacity:.7;z-index:3}
+@keyframes snowfall{from{transform:translateY(-20px) rotate(0deg);opacity:0}10%{opacity:.7}to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+.cloud{position:absolute;background:rgba(255,255,255,.06);border-radius:50px;animation:cloudDrift var(--dur,40s) linear infinite;filter:blur(2px)}
+@keyframes cloudDrift{from{transform:translateX(-200px)}to{transform:translateX(110vw)}}
+.rope{position:absolute;width:2px;background:linear-gradient(rgba(249,115,22,.8),rgba(249,115,22,.2));border-radius:1px;animation:ropeSwing var(--dur,3s) ease-in-out infinite;transform-origin:top center}
+@keyframes ropeSwing{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+
+/* ══════════════════════════════
+   OVERLAY GRADIENT
+══════════════════════════════ */
+#overlay{
+  position:absolute;inset:0;z-index:5;
+  background:linear-gradient(
+    to bottom,
+    rgba(10,14,26,.15) 0%,
+    rgba(10,14,26,.0) 30%,
+    rgba(10,14,26,.55) 65%,
+    rgba(10,14,26,.95) 100%
+  );
+  pointer-events:none;
+}
+
+/* ══════════════════════════════
+   MAIN UI
+══════════════════════════════ */
+#ui{
+  position:relative;z-index:10;height:100%;
+  display:flex;flex-direction:column;
+  justify-content:flex-end;
+  padding:0 0 env(safe-area-inset-bottom,20px);
+}
+
+/* ── LOGO HEADER ── */
+#logo-area{
+  position:absolute;top:env(safe-area-inset-top,20px);left:0;right:0;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:20px 24px 0;z-index:12;
+}
+.logo-badge{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.3);
+  border-radius:20px;padding:6px 16px;
+  backdrop-filter:blur(10px);
+}
+.logo-badge-icon{font-size:18px;animation:logoFloat 3s ease-in-out infinite}
+@keyframes logoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.logo-badge-text{font-size:14px;font-weight:800;color:var(--ora);letter-spacing:.5px}
+.logo-tagline{font-size:11px;color:rgba(255,255,255,.5);text-align:center;letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+
+/* ── ALTITUDE METER ── */
+#alt-meter{
+  position:absolute;right:18px;top:env(safe-area-inset-top,20px);
+  margin-top:20px;
+  display:flex;flex-direction:column;align-items:center;gap:2px;z-index:12;
+}
+.alt-bar-outer{
+  width:6px;height:80px;background:rgba(255,255,255,.08);
+  border-radius:3px;overflow:hidden;border:1px solid rgba(255,255,255,.12);
+  position:relative;
+}
+.alt-bar-inner{
+  position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(to top,var(--ora),var(--pur));
+  border-radius:3px;animation:altRise 4s ease-in-out infinite;
+}
+@keyframes altRise{0%{height:20%}50%{height:85%}100%{height:20%}}
+.alt-label{font-size:8px;color:var(--mute);letter-spacing:.5px;text-transform:uppercase;margin-top:4px}
+.alt-val{font-size:11px;font-weight:700;font-family:monospace;color:var(--ora);animation:altCount 4s ease-in-out infinite}
+@keyframes altCount{0%{opacity:.5}50%{opacity:1}100%{opacity:.5}}
+
+/* ── COMPASS ── */
+#compass{
+  position:absolute;left:18px;top:env(safe-area-inset-top,20px);
+  margin-top:20px;z-index:12;
+}
+.compass-ring{
+  width:44px;height:44px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.15);
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.3);backdrop-filter:blur(6px);
+  position:relative;animation:compassSpin 8s linear infinite;
+}
+@keyframes compassSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.compass-n{position:absolute;top:4px;left:50%;transform:translateX(-50%);font-size:7px;font-weight:700;color:#f87171;animation:compassSpin 8s linear infinite reverse}
+.compass-needle{width:2px;height:16px;background:linear-gradient(var(--red) 50%,var(--mute) 50%);border-radius:1px;animation:compassSpin 8s linear infinite reverse}
+
+/* ── WEATHER BADGE ── */
+#wx-badge{
+  position:absolute;left:50%;transform:translateX(-50%);
+  top:calc(env(safe-area-inset-top,20px) + 88px);
+  z-index:12;display:flex;align-items:center;gap:6px;
+  background:rgba(0,0,0,.35);border:1px solid var(--bord);
+  border-radius:14px;padding:5px 12px;backdrop-filter:blur(8px);
+}
+.wx-badge-items{display:flex;gap:10px;align-items:center;font-size:11px;color:rgba(255,255,255,.6)}
+.wx-badge-item{display:flex;align-items:center;gap:3px}
+
+/* ── CARD PANEL ── */
+#card{
+  background:var(--surf);
+  border-radius:28px 28px 0 0;
+  border:1px solid var(--bord);
+  border-bottom:none;
+  padding:28px 22px calc(28px + env(safe-area-inset-bottom,0px));
+  box-shadow:0 -20px 60px rgba(0,0,0,.6),0 -2px 0 rgba(249,115,22,.4);
+  backdrop-filter:blur(24px);
+  max-height:72dvh;overflow-y:auto;
+}
+
+/* card states */
+.card-state{display:none}
+.card-state.active{display:block;animation:stateIn .3s ease}
+@keyframes stateIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── headings ── */
+.card-eyebrow{
+  font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:var(--ora);margin-bottom:8px;display:flex;align-items:center;gap:6px;
+}
+.card-eyebrow::before,.card-eyebrow::after{content:'';flex:1;height:1px;background:linear-gradient(to right,rgba(249,115,22,.4),transparent)}
+.card-eyebrow::before{background:linear-gradient(to left,rgba(249,115,22,.4),transparent)}
+.card-title{font-size:28px;font-weight:900;line-height:1.05;margin-bottom:6px;letter-spacing:-.5px}
+.card-sub{font-size:13px;color:var(--mute);margin-bottom:24px;line-height:1.6}
+
+/* ── SIGN IN BUTTONS ── */
+.auth-btns{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.auth-btn{
+  display:flex;align-items:center;gap:12px;
+  padding:15px 18px;border-radius:16px;border:none;
+  font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s,opacity .2s;
+  position:relative;overflow:hidden;
+}
+.auth-btn::after{content:'›';position:absolute;right:16px;font-size:18px;opacity:.5}
+.auth-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.auth-btn:active{transform:scale(.97)}
+.auth-btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.auth-btn-icon{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.15);flex-shrink:0;font-size:14px}
+.auth-btn-info{text-align:left;flex:1}
+.auth-btn-label{display:block;font-size:15px}
+.auth-btn-sub{display:block;font-size:10px;font-weight:500;opacity:.65;margin-top:1px}
+
+.btn-google{background:linear-gradient(135deg,#fff,#f0f0f0);color:#1a1a1a}
+.btn-google .auth-btn-icon{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.btn-google::after{color:#888}
+.btn-phone{background:linear-gradient(135deg,#1e3a5f,#1a6340);color:#fff;border:1px solid rgba(46,160,67,.3)}
+.btn-phone .auth-btn-icon{background:rgba(46,160,67,.2)}
+.btn-guest{background:rgba(255,255,255,.06);color:var(--mute);border:1px solid var(--bord)}
+.btn-guest::after{display:none}
+
+/* ── divider ── */
+.auth-divider{display:flex;align-items:center;gap:10px;margin:4px 0 16px;color:var(--mute);font-size:11px}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--bord)}
+
+/* ── PHONE FLOW ── */
+.phone-form{display:flex;flex-direction:column;gap:12px}
+.phone-input-wrap{
+  display:flex;align-items:center;gap:0;
+  background:rgba(255,255,255,.05);border:1.5px solid var(--bord);
+  border-radius:14px;overflow:hidden;transition:border-color .2s;
+}
+.phone-input-wrap:focus-within{border-color:rgba(249,115,22,.6)}
+.phone-flag{
+  padding:0 12px;font-size:20px;
+  border-right:1px solid var(--bord);height:50px;
+  display:flex;align-items:center;background:rgba(255,255,255,.03);
+  cursor:pointer;flex-shrink:0;
+}
+.phone-cc{
+  padding:0 8px 0 10px;font-size:13px;font-weight:700;color:var(--ora);
+  background:transparent;border:none;outline:none;color:var(--ora);
+  font-family:inherit;height:50px;width:54px;flex-shrink:0;
+}
+.phone-num{
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--txt);font-size:16px;font-family:inherit;padding:0 14px;height:50px;
+}
+.phone-num::placeholder{color:var(--mute)}
+/* OTP boxes */
+.otp-row{display:flex;gap:8px;justify-content:center}
+.otp-box{
+  width:46px;height:56px;border-radius:12px;text-align:center;font-size:22px;font-weight:700;
+  background:rgba(255,255,255,.06);border:1.5px solid var(--bord);
+  color:var(--txt);font-family:monospace;outline:none;
+  transition:border-color .2s,background .2s,transform .15s;
+  -webkit-appearance:none;appearance:none;
+}
+.otp-box:focus{border-color:rgba(249,115,22,.7);background:rgba(249,115,22,.08);transform:scale(1.05)}
+.otp-box.filled{border-color:rgba(46,160,67,.5);background:rgba(46,160,67,.08)}
+/* recaptcha */
+#recaptcha-container{display:flex;justify-content:center;min-height:0;overflow:hidden}
+/* resend */
+.resend-row{text-align:center;font-size:12px;color:var(--mute)}
+.resend-btn{background:none;border:none;color:var(--ora);font-weight:600;cursor:pointer;font-size:12px;font-family:inherit;padding:0}
+.resend-btn:disabled{color:var(--mute);cursor:not-allowed}
+
+/* ── PRIMARY BUTTON ── */
+.primary-btn{
+  width:100%;padding:16px;border-radius:16px;border:none;
+  background:linear-gradient(135deg,#fb923c,#f97316);color:#fff;
+  font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s,opacity .15s;
+  box-shadow:0 6px 20px rgba(249,115,22,.45);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.primary-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(249,115,22,.55)}
+.primary-btn:active{transform:scale(.97)}
+.primary-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.primary-btn .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.primary-btn.loading .spinner{display:block}
+.primary-btn.loading .btn-txt{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── BACK BUTTON ── */
+.back-btn{
+  display:flex;align-items:center;gap:6px;background:none;border:none;
+  color:var(--mute);font-size:13px;cursor:pointer;font-family:inherit;
+  padding:0;margin-bottom:16px;transition:color .15s;
+}
+.back-btn:hover{color:var(--txt)}
+
+/* ── ERROR/INFO BANNER ── */
+.auth-msg{
+  border-radius:12px;padding:10px 14px;font-size:12px;margin-top:10px;
+  display:none;line-height:1.5;
+}
+.auth-msg.show{display:block;animation:msgIn .2s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.auth-msg.err{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);color:#fca5a5}
+.auth-msg.info{background:rgba(56,139,253,.1);border:1px solid rgba(56,139,253,.3);color:#93c5fd}
+.auth-msg.ok{background:rgba(46,160,67,.1);border:1px solid rgba(46,160,67,.3);color:#86efac}
+
+/* ── TERMS ── */
+.terms-txt{font-size:10px;color:var(--mute);text-align:center;line-height:1.7;margin-top:16px}
+.terms-txt a{color:rgba(249,115,22,.8);text-decoration:none}
+
+/* ── PROGRESS TRAIL ── */
+.trail-dots{display:flex;gap:6px;justify-content:center;margin-bottom:20px}
+.trail-dot{width:6px;height:6px;border-radius:50%;background:var(--bord);transition:background .3s,transform .3s}
+.trail-dot.on{background:var(--ora);transform:scale(1.4)}
+
+/* ── USER PROFILE CARD (after login) ── */
+#profile-chip{
+  position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:14px;z-index:100;
+  display:none;align-items:center;gap:8px;
+  background:rgba(15,20,35,.92);border:1px solid var(--bord);
+  border-radius:20px;padding:6px 12px 6px 6px;
+  backdrop-filter:blur(12px);
+}
+#profile-chip.show{display:flex;animation:chipIn .3s ease}
+@keyframes chipIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+.profile-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--ora),var(--pur));display:flex;align-items:center;justify-content:center;font-size:13px;overflow:hidden;flex-shrink:0}
+.profile-avatar img{width:100%;height:100%;object-fit:cover}
+.profile-name{font-size:12px;font-weight:600;max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* FLOATING ELEMENTS */
+.floater{position:absolute;animation:floatUp var(--dur,12s) linear infinite var(--delay,0s);opacity:0;pointer-events:none;z-index:3;font-size:var(--sz,16px)}
+@keyframes floatUp{0%{transform:translateY(0) scale(1);opacity:0}10%{opacity:.7}90%{opacity:.4}100%{transform:translateY(-80vh) scale(.5) rotate(var(--rot,20deg));opacity:0}}
+</style>
+</head>
+<body>
+
+<!-- ══ 3D SCENE ══ -->
+<div id="scene">
+  <canvas id="bg"></canvas>
+
+  <!-- Layered parallax mountains -->
+  <div id="mountains">
+    <!-- Far mountains (lightest) -->
+    <svg class="mtn-layer" viewBox="0 0 1440 500" preserveAspectRatio="none" style="opacity:.35;filter:blur(3px)">
+      <defs>
+        <linearGradient id="mtnFar" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#1e2a4a"/>
+          <stop offset="1" stop-color="#0a0e1a" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <polygon points="0,500 0,280 120,140 240,200 380,80 500,160 620,60 740,130 860,40 980,100 1100,30 1220,90 1340,20 1440,80 1440,500" fill="url(#mtnFar)"/>
+      <!-- Snow caps far -->
+      <polygon points="380,80 350,120 410,120" fill="rgba(255,255,255,.5)"/>
+      <polygon points="620,60 595,95 645,95" fill="rgba(255,255,255,.5)"/>
+      <polygon points="860,40 832,78 888,78" fill="rgba(255,255,255,.6)"/>
+      <polygon points="1100,30 1072,68 1128,68" fill="rgba(255,255,255,.6)"/>
+      <polygon points="1340,20 1312,58 1368,58" fill="rgba(255,255,255,.55)"/>
+    </svg>
+
+    <!-- Mid mountains -->
+    <svg class="mtn-layer" viewBox="0 0 1440 500" preserveAspectRatio="none" style="opacity:.65;filter:blur(1px)">
+      <defs>
+        <linearGradient id="mtnMid" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#162040"/>
+          <stop offset="1" stop-color="#0a0e1a"/>
+        </linearGradient>
+      </defs>
+      <polygon points="0,500 0,320 160,180 300,240 460,120 580,190 700,90 820,155 960,70 1080,140 1200,50 1320,110 1440,60 1440,500" fill="url(#mtnMid)"/>
+      <polygon points="460,120 428,158 492,158" fill="rgba(255,255,255,.6)"/>
+      <polygon points="700,90 668,130 732,130" fill="rgba(255,255,255,.65)"/>
+      <polygon points="960,70 926,112 994,112" fill="rgba(255,255,255,.7)"/>
+      <polygon points="1200,50 1165,94 1235,94" fill="rgba(255,255,255,.65)"/>
+    </svg>
+
+    <!-- Near mountains (darkest, most detail) -->
+    <svg class="mtn-layer" viewBox="0 0 1440 500" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="mtnNear" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#1a2840"/>
+          <stop offset="0.7" stop-color="#0f1628"/>
+          <stop offset="1" stop-color="#0a0e1a"/>
+        </linearGradient>
+        <!-- rock texture -->
+        <filter id="roughen"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" seed="5"/><feDisplacementMap in="SourceGraphic" scale="6"/></filter>
+      </defs>
+      <polygon points="0,500 0,350 100,260 220,310 340,190 430,250 540,150 640,210 760,110 870,180 970,100 1080,160 1180,80 1290,140 1380,90 1440,130 1440,500" fill="url(#mtnNear)"/>
+      <!-- Ridge lines -->
+      <polyline points="0,350 100,260 220,310 340,190 430,250 540,150 640,210 760,110 870,180 970,100 1080,160 1180,80 1290,140 1380,90 1440,130" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="1"/>
+      <!-- Snow caps near -->
+      <polygon points="540,150 510,190 575,190" fill="rgba(255,255,255,.75)"/>
+      <polygon points="760,110 727,155 793,155" fill="rgba(255,255,255,.8)"/>
+      <polygon points="970,100 937,146 1003,146" fill="rgba(255,255,255,.78)"/>
+      <polygon points="1180,80 1145,130 1215,130" fill="rgba(255,255,255,.75)"/>
+    </svg>
+
+    <!-- Glacier/Ice detail -->
+    <svg class="mtn-layer" viewBox="0 0 1440 500" preserveAspectRatio="none" style="opacity:.4">
+      <path d="M755,115 Q760,108 765,105 Q770,108 775,115 Q772,120 768,118 Q764,120 760,118 Z" fill="rgba(180,220,255,.9)"/>
+      <path d="M965,105 Q970,98 975,95 Q980,98 985,105 Q982,110 978,108 Q974,110 970,108 Z" fill="rgba(180,220,255,.9)"/>
+      <path d="M1175,85 Q1180,78 1185,75 Q1190,78 1195,85 Q1192,90 1188,88 Q1184,90 1180,88 Z" fill="rgba(180,220,255,.9)"/>
+    </svg>
+
+    <!-- Valley / foreground terrain -->
+    <svg class="mtn-layer" viewBox="0 0 1440 500" preserveAspectRatio="none" style="bottom:0">
+      <defs>
+        <linearGradient id="valley" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#0d1520"/>
+          <stop offset="1" stop-color="#0a0e1a"/>
+        </linearGradient>
+      </defs>
+      <polygon points="0,500 0,420 180,390 360,400 540,380 720,390 900,375 1080,385 1260,370 1440,380 1440,500" fill="url(#valley)"/>
+      <!-- Pine trees silhouette -->
+      <g fill="#0d1828" opacity=".8">
+        <polygon points="60,395 68,420 52,420"/>
+        <polygon points="65,385 73,410 57,410"/>
+        <polygon points="130,388 139,415 121,415"/>
+        <polygon points="136,378 145,406 127,406"/>
+        <polygon points="200,392 208,418 192,418"/>
+        <polygon points="205,382 214,408 196,408"/>
+        <polygon points="280,385 290,414 270,414"/>
+        <polygon points="1200,382 1210,410 1190,410"/>
+        <polygon points="1206,372 1216,400 1196,400"/>
+        <polygon points="1280,388 1290,416 1270,416"/>
+        <polygon points="1360,384 1370,412 1350,412"/>
+        <polygon points="1366,374 1376,402 1356,402"/>
+      </g>
+      <!-- Trail path -->
+      <path d="M0,430 Q180,425 360,428 Q540,430 720,427 Q900,424 1080,427 Q1260,430 1440,428" fill="none" stroke="rgba(249,115,22,.2)" stroke-width="1.5" stroke-dasharray="6,4"/>
+    </svg>
+  </div>
+
+  <!-- Trekker character -->
+  <div id="trekker-wrap">
+    <svg width="40" height="55" viewBox="0 0 40 55" fill="none">
+      <!-- backpack -->
+      <rect x="14" y="16" width="12" height="15" rx="3" fill="#e67e22" opacity=".9"/>
+      <!-- body -->
+      <rect x="16" y="22" width="8" height="13" rx="2" fill="#2980b9"/>
+      <!-- head -->
+      <circle cx="20" cy="16" r="5" fill="#f0c27f"/>
+      <!-- helmet -->
+      <path d="M15,14 Q20,8 25,14" fill="#e74c3c" stroke="#c0392b" stroke-width=".5"/>
+      <!-- legs walking -->
+      <line class="leg-l" x1="18" y1="35" x2="15" y2="48" stroke="#1a252f" stroke-width="2.5" stroke-linecap="round"/>
+      <line class="leg-r" x1="22" y1="35" x2="25" y2="48" stroke="#1a252f" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- boots -->
+      <rect x="11" y="46" width="7" height="4" rx="2" fill="#2c3e50"/>
+      <rect x="22" y="46" width="7" height="4" rx="2" fill="#2c3e50"/>
+      <!-- trekking pole -->
+      <line x1="26" y1="25" x2="32" y2="50" stroke="#95a5a6" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="32" cy="51" r="2" fill="#7f8c8d"/>
+      <!-- arm with pole -->
+      <line x1="24" y1="27" x2="28" y2="34" stroke="#2980b9" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <!-- Particles layer -->
+  <div id="particles"></div>
+
+  <!-- Floating emoji -->
+  <div id="floaters"></div>
+
+  <!-- Overlay gradient -->
+  <div id="overlay"></div>
+</div>
+
+<!-- ══ UI ══ -->
+<div id="ui">
+  <!-- Logo -->
+  <div id="logo-area">
+    <div class="logo-badge">
+      <span class="logo-badge-icon">⛰️</span>
+      <span class="logo-badge-text">TREKVERSE</span>
+    </div>
+    <div class="logo-tagline">Your Himalayan Journey</div>
+  </div>
+
+  <!-- Altitude meter -->
+  <div id="alt-meter">
+    <div class="alt-bar-outer"><div class="alt-bar-inner"></div></div>
+    <div class="alt-label">ALT</div>
+    <div class="alt-val" id="alt-val">4,218m</div>
+  </div>
+
+  <!-- Compass -->
+  <div id="compass">
+    <div class="compass-ring">
+      <span class="compass-n">N</span>
+      <div class="compass-needle"></div>
+    </div>
+  </div>
+
+  <!-- Weather badge -->
+  <div id="wx-badge">
+    <div class="wx-badge-items">
+      <span class="wx-badge-item">🌡️ <span id="wx-temp">-8°C</span></span>
+      <span class="wx-badge-item">💨 <span id="wx-wind">42km/h</span></span>
+      <span class="wx-badge-item">❄️ Snow</span>
+    </div>
+  </div>
+
+  <!-- Card -->
+  <div id="card">
+    <!-- Trail progress dots -->
+    <div class="trail-dots">
+      <div class="trail-dot on" id="dot-0"></div>
+      <div class="trail-dot" id="dot-1"></div>
+      <div class="trail-dot" id="dot-2"></div>
+    </div>
+
+    <!-- STATE 0: Choose method -->
+    <div class="card-state active" id="state-choose">
+      <div class="card-eyebrow">Begin your journey</div>
+      <div class="card-title">Every Summit<br>Starts Here.</div>
+      <div class="card-sub">Log treks, track summits, share adventures — sign in to sync across all your devices.</div>
+
+      <div class="auth-btns">
+        <button class="auth-btn btn-google" id="btn-google">
+          <div class="auth-btn-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          </div>
+          <div class="auth-btn-info">
+            <span class="auth-btn-label">Continue with Google</span>
+            <span class="auth-btn-sub">Quick & secure, 1 tap</span>
+          </div>
+        </button>
+
+        <button class="auth-btn btn-phone" id="btn-phone-go">
+          <div class="auth-btn-icon">📱</div>
+          <div class="auth-btn-info">
+            <span class="auth-btn-label">Continue with Phone</span>
+            <span class="auth-btn-sub">OTP via SMS — works worldwide</span>
+          </div>
+        </button>
+      </div>
+
+      <div class="auth-divider">or explore without account</div>
+
+      <button class="auth-btn btn-guest" id="btn-guest">
+        <div class="auth-btn-icon">🗺️</div>
+        <div class="auth-btn-info">
+          <span class="auth-btn-label">Continue as Guest</span>
+          <span class="auth-btn-sub">Local storage only, no sync</span>
+        </div>
+      </button>
+
+      <div id="msg-choose" class="auth-msg"></div>
+      <div class="terms-txt">By signing in you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>. Your data is encrypted end-to-end.</div>
+    </div>
+
+    <!-- STATE 1: Phone number -->
+    <div class="card-state" id="state-phone">
+      <button class="back-btn" id="back-from-phone">← Back</button>
+      <div class="card-eyebrow">Phone sign-in</div>
+      <div class="card-title">What's your<br>number?</div>
+      <div class="card-sub">We'll send a one-time code to verify it's you.</div>
+
+      <div class="phone-form">
+        <div class="phone-input-wrap">
+          <div class="phone-flag" id="flag-btn">🇮🇳</div>
+          <input class="phone-cc" id="phone-cc" value="+91" maxlength="4">
+          <input class="phone-num" id="phone-num" type="tel" placeholder="98765 43210" inputmode="numeric" maxlength="12">
+        </div>
+        <div id="recaptcha-container"></div>
+        <button class="primary-btn" id="btn-send-otp">
+          <span class="btn-txt">Send OTP 📨</span>
+          <div class="spinner"></div>
+        </button>
+      </div>
+      <div id="msg-phone" class="auth-msg"></div>
+    </div>
+
+    <!-- STATE 2: OTP -->
+    <div class="card-state" id="state-otp">
+      <button class="back-btn" id="back-from-otp">← Change number</button>
+      <div class="card-eyebrow">Verify OTP</div>
+      <div class="card-title">Enter the<br>code sent.</div>
+      <div class="card-sub" id="otp-sub">Code sent to your number</div>
+
+      <div class="phone-form">
+        <div class="otp-row">
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric" data-idx="0">
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric" data-idx="1">
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric" data-idx="2">
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric" data-idx="3">
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric" data-idx="4">
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric" data-idx="5">
+        </div>
+        <button class="primary-btn" id="btn-verify-otp" disabled>
+          <span class="btn-txt">Verify & Enter ✓</span>
+          <div class="spinner"></div>
+        </button>
+        <div class="resend-row">
+          Didn't get it? <button class="resend-btn" id="btn-resend" disabled>Resend in <span id="resend-timer">30</span>s</button>
+        </div>
+      </div>
+      <div id="msg-otp" class="auth-msg"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Firebase SDKs (compat for easy CDN use) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
+<script>
+// ══════════════════════════════════════════════
+// FIREBASE INIT
+// ══════════════════════════════════════════════
+// ⚠️  REPLACE with your Firebase project config!
+// Go to: console.firebase.google.com
+// → Project Settings → Your apps → Web app → Config
+const firebaseConfig = {
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
+};
+
+let firebaseReady = false;
+try {
+  firebase.initializeApp(firebaseConfig);
+  firebaseReady = true;
+} catch(e) {
+  console.warn('Firebase not configured yet — using demo mode');
+}
+
+const auth = firebaseReady ? firebase.auth() : null;
+
+// ══════════════════════════════════════════════
+// AUTH STATE
+// ══════════════════════════════════════════════
+if (auth) {
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      // Store user info and redirect
+      localStorage.setItem('tv_user', JSON.stringify({
+        uid:   user.uid,
+        name:  user.displayName || user.phoneNumber || 'Explorer',
+        photo: user.photoURL || null,
+        phone: user.phoneNumber || null,
+        email: user.email || null,
+        anon:  user.isAnonymous,
+      }));
+      window.location.href = 'index.html';
+    }
+  });
+}
+
+// ══════════════════════════════════════════════
+// STATE MACHINE
+// ══════════════════════════════════════════════
+let currentState = 'choose';
+let confirmResult = null;
+let resendInterval = null;
+
+function goState(id) {
+  document.querySelectorAll('.card-state').forEach(s => s.classList.remove('active'));
+  document.getElementById('state-' + id).classList.add('active');
+  currentState = id;
+  // update trail dots
+  const order = ['choose','phone','otp'];
+  const idx = order.indexOf(id);
+  [0,1,2].forEach(i => {
+    document.getElementById('dot-' + i)?.classList.toggle('on', i <= idx);
+  });
+}
+
+function showMsg(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.className = 'auth-msg show ' + type;
+}
+function hideMsg(id) {
+  document.getElementById(id).className = 'auth-msg';
+}
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  btn.classList.toggle('loading', loading);
+}
+
+// ══════════════════════════════════════════════
+// GOOGLE SIGN-IN
+// ══════════════════════════════════════════════
+document.getElementById('btn-google').onclick = async () => {
+  if (!firebaseReady) {
+    showMsg('msg-choose', '⚙️ Firebase not configured yet. Add your config keys to login.html!', 'err');
+    return;
+  }
+  setLoading('btn-google', true);
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    await auth.signInWithPopup(provider);
+    // onAuthStateChanged will redirect
+  } catch(e) {
+    setLoading('btn-google', false);
+    showMsg('msg-choose', '❌ ' + (e.message || 'Google sign-in failed'), 'err');
+  }
+};
+
+// ══════════════════════════════════════════════
+// GUEST SIGN-IN
+// ══════════════════════════════════════════════
+document.getElementById('btn-guest').onclick = async () => {
+  if (!firebaseReady) {
+    // Truly anonymous — just redirect with a local guest id
+    localStorage.setItem('tv_user', JSON.stringify({uid:'guest_'+Date.now(),name:'Guest Explorer',anon:true}));
+    window.location.href = 'index.html';
+    return;
+  }
+  setLoading('btn-guest', true);
+  try {
+    await auth.signInAnonymously();
+  } catch(e) {
+    setLoading('btn-guest', false);
+    showMsg('msg-choose', '❌ ' + e.message, 'err');
+  }
+};
+
+// ══════════════════════════════════════════════
+// PHONE — SEND OTP
+// ══════════════════════════════════════════════
+document.getElementById('btn-phone-go').onclick = () => goState('phone');
+document.getElementById('back-from-phone').onclick = () => { goState('choose'); hideMsg('msg-phone'); };
+document.getElementById('back-from-otp').onclick  = () => { goState('phone'); hideMsg('msg-otp'); clearResendTimer(); };
+
+// Invisible reCAPTCHA
+let recaptchaVerifier = null;
+function initRecaptcha() {
+  if (!firebaseReady || recaptchaVerifier) return;
+  try {
+    recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+      size: 'invisible',
+      callback: () => {},
+      'expired-callback': () => { recaptchaVerifier = null; }
+    });
+  } catch(e) { console.warn('reCAPTCHA init failed', e); }
+}
+
+document.getElementById('btn-send-otp').onclick = async () => {
+  if (!firebaseReady) { showMsg('msg-phone','⚙️ Firebase not configured yet.','err'); return; }
+  const cc  = document.getElementById('phone-cc').value.trim();
+  const num = document.getElementById('phone-num').value.replace(/\D/g,'');
+  if (!num || num.length < 7) { showMsg('msg-phone','Enter a valid phone number.','err'); return; }
+  const full = cc + num;
+  setLoading('btn-send-otp', true); hideMsg('msg-phone');
+  initRecaptcha();
+  try {
+    confirmResult = await auth.signInWithPhoneNumber(full, recaptchaVerifier);
+    document.getElementById('otp-sub').textContent = `Code sent to ${full}`;
+    goState('otp');
+    startResendTimer();
+    setTimeout(() => document.querySelector('.otp-box').focus(), 200);
+  } catch(e) {
+    recaptchaVerifier = null; // reset for retry
+    showMsg('msg-phone', '❌ ' + (e.message||'Failed to send OTP'), 'err');
+  } finally { setLoading('btn-send-otp', false); }
+};
+
+// ══════════════════════════════════════════════
+// OTP BOXES — smart navigation
+// ══════════════════════════════════════════════
+const otpBoxes = document.querySelectorAll('.otp-box');
+otpBoxes.forEach((box, i) => {
+  box.addEventListener('input', e => {
+    const v = e.target.value.replace(/\D/,'');
+    box.value = v;
+    box.classList.toggle('filled', !!v);
+    if (v && i < 5) otpBoxes[i+1].focus();
+    checkOtpComplete();
+  });
+  box.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !box.value && i > 0) otpBoxes[i-1].focus();
+  });
+  box.addEventListener('paste', e => {
+    e.preventDefault();
+    const data = e.clipboardData.getData('text').replace(/\D/g,'').slice(0,6);
+    data.split('').forEach((ch, j) => {
+      if (otpBoxes[j]) { otpBoxes[j].value = ch; otpBoxes[j].classList.add('filled'); }
+    });
+    checkOtpComplete();
+    if (data.length === 6) document.getElementById('btn-verify-otp').focus();
+  });
+});
+
+function getOtp() { return Array.from(otpBoxes).map(b => b.value).join(''); }
+function checkOtpComplete() {
+  const complete = getOtp().length === 6;
+  document.getElementById('btn-verify-otp').disabled = !complete;
+}
+
+// ══════════════════════════════════════════════
+// OTP — VERIFY
+// ══════════════════════════════════════════════
+document.getElementById('btn-verify-otp').onclick = async () => {
+  const code = getOtp();
+  if (code.length < 6) return;
+  setLoading('btn-verify-otp', true); hideMsg('msg-otp');
+  try {
+    await confirmResult.confirm(code);
+    // onAuthStateChanged handles redirect
+  } catch(e) {
+    showMsg('msg-otp', '❌ ' + (e.message||'Invalid code. Try again.'), 'err');
+    otpBoxes.forEach(b => { b.value=''; b.classList.remove('filled'); });
+    otpBoxes[0].focus();
+  } finally { setLoading('btn-verify-otp', false); }
+};
+
+// ══════════════════════════════════════════════
+// RESEND TIMER
+// ══════════════════════════════════════════════
+function startResendTimer() {
+  let t = 30;
+  const btn = document.getElementById('btn-resend');
+  const span = document.getElementById('resend-timer');
+  btn.disabled = true;
+  clearInterval(resendInterval);
+  resendInterval = setInterval(() => {
+    t--;
+    span.textContent = t;
+    if (t <= 0) {
+      clearInterval(resendInterval);
+      btn.disabled = false;
+      btn.textContent = 'Resend OTP';
+    }
+  }, 1000);
+}
+function clearResendTimer() { clearInterval(resendInterval); }
+
+document.getElementById('btn-resend').onclick = async () => {
+  if (!confirmResult) { goState('phone'); return; }
+  document.getElementById('btn-send-otp').click();
+};
+
+// ══════════════════════════════════════════════
+// STAR FIELD + ANIMATED BG (Canvas)
+// ══════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('bg');
+  const ctx = canvas.getContext('2d');
+  let W, H, stars = [], meteors = [];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    buildStars();
+  }
+
+  function buildStars() {
+    stars = Array.from({length: 220}, () => ({
+      x: Math.random()*W, y: Math.random()*H*0.7,
+      r: Math.random()*1.4+0.2,
+      a: Math.random()*0.8+0.2,
+      speed: Math.random()*0.3+0.05,
+      phase: Math.random()*Math.PI*2
+    }));
+  }
+
+  function spawnMeteor() {
+    if (meteors.length > 3) return;
+    meteors.push({
+      x: Math.random()*W, y: Math.random()*H*0.3,
+      vx: -Math.random()*4-2, vy: Math.random()*3+1,
+      len: Math.random()*80+40, life: 1
+    });
+  }
+
+  let t = 0;
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+
+    // Deep sky gradient
+    const sky = ctx.createLinearGradient(0,0,0,H*0.65);
+    sky.addColorStop(0, '#030610');
+    sky.addColorStop(0.4, '#0a0e1a');
+    sky.addColorStop(0.7, '#0d1220');
+    sky.addColorStop(1, '#0a0e1a');
+    ctx.fillStyle = sky; ctx.fillRect(0,0,W,H);
+
+    // Aurora borealis
+    const auPhase = Math.sin(t*0.003);
+    const auGrad = ctx.createLinearGradient(0, H*0.05, 0, H*0.35);
+    auGrad.addColorStop(0, `rgba(56,189,155,${0.03+auPhase*0.04})`);
+    auGrad.addColorStop(0.5, `rgba(99,102,241,${0.04+auPhase*0.03})`);
+    auGrad.addColorStop(1, `rgba(56,189,155,0)`);
+    ctx.fillStyle = auGrad;
+    ctx.beginPath();
+    ctx.moveTo(0, H*0.1);
+    for(let x=0; x<=W; x+=20) {
+      const y = H*0.15 + Math.sin(x/120+t*0.005)*H*0.06 + Math.sin(x/60+t*0.008)*H*0.03;
+      ctx.lineTo(x,y);
+    }
+    ctx.lineTo(W,0); ctx.lineTo(0,0); ctx.closePath();
+    ctx.fill();
+
+    // Stars
+    stars.forEach(s => {
+      const blink = s.a * (0.6 + 0.4*Math.sin(t*s.speed + s.phase));
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(255,255,255,${blink})`; ctx.fill();
+    });
+
+    // Moon
+    const moonX = W*0.78, moonY = H*0.12;
+    const moonGlow = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, 60);
+    moonGlow.addColorStop(0, 'rgba(255,240,200,.06)');
+    moonGlow.addColorStop(1, 'rgba(255,240,200,0)');
+    ctx.fillStyle = moonGlow; ctx.beginPath(); ctx.arc(moonX,moonY,60,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(moonX,moonY,18,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,248,220,.9)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(moonX-6,moonY-4,16,0,Math.PI*2);
+    ctx.fillStyle='#090d18'; ctx.fill();
+
+    // Meteors
+    meteors.forEach((m,i) => {
+      m.x += m.vx; m.y += m.vy; m.life -= 0.025;
+      if(m.life <= 0) { meteors.splice(i,1); return; }
+      const g = ctx.createLinearGradient(m.x,m.y,m.x-m.vx*(m.len/4),m.y-m.vy*(m.len/4));
+      g.addColorStop(0, `rgba(255,240,200,${m.life})`);
+      g.addColorStop(1, 'rgba(255,240,200,0)');
+      ctx.strokeStyle = g; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(m.x,m.y);
+      ctx.lineTo(m.x - m.vx*(m.len/4), m.y - m.vy*(m.len/4));
+      ctx.stroke();
+    });
+
+    // Ambient ground glow
+    const glow = ctx.createRadialGradient(W/2,H,0,W/2,H,W*0.6);
+    glow.addColorStop(0,'rgba(249,115,22,.04)'); glow.addColorStop(1,'rgba(249,115,22,0)');
+    ctx.fillStyle=glow; ctx.fillRect(0,0,W,H);
+
+    t++;
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  draw();
+
+  setInterval(spawnMeteor, 3500);
+})();
+
+// ══════════════════════════════════════════════
+// PARTICLES (snow, stars, floaters)
+// ══════════════════════════════════════════════
+(function() {
+  const p = document.getElementById('particles');
+
+  // Snow
+  for(let i=0; i<22; i++) {
+    const s = document.createElement('div');
+    s.className = 'snowflake';
+    s.textContent = ['❄','❅','❆','·','*'][i%5];
+    s.style.cssText = `
+      left:${Math.random()*100}vw;
+      --dur:${6+Math.random()*10}s;
+      --delay:${-Math.random()*10}s;
+      --sz:${8+Math.random()*10}px;
+      color:rgba(200,220,255,${0.4+Math.random()*0.4})
+    `;
+    p.appendChild(s);
+  }
+
+  // Clouds
+  for(let i=0; i<5; i++) {
+    const c = document.createElement('div');
+    c.className = 'cloud';
+    const w = 80+Math.random()*160, h = 24+Math.random()*32;
+    c.style.cssText = `
+      left:-200px; top:${5+Math.random()*22}%;
+      width:${w}px; height:${h}px;
+      --dur:${50+Math.random()*40}s;
+      animation-delay:${-Math.random()*50}s;
+      opacity:${0.03+Math.random()*0.07}
+    `;
+    p.appendChild(c);
+  }
+})();
+
+// Floating emoji
+(function() {
+  const wrap = document.getElementById('floaters');
+  const emojis = ['🏔','⛰','🧗','🏕','🌄','🦅','🌿','🗺','⛺','🧭','🪨','🌊'];
+  for(let i=0; i<10; i++) {
+    const f = document.createElement('div');
+    f.className = 'floater';
+    f.textContent = emojis[i%emojis.length];
+    f.style.cssText = `
+      left:${Math.random()*90}vw;
+      bottom:${15+Math.random()*20}%;
+      --dur:${10+Math.random()*15}s;
+      --delay:${-Math.random()*15}s;
+      --sz:${14+Math.random()*16}px;
+      --rot:${-30+Math.random()*60}deg;
+    `;
+    wrap.appendChild(f);
+  }
+})();
+
+// ══════════════════════════════════════════════
+// AMBIENT STATS ANIMATION
+// ══════════════════════════════════════════════
+const altVals = ['3,450m','4,218m','5,142m','6,011m','4,875m','3,780m'];
+const wxTemps = ['-8°C','-12°C','-6°C','-14°C','-9°C'];
+const wxWinds = ['42km/h','58km/h','34km/h','71km/h','47km/h'];
+let altIdx=0, wxIdx=0;
+setInterval(()=>{ document.getElementById('alt-val').textContent=altVals[altIdx++%altVals.length]; },3800);
+setInterval(()=>{ document.getElementById('wx-temp').textContent=wxTemps[wxIdx%wxTemps.length]; document.getElementById('wx-wind').textContent=wxWinds[wxIdx++%wxWinds.length]; },5200);
+</script>
+</body>
+</html>

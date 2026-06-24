@@ -28,6 +28,46 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 
+<!-- Firebase Auth -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script>
+// ── FIREBASE AUTH GUARD ──
+// Replace these with your actual Firebase config values
+const _fbConfig = {
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
+};
+let _fbReady = false;
+try {
+  if (!firebase.apps.length) firebase.initializeApp(_fbConfig);
+  _fbReady = true;
+} catch(e) { console.warn('Firebase not configured'); }
+
+// Check auth — if no user and Firebase is configured, redirect to login
+if (_fbReady && !_fbConfig.apiKey.includes('YOUR')) {
+  firebase.auth().onAuthStateChanged(user => {
+    if (!user) {
+      const guest = localStorage.getItem('tv_user');
+      if (!guest) window.location.replace('login.html');
+    } else {
+      localStorage.setItem('tv_user', JSON.stringify({
+        uid:   user.uid,
+        name:  user.displayName || user.phoneNumber || 'Explorer',
+        photo: user.photoURL || null,
+        phone: user.phoneNumber || null,
+        email: user.email || null,
+        anon:  user.isAnonymous,
+      }));
+    }
+  });
+}
+</script>
+
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -670,7 +710,17 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   <div id="bdg">0 / 0</div>
   <button id="addbtn" title="Add your own trek/pin">+</button>
   <button id="themebtn" title="Switch to light mode">🌙</button>
+  <button id="user-chip" title="Account" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--bord);background:rgba(255,255,255,.06);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden;flex-shrink:0;transition:border-color .2s,transform .15s">👤</button>
   <button id="hubbtn" title="Journey Hub">☰</button>
+</div>
+
+<!-- USER MENU DROPDOWN -->
+<div id="user-menu" style="position:fixed;top:58px;right:10px;z-index:3000;background:var(--surf);border:1px solid var(--bord);border-radius:16px;padding:6px;min-width:200px;box-shadow:0 12px 40px rgba(0,0,0,.6);display:none;animation:sfadeIn .2s ease">
+  <div id="um-profile" style="padding:10px 12px 10px;border-bottom:1px solid var(--bord);margin-bottom:4px">
+    <div id="um-name" style="font-size:13px;font-weight:700;color:var(--txt)">Explorer</div>
+    <div id="um-email" style="font-size:11px;color:var(--mute);margin-top:2px"></div>
+  </div>
+  <button id="um-signout" style="width:100%;padding:10px 12px;border-radius:10px;border:none;background:transparent;color:var(--red);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left;transition:background .15s">🚪 Sign Out</button>
 </div>
 
 <!-- SEARCH OVERLAY -->
@@ -3072,6 +3122,56 @@ document.getElementById('themebtn').onclick = toggleTheme;
 
 // Apply saved theme on load (CSS only — no tile swap, map not ready yet)
 (function(){ applyTheme(localStorage.getItem('sl3_theme') || 'dark', false); })();
+
+// ═══════════════════════════════════════════════════
+// USER CHIP + SIGN OUT
+// ═══════════════════════════════════════════════════
+(function initUserChip() {
+  const chip   = document.getElementById('user-chip');
+  const menu   = document.getElementById('user-menu');
+  const umName = document.getElementById('um-name');
+  const umEmail= document.getElementById('um-email');
+
+  // Load user info from localStorage (set by login.html or auth guard)
+  const raw = localStorage.getItem('tv_user');
+  if (raw) {
+    try {
+      const u = JSON.parse(raw);
+      const label = u.name || u.email || u.phone || 'Explorer';
+      umName.textContent  = label;
+      umEmail.textContent = u.email || u.phone || (u.anon ? 'Guest — local only' : '');
+      // Avatar
+      if (u.photo) {
+        chip.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = u.photo; img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+        chip.appendChild(img);
+      } else {
+        chip.textContent = label[0]?.toUpperCase() || '👤';
+        chip.style.background = 'linear-gradient(135deg,var(--ora),var(--pur))';
+        chip.style.color = '#fff';
+        chip.style.fontWeight = '700';
+      }
+    } catch(e) {}
+  }
+
+  // Toggle menu
+  chip.onclick = (e) => {
+    e.stopPropagation();
+    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+  };
+  document.addEventListener('click', () => { menu.style.display = 'none'; });
+
+  // Sign out
+  document.getElementById('um-signout').onclick = async () => {
+    menu.style.display = 'none';
+    if (_fbReady && !_fbConfig.apiKey.includes('YOUR')) {
+      try { await firebase.auth().signOut(); } catch(e) {}
+    }
+    localStorage.removeItem('tv_user');
+    window.location.replace('login.html');
+  };
+})();
 
 // ═══════════════════════════════════════════════════
 // BOOT
