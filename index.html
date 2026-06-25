@@ -28,47 +28,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 
-<!-- Firebase Auth -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script>
-// ── FIREBASE AUTH GUARD ──
-// Replace these with your actual Firebase config values
-const _fbConfig = {
-  apiKey:            "AIzaSyA2uK3V1IO7QuyGW4GmZNIDE8jNkgpiWvo",
-  authDomain:        "trekverse-ddbd6.firebaseapp.com",
-  projectId:         "trekverse-ddbd6",
-  storageBucket:     "trekverse-ddbd6.firebasestorage.app",
-  messagingSenderId: "132312232932",
-  appId:             "1:132312232932:web:2eaee2610c928bbd9d4df1",
-  measurementId:     "G-PBSK4QDCBS"
-};
-let _fbReady = false;
-try {
-  if (!firebase.apps.length) firebase.initializeApp(_fbConfig);
-  _fbReady = true;
-} catch(e) { console.warn('Firebase not configured'); }
-
-// Check auth — if no user and Firebase is configured, redirect to login
-if (_fbReady && !_fbConfig.apiKey.includes('YOUR')) {
-  firebase.auth().onAuthStateChanged(user => {
-    if (!user) {
-      const guest = localStorage.getItem('tv_user');
-      if (!guest) window.location.replace('login.html');
-    } else {
-      localStorage.setItem('tv_user', JSON.stringify({
-        uid:   user.uid,
-        name:  user.displayName || user.phoneNumber || 'Explorer',
-        photo: user.photoURL || null,
-        phone: user.phoneNumber || null,
-        email: user.email || null,
-        anon:  user.isAnonymous,
-      }));
-    }
-  });
-}
-</script>
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -125,234 +84,202 @@ if (_fbReady && !_fbConfig.apiKey.includes('YOUR')) {
 #themebtn:hover{ background:rgba(255,255,255,.15);transform:scale(1.08) }
 [data-theme="light"] #themebtn{ background:rgba(0,0,0,.07);border-color:var(--bord) }
 [data-theme="light"] #themebtn:hover{ background:rgba(0,0,0,.13) }
-
-#user-chip:hover{ border-color:var(--ora)!important;transform:scale(1.08) }
-[data-theme="light"] #user-chip{ background:rgba(0,0,0,.06)!important;border-color:var(--bord)!important }
-#um-signout:hover{ background:rgba(248,81,73,.1) }
 html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt)}
 
-/* ═══════════════════════════════════════
-   TOPBAR — fully responsive
-═══════════════════════════════════════ */
+/* TOPBAR */
 #topbar{
   position:fixed;top:0;left:0;right:0;z-index:1000;
-  height:54px;display:flex;align-items:center;gap:6px;
-  padding:0 10px;padding-top:env(safe-area-inset-top,0px);
+  height:54px;display:flex;align-items:center;gap:10px;padding:0 14px;
   background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
   border-bottom:1px solid var(--bord);
   box-shadow:0 4px 24px rgba(0,0,0,.35);
-  overflow:hidden;
 }
-.logo{font-size:clamp(14px,4vw,18px);font-weight:800;color:var(--ora);white-space:nowrap;letter-spacing:.3px;text-shadow:0 0 16px rgba(249,115,22,.4);display:flex;align-items:center;gap:4px;flex-shrink:0}
+.logo{font-size:18px;font-weight:800;color:var(--ora);white-space:nowrap;letter-spacing:.3px;text-shadow:0 0 16px rgba(249,115,22,.4);display:flex;align-items:center;gap:4px}
 .logo .logo-peak{display:inline-block;animation:logoFloat 3s ease-in-out infinite}
 @keyframes logoFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-2px) rotate(-3deg)}}
 .logo em{color:var(--txt);font-style:normal;font-weight:300}
-
-/* ── Search toggle button (icon only in topbar) ── */
-#srch-toggle{
-  width:36px;height:36px;border-radius:50%;border:1px solid var(--bord);
-  background:rgba(255,255,255,.06);color:var(--mute);font-size:16px;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-  transition:background .2s,border-color .2s,transform .15s;flex-shrink:0;
-}
-#srch-toggle:hover{background:rgba(255,255,255,.12);border-color:rgba(249,115,22,.4)}
-#srch-toggle:active{transform:scale(.9)}
-[data-theme="light"] #srch-toggle{background:rgba(0,0,0,.06)}
-
-/* ── SEARCH OVERLAY ── */
-#srch-overlay{
-  position:fixed;inset:0;z-index:4000;
-  background:rgba(0,0,0,.75);backdrop-filter:blur(14px);
-  display:none;flex-direction:column;
-  padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 14px;
-}
-#srch-overlay.on{display:flex;animation:srchIn .18s ease}
-@keyframes srchIn{from{opacity:0}to{opacity:1}}
-[data-theme="light"] #srch-overlay{background:rgba(240,244,248,.94)}
-#srch-bar{
-  display:flex;align-items:center;gap:10px;flex-shrink:0;
-  background:var(--surf);border:1.5px solid var(--bord);
-  border-radius:16px;padding:0 14px;height:50px;
-  box-shadow:0 4px 24px rgba(0,0,0,.4);
-  transition:border-color .2s;
-}
-#srch-bar:focus-within{border-color:rgba(249,115,22,.6)}
-#srch-ico{font-size:16px;color:var(--mute);flex-shrink:0}
+.swrap{position:relative;flex:1}
 #srch{
-  flex:1;background:transparent;border:none;outline:none;
-  color:var(--txt);font-size:16px;font-family:inherit;height:100%;min-width:0;
+  width:100%;height:34px;border-radius:17px;
+  background:rgba(255,255,255,0.06);border:1px solid var(--bord);
+  padding:0 12px 0 34px;color:var(--txt);font-size:13px;outline:none;
 }
+#srch:focus{border-color:rgba(249,115,22,.5)}
 #srch::placeholder{color:var(--mute)}
-#srch-clear{
-  background:none;border:none;color:var(--mute);font-size:20px;
-  cursor:pointer;padding:0 2px;opacity:0;transition:opacity .15s;flex-shrink:0;line-height:1;
+.sico{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none;color:var(--mute)}
+#sres{
+  position:absolute;top:40px;left:0;right:0;display:none;
+  background:var(--surf);border:1px solid var(--bord);border-radius:12px;
+  max-height:260px;overflow-y:auto;z-index:9999;
+  box-shadow:0 12px 40px rgba(0,0,0,.7);
+  animation:sresIn .22s cubic-bezier(.2,1,.3,1);
 }
-#srch-clear.vis{opacity:1}
-#srch-cancel{
-  background:none;border:none;color:var(--ora);font-size:14px;font-weight:700;
-  cursor:pointer;white-space:nowrap;flex-shrink:0;padding:8px 0 8px 8px;
-}
-/* category chips */
-#srch-cats{
-  display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;
-  padding:10px 0 2px;flex-shrink:0;
-}
-#srch-cats::-webkit-scrollbar{display:none}
-.srch-cat{
-  flex-shrink:0;padding:6px 14px;border-radius:20px;
-  border:1px solid var(--bord);background:rgba(255,255,255,.04);
-  color:var(--mute);font-size:12px;font-weight:600;cursor:pointer;
-  transition:background .15s,border-color .15s,color .15s;white-space:nowrap;
-  font-family:inherit;
-}
-[data-theme="light"] .srch-cat{background:rgba(0,0,0,.04)}
-.srch-cat:hover,.srch-cat.on{background:rgba(249,115,22,.12);border-color:rgba(249,115,22,.4);color:var(--ora)}
-/* results panel */
-#srch-results-panel{
-  flex:1;overflow-y:auto;margin-top:10px;
-  border-radius:16px;background:var(--surf);
-  border:1px solid var(--bord);
-  box-shadow:0 8px 32px rgba(0,0,0,.5);
-  overscroll-behavior:contain;
-}
-.srch-section-head{
-  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;
-  color:var(--mute);padding:10px 14px 6px;
-  border-bottom:1px solid var(--bord);background:rgba(255,255,255,.02);
-  position:sticky;top:0;z-index:1;
-}
-[data-theme="light"] .srch-section-head{background:rgba(0,0,0,.03)}
-.sri{padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--bord);display:flex;align-items:center;gap:12px;transition:background .12s}
+@keyframes sresIn{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.sri{padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--bord);display:flex;align-items:center;gap:10px;transition:background .15s}
 .sri:last-child{border:none}
-.sri:hover,.sri:active{background:rgba(255,255,255,.05)}
-[data-theme="light"] .sri:hover{background:rgba(0,0,0,.04)}
-.sri-ico{font-size:18px;flex-shrink:0;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.2)}
-.sri-info{flex:1;min-width:0}
-.sri-name{font-size:14px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sri-meta{font-size:11px;color:var(--mute);margin-top:1px}
+.sri:hover{background:rgba(255,255,255,.04)}
+.sri-ico{font-size:16px;flex-shrink:0}
+.sri-name{font-size:13px;font-weight:600}
+.sri-meta{font-size:11px;color:var(--mute)}
 .sri.ok .sri-name::after{content:" ✓";color:var(--grn)}
-.srch-empty{padding:48px 20px;text-align:center;color:var(--mute);font-size:14px;line-height:2}
-.srch-empty-ico{font-size:40px;margin-bottom:8px}
-
-/* hide old swrap */
-.swrap{display:none!important}
-
-/* ── Badge ── */
 #bdg{
-  font-size:clamp(9px,2.5vw,11px);padding:4px 9px;border-radius:12px;
+  font-size:11px;padding:4px 10px;border-radius:12px;
   background:linear-gradient(135deg,rgba(249,115,22,.18),rgba(249,115,22,.08));
   border:1px solid rgba(249,115,22,.35);color:var(--ora);cursor:pointer;
   white-space:nowrap;font-weight:700;font-family:monospace;
   box-shadow:0 2px 8px rgba(249,115,22,.15);
-  transition:transform .15s ease;flex-shrink:0;
+  transition:transform .15s ease;
 }
 #bdg:active{transform:scale(.92)}
-@media(max-width:340px){#bdg{display:none}}
-
-/* ── Action buttons ── */
 #addbtn{
-  width:34px;height:34px;border-radius:50%;border:none;
+  width:32px;height:32px;border-radius:50%;border:none;
   background:linear-gradient(135deg,#fb923c,#f97316);color:#fff;
-  font-size:20px;font-weight:700;cursor:pointer;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s;
-  box-shadow:0 3px 10px rgba(249,115,22,.45),inset 0 1px 0 rgba(255,255,255,.3);
+  font-size:19px;font-weight:700;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s, background .25s;
+  box-shadow:0 3px 10px rgba(249,115,22,.45), inset 0 1px 0 rgba(255,255,255,.3);line-height:1;
 }
-#addbtn:hover{transform:scale(1.1)}
+#addbtn:hover{transform:scale(1.1);box-shadow:0 4px 16px rgba(249,115,22,.6), inset 0 1px 0 rgba(255,255,255,.3)}
 #addbtn:active{transform:scale(.92)}
-#addbtn.active{background:linear-gradient(135deg,#fb7185,#f85149);transform:rotate(45deg)}
+#addbtn.active{background:linear-gradient(135deg,#fb7185,#f85149);transform:rotate(45deg);box-shadow:0 3px 10px rgba(248,81,73,.45)}
 #hubbtn{
-  width:34px;height:34px;border-radius:50%;border:none;
+  width:32px;height:32px;border-radius:50%;border:none;
   background:linear-gradient(135deg,#c4b5fd,#a371f7);color:#fff;
-  font-size:16px;font-weight:700;cursor:pointer;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s;
-  box-shadow:0 3px 10px rgba(163,113,247,.45),inset 0 1px 0 rgba(255,255,255,.3);
+  font-size:15px;font-weight:700;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s, background .25s;
+  box-shadow:0 3px 10px rgba(163,113,247,.45), inset 0 1px 0 rgba(255,255,255,.3);line-height:1;
 }
-#hubbtn:hover{transform:scale(1.1)}
+#hubbtn:hover{transform:scale(1.1);box-shadow:0 4px 16px rgba(163,113,247,.6), inset 0 1px 0 rgba(255,255,255,.3)}
 #hubbtn:active{transform:scale(.92)}
 #addbanner{
   position:fixed;top:54px;left:0;right:0;z-index:950;display:none;
   align-items:center;justify-content:center;gap:14px;
-  background:linear-gradient(135deg,rgba(249,115,22,.97),rgba(234,108,4,.97));
-  color:#fff;font-size:13px;font-weight:600;padding:10px 16px;
-  backdrop-filter:blur(10px);box-shadow:0 4px 20px rgba(249,115,22,.4);
+  background:linear-gradient(135deg,rgba(249,115,22,.97),rgba(234,108,4,.97));color:#fff;font-size:13px;font-weight:600;
+  padding:10px 16px;backdrop-filter:blur(10px);
+  box-shadow:0 4px 20px rgba(249,115,22,.4);
 }
 #addbanner.show{display:flex;animation:bannerSlide .3s cubic-bezier(.2,1,.3,1)}
 @keyframes bannerSlide{from{transform:translateY(-100%)}to{transform:translateY(0)}}
 #addcancel{
   background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.3);color:#fff;
   padding:4px 12px;border-radius:14px;font-size:12px;font-weight:600;cursor:pointer;
+  transition:transform .15s;
 }
 #addcancel:active{transform:scale(.92)}
+.mk-custom{background:rgba(163,113,247,.92)!important;border-color:rgba(163,113,247,.5)!important}
+.wp-edit-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:10px;padding:10px;background:rgba(255,255,255,.03);border:1px solid var(--bord);border-radius:10px}
+.wp-edit-row .mf{flex:1;margin-bottom:0}
+.wp-edit-row select{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--bord);border-radius:9px;padding:9px 8px;color:var(--txt);font-size:12px;font-family:inherit;outline:none}
+.wp-remove{background:rgba(248,81,73,.15);border:1px solid rgba(248,81,73,.3);color:var(--red);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;flex-shrink:0}
+#wp-add-btn{width:100%;padding:10px;border-radius:10px;border:1px dashed var(--bord);background:transparent;color:var(--mute);font-size:12px;cursor:pointer;font-family:inherit;margin-top:4px}
+#wp-add-btn:hover{border-color:var(--ora);color:var(--ora)}
+.diff-select{display:flex;gap:6px}
+.diff-opt{flex:1;padding:8px;text-align:center;border-radius:8px;border:1px solid var(--bord);font-size:11px;font-weight:600;cursor:pointer;color:var(--mute);text-transform:capitalize}
+.diff-opt.sel-easy{background:rgba(46,160,67,.2);border-color:var(--grn);color:var(--grn)}
+.diff-opt.sel-moderate{background:rgba(210,153,34,.2);border-color:var(--yel);color:var(--yel)}
+.diff-opt.sel-difficult{background:rgba(249,115,22,.2);border-color:var(--ora);color:var(--ora)}
+.diff-opt.sel-extreme{background:rgba(248,81,73,.2);border-color:var(--red);color:var(--red)}
+.custom-badge{display:inline-block;font-size:9px;padding:2px 7px;border-radius:8px;background:rgba(163,113,247,.15);color:var(--pur);font-weight:700;margin-left:6px;vertical-align:middle}
+.btn-del{background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);color:var(--red);flex:0 0 auto;padding:13px 16px}
+.btn-del:hover{background:rgba(248,81,73,.2)}
 
-/* ═══════════════════════════════════
-   TAB BAR
-═══════════════════════════════════ */
+/* MAP */
 #tabs{
   position:fixed;bottom:0;left:0;right:0;z-index:1000;
   display:flex;overflow-x:auto;scrollbar-width:none;
   background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
   border-top:1px solid var(--bord);
-  padding:8px 10px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));gap:6px;
+  padding:8px 10px;padding-bottom:calc(8px + env(safe-area-inset-bottom));gap:6px;
   box-shadow:0 -4px 24px rgba(0,0,0,.35);
 }
 #tabs::-webkit-scrollbar{display:none}
 .tab{
-  flex-shrink:0;padding:6px 12px;border-radius:16px;
-  font-size:clamp(10px,2.5vw,11px);font-weight:600;
+  flex-shrink:0;padding:6px 14px;border-radius:16px;font-size:11px;font-weight:600;
   cursor:pointer;border:1px solid var(--bord);color:var(--mute);
   white-space:nowrap;background:rgba(255,255,255,.02);
-  transition:transform .15s,box-shadow .25s,background .25s,border-color .25s,color .25s;
-  font-family:inherit;display:flex;align-items:center;gap:5px;
+  transition:transform .15s ease, box-shadow .25s ease, background .25s ease, border-color .25s ease, color .25s ease;
+  font-family:inherit;
 }
 .tab.on{
   background:linear-gradient(135deg,#fb923c,#f97316);
   border-color:#f97316;color:#fff;
-  box-shadow:0 3px 12px rgba(249,115,22,.45),0 0 0 1px rgba(255,255,255,.15) inset;
+  box-shadow:0 3px 12px rgba(249,115,22,.45), 0 0 0 1px rgba(255,255,255,.15) inset;
   transform:translateY(-1px);
 }
 .tab:hover:not(.on){color:var(--txt);border-color:rgba(255,255,255,.25);background:rgba(255,255,255,.06)}
 .tab:active{transform:scale(.94)}
+.tab{display:flex;align-items:center;gap:5px}
 .tab-label{pointer-events:none}
 .tab-chev{
-  font-size:9px;opacity:.55;line-height:1;padding:3px 2px;margin:-3px -4px -3px 1px;
+  font-size:9px;opacity:.55;line-height:1;
+  padding:3px 2px;margin:-3px -4px -3px 1px;
   transform:rotate(180deg);
-  transition:transform .2s,opacity .2s,background .15s;border-radius:6px;
+  transition:transform .2s ease, opacity .2s ease, background .15s ease;
+  border-radius:6px;
 }
 .tab-chev:hover{opacity:1;background:rgba(255,255,255,.15)}
+.tab-chev:active{transform:rotate(180deg) scale(.85)}
 .tab-chev.chev-open{transform:rotate(0deg);opacity:1}
 
-/* ═══════════════════════════════════
-   REGION POPOVER
-═══════════════════════════════════ */
+/* Region hover/tap popover — shows treks in that region */
 #regionpop{
-  position:fixed;z-index:1100;bottom:0;left:0;
-  width:min(260px,90vw);height:410px;
-  pointer-events:none;display:none;flex-direction:column;justify-content:flex-end;
-  padding-bottom:calc(54px + env(safe-area-inset-bottom,0px) + 16px);
+  position:fixed;z-index:1100;
+  bottom:0;left:0;
+  width:240px;
+  height:410px;
+  pointer-events:none;
+  display:none;
+  flex-direction:column;
+  justify-content:flex-end;
+  padding-bottom:70px;
 }
 #regionpop.show{display:flex}
 #regionpop.show .rpop-card{pointer-events:auto}
 .rpop-card{
-  position:relative;background:var(--surf);border:1px solid var(--bord);
-  border-radius:16px;box-shadow:0 16px 48px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.04);
+  position:relative;
+  background:var(--surf);
+  border:1px solid var(--bord);
+  border-radius:16px;
+  box-shadow:0 16px 48px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04);
   transform-origin:18px 100%;
   animation:rpopIn .28s cubic-bezier(.22,1.4,.36,1) backwards;
-  display:flex;flex-direction:column;max-height:300px;
+  display:flex;flex-direction:column;
+  max-height:340px;
 }
-@keyframes rpopIn{from{opacity:0;transform:scale(.9) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes rpopIn{
+  0%{opacity:0;transform:perspective(600px) rotateX(-18deg) translateY(10px) scale(.9)}
+  100%{opacity:1;transform:perspective(600px) rotateX(0) translateY(0) scale(1)}
+}
 #regionpop.closing .rpop-card{animation:rpopOut .16s ease forwards}
-@keyframes rpopOut{to{opacity:0;transform:scale(.92)}}
-.rpop-head{padding:11px 14px 9px;border-bottom:1px solid var(--bord);flex-shrink:0;border-radius:16px 16px 0 0;background:linear-gradient(135deg,rgba(249,115,22,.1),transparent)}
+@keyframes rpopOut{
+  0%{opacity:1;transform:perspective(600px) rotateX(0) translateY(0) scale(1)}
+  100%{opacity:0;transform:perspective(600px) rotateX(-14deg) translateY(8px) scale(.92)}
+}
+.rpop-head{
+  padding:11px 14px 9px;
+  border-bottom:1px solid var(--bord);
+  flex-shrink:0;
+  border-radius:16px 16px 0 0;
+  overflow:hidden;
+  background:linear-gradient(135deg,rgba(249,115,22,.1),transparent);
+}
 .rpop-title{font-size:13px;font-weight:800;color:var(--txt);display:flex;align-items:center;gap:6px}
 .rpop-count{font-size:10px;color:var(--mute);font-weight:600;margin-top:1px}
 .rpop-list{overflow-y:auto;flex:1;padding:6px;border-radius:0 0 16px 16px}
-.rpop-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;cursor:pointer;animation:rpopItemIn .25s ease backwards;transition:background .15s}
+.rpop-item{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 8px;border-radius:10px;cursor:pointer;
+  animation:rpopItemIn .25s ease backwards;
+  transition:background .15s ease, transform .15s ease;
+}
 @keyframes rpopItemIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
-.rpop-item:hover{background:rgba(255,255,255,.06)}
+.rpop-item:hover{background:rgba(255,255,255,.06);transform:translateX(2px)}
 .rpop-item:active{transform:scale(.97)}
-.rpop-ico{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;border:1.5px solid rgba(255,255,255,.25);box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.rpop-ico{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:13px;
+  border:1.5px solid rgba(255,255,255,.25);
+  box-shadow:0 2px 6px rgba(0,0,0,.4);
+}
 .rpop-ico.ico-default{background:linear-gradient(145deg,#fb923c,#ea580c)}
 .rpop-ico.ico-done{background:linear-gradient(145deg,#4ade80,#1a7431)}
 .rpop-ico.ico-pin{background:linear-gradient(145deg,#c4b5fd,#7c3aed)}
@@ -362,140 +289,131 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .rpop-check{font-size:12px;color:var(--grn);flex-shrink:0}
 .rpop-list::-webkit-scrollbar{width:5px}
 .rpop-list::-webkit-scrollbar-thumb{background:var(--bord);border-radius:3px}
-.rpop-card::after{content:'';position:absolute;bottom:-7px;left:var(--arrow-x,50%);transform:translateX(-50%) rotate(45deg);width:14px;height:14px;background:var(--surf);border-right:1px solid var(--bord);border-bottom:1px solid var(--bord);border-radius:0 0 3px 0}
+.rpop-card::after{
+  content:'';
+  position:absolute;bottom:-7px;left:var(--arrow-x,50%);
+  transform:translateX(-50%) rotate(45deg);
+  width:14px;height:14px;
+  background:var(--surf);
+  border-right:1px solid var(--bord);border-bottom:1px solid var(--bord);
+  border-radius:0 0 3px 0;
+}
 
-/* ═══════════════════════════════════
-   SHEET — responsive
-═══════════════════════════════════ */
-#sheetbackdrop{position:fixed;inset:0;z-index:850;background:rgba(0,0,0,0);pointer-events:none;transition:background .4s}
+/* SHEET */
+#sheetbackdrop{
+  position:fixed;inset:0;z-index:850;
+  background:rgba(0,0,0,0);
+  pointer-events:none;
+  transition:background .4s ease;
+}
 #sheetbackdrop.up{background:rgba(0,0,0,.35);pointer-events:auto}
 #sheet{
   position:fixed;bottom:-100%;left:0;right:0;z-index:900;
-  background:var(--surf);border-top:1px solid var(--bord);
+  background:var(--surf);
+  border-top:1px solid var(--bord);
   border-radius:22px 22px 0 0;
   transition:bottom .42s cubic-bezier(.32,.72,0,1);
-  max-height:86dvh;overflow-y:auto;
-  box-shadow:0 -16px 50px rgba(0,0,0,.55),0 -2px 0 rgba(249,115,22,.5);
-  padding-bottom:env(safe-area-inset-bottom,0px);
+  max-height:80dvh;overflow-y:auto;
+  box-shadow:0 -16px 50px rgba(0,0,0,.55), 0 -2px 0 rgba(249,115,22,.5);
 }
-#sheet.up{bottom:calc(54px + env(safe-area-inset-bottom,0px))}
+#sheet.up{bottom:54px}
 .shandle{width:38px;height:4px;background:var(--bord);border-radius:2px;margin:12px auto 0}
-#sbody{padding:16px 16px 28px;animation:sbodyIn .35s ease backwards .05s}
+#sbody{padding:16px 18px 32px;animation:sbodyIn .35s ease backwards .05s}
 @keyframes sbodyIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.s-reg{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ora);margin-bottom:4px}
-.s-name{font-size:clamp(20px,6vw,28px);font-weight:800;line-height:1.1;margin-bottom:3px}
-.s-season{font-size:12px;color:var(--mute);margin-bottom:14px}
-.s-desc{font-size:13px;line-height:1.75;color:#9ca3af;margin-bottom:18px}
 
-/* stats grid — 4 col → 2x2 on tiny screens */
+.s-reg{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ora);margin-bottom:4px}
+.s-name{font-size:28px;font-weight:800;line-height:1.1;margin-bottom:3px}
+.s-season{font-size:12px;color:var(--mute);margin-bottom:14px}
+
 .s-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
-@media(max-width:360px){.s-stats{grid-template-columns:repeat(2,1fr)}}
-.ss{background:linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid var(--bord);border-radius:12px;padding:10px 6px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.05);animation:ssIn .35s ease backwards;transition:transform .2s}
+.ss{
+  background:linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+  border:1px solid var(--bord);border-radius:12px;padding:10px 6px;text-align:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.05);
+  animation:ssIn .35s ease backwards;
+  transition:transform .2s ease;
+}
 .ss:nth-child(1){animation-delay:.02s}.ss:nth-child(2){animation-delay:.07s}.ss:nth-child(3){animation-delay:.12s}.ss:nth-child(4){animation-delay:.17s}
-@keyframes ssIn{from{opacity:0;transform:translateY(6px) scale(.96)}to{opacity:1;transform:scale(1)}}
+@keyframes ssIn{from{opacity:0;transform:translateY(6px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 .ssv{font-size:14px;font-weight:700;font-family:monospace;color:var(--ora);text-shadow:0 0 12px rgba(249,115,22,.3)}
 .ssl{font-size:9px;color:var(--mute);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+
 .dfrow{display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .dfl{font-size:11px;color:var(--mute);white-space:nowrap}
 .dft{flex:1;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.4)}
 .dfb{height:100%;border-radius:3px;width:0;transition:width 1s cubic-bezier(.16,1,.3,1);box-shadow:0 0 10px currentColor}
 .easy{background:var(--grn);color:var(--grn)}.moderate{background:var(--yel);color:var(--yel)}.difficult{background:var(--ora);color:var(--ora)}.extreme{background:var(--red);color:var(--red)}
 .dfn{font-size:11px;font-weight:600;text-transform:capitalize}
+
 #ecanv{width:100%;height:68px;margin-bottom:14px;border-radius:8px;display:block}
+
+.s-desc{font-size:13px;line-height:1.75;color:#9ca3af;margin-bottom:18px}
+
 .wpt{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--mute);margin-bottom:10px;font-weight:600}
 .wpl{display:flex;flex-direction:column}
 .wpi{display:flex;gap:12px;position:relative;animation:wpiIn .3s ease backwards}
 .wpi:nth-child(1){animation-delay:.03s}.wpi:nth-child(2){animation-delay:.07s}.wpi:nth-child(3){animation-delay:.11s}.wpi:nth-child(4){animation-delay:.15s}.wpi:nth-child(5){animation-delay:.19s}.wpi:nth-child(6){animation-delay:.23s}.wpi:nth-child(7){animation-delay:.27s}
 @keyframes wpiIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
 .wpleft{display:flex;flex-direction:column;align-items:center;width:14px;flex-shrink:0}
-.wpd{width:12px;height:12px;border-radius:50%;border:2px solid var(--bg);flex-shrink:0;box-shadow:0 0 8px currentColor,0 1px 3px rgba(0,0,0,.4)}
+.wpd{width:12px;height:12px;border-radius:50%;border:2px solid var(--bg);flex-shrink:0;box-shadow:0 0 8px currentColor, 0 1px 3px rgba(0,0,0,.4)}
 .wpline{flex:1;width:2px;background:linear-gradient(var(--bord),transparent);margin-top:2px;min-height:12px}
 .wpinfo{padding-bottom:10px}
 .wpn{font-size:13px;font-weight:500}
 .wps{font-size:11px;color:var(--mute);font-family:monospace;margin-top:1px}
 .wptag{display:inline-block;font-size:9px;padding:1px 6px;border-radius:8px;margin-left:5px;font-weight:700;vertical-align:middle}
-.tc{background:rgba(249,115,22,.15);color:var(--ora)}.tp{background:rgba(163,113,247,.15);color:var(--pur)}.tl{background:rgba(56,139,253,.15);color:var(--blu)}.ts{background:rgba(248,81,73,.15);color:var(--red)}.tv{background:rgba(125,133,144,.12);color:var(--mute)}
+.tc{background:rgba(249,115,22,.15);color:var(--ora)}
+.tp{background:rgba(163,113,247,.15);color:var(--pur)}
+.tl{background:rgba(56,139,253,.15);color:var(--blu)}
+.ts{background:rgba(248,81,73,.15);color:var(--red)}
+.tv{background:rgba(125,133,144,.12);color:var(--mute)}
+
 .logbox{background:rgba(46,160,67,.08);border:1px solid rgba(46,160,67,.25);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px}
-
-/* sacts — log button full width on narrow, icons alongside */
-.sacts{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
-.sacts>.btn.bp,.sacts>.btn.bd{flex:1 1 100%}
-.sacts>.btn.bsec{flex:1 1 auto;min-width:44px;padding:12px 10px}
-@media(min-width:420px){
-  .sacts>.btn.bp,.sacts>.btn.bd{flex:1 1 0;min-width:0}
-  .sacts>.btn.bsec{flex:0 0 auto}
-}
-
-/* buttons */
-.btn{padding:13px;border-radius:12px;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:transform .15s,box-shadow .25s,background .25s;text-align:center}
+.sacts{display:flex;gap:10px;margin-top:20px}
+.btn{flex:1;padding:13px;border-radius:12px;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:transform .15s ease, box-shadow .25s ease, background .25s ease}
 .bp{background:linear-gradient(135deg,#fb923c,#f97316);color:#fff;box-shadow:0 4px 14px rgba(249,115,22,.4)}
 .bp:hover{box-shadow:0 6px 18px rgba(249,115,22,.5);transform:translateY(-1px)}
 .bp:active{transform:scale(.97)}
 .bd{background:rgba(46,160,67,.12);border:1px solid rgba(46,160,67,.3);color:var(--grn)}
 .bd:active{transform:scale(.97)}
-.bsec{background:rgba(255,255,255,.06);border:1px solid var(--bord);color:var(--txt)}
+.bsec{background:rgba(255,255,255,.06);border:1px solid var(--bord);color:var(--txt);flex:0 0 auto;padding:13px 16px}
 .bsec:hover{background:rgba(255,255,255,.1)}
 .bsec:active{transform:scale(.94)}
 
-/* ═══════════════════════════════════
-   MODALS — responsive
-═══════════════════════════════════ */
+/* MODAL */
 #modal{position:fixed;inset:0;z-index:2000;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(6px)}
 #modal.on{display:flex}
 #pinmodal{position:fixed;inset:0;z-index:2100;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(6px)}
 #pinmodal.on{display:flex}
-.mbox{
-  background:var(--surf);border-radius:22px 22px 0 0;border:1px solid var(--bord);
-  padding:22px 16px calc(24px + env(safe-area-inset-bottom,0px));
-  width:100%;max-width:520px;
-}
-.mtitle{font-size:clamp(18px,5vw,22px);font-weight:800;margin-bottom:2px}
+.mbox{background:var(--surf);border-radius:22px 22px 0 0;border:1px solid var(--bord);padding:22px 18px 40px;width:100%;max-width:500px}
+.mtitle{font-size:22px;font-weight:800;margin-bottom:2px}
 .msub{font-size:12px;color:var(--mute);margin-bottom:18px}
 .mf{margin-bottom:13px}
 .mf label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--mute);margin-bottom:5px}
-.mf input,.mf textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--bord);border-radius:10px;padding:10px 12px;color:var(--txt);font-size:16px;font-family:inherit;outline:none;box-sizing:border-box}
+.mf input,.mf textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--bord);border-radius:10px;padding:9px 12px;color:var(--txt);font-size:13px;font-family:inherit;outline:none}
 .mf input:focus,.mf textarea:focus{border-color:rgba(249,115,22,.5)}
-.mf textarea{resize:none;height:70px;font-size:14px}
+.mf textarea{resize:none;height:70px}
 .stars{display:flex;gap:6px}
-.star{font-size:clamp(22px,7vw,26px);cursor:pointer;color:var(--bord);transition:color .1s}
+.star{font-size:26px;cursor:pointer;color:var(--bord);transition:color .1s}
 .star.on{color:var(--ora)}
 .macts{display:flex;gap:10px;margin-top:20px}
 
-/* ═══════════════════════════════════
-   MAP & TOAST
-═══════════════════════════════════ */
-#map{position:fixed;top:54px;left:0;right:0;bottom:calc(54px + env(safe-area-inset-bottom,0px));z-index:1;background:#1a1f2e}
-#map::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:450;background:radial-gradient(ellipse at 50% 0%,rgba(13,17,23,0) 0%,rgba(13,17,23,.25) 100%)}
+/* TOAST */
+#map{position:fixed;top:54px;left:0;right:0;bottom:54px;z-index:1;background:#1a1f2e}
+#map::after{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:450;
+  background:radial-gradient(ellipse at 50% 0%, rgba(13,17,23,0) 0%, rgba(13,17,23,.25) 100%);
+}
 #toast{
-  position:fixed;bottom:calc(74px + env(safe-area-inset-bottom,0px));left:50%;
+  position:fixed;bottom:74px;left:50%;
   transform:translateX(-50%) translateY(20px) scale(.9);
-  padding:11px 20px;border-radius:24px;
+  padding:11px 22px;border-radius:24px;
   font-size:13px;font-weight:600;z-index:3000;
-  opacity:0;transition:opacity .3s,transform .35s cubic-bezier(.34,1.56,.64,1);
-  pointer-events:none;white-space:nowrap;color:#fff;max-width:88vw;text-align:center;
-  box-shadow:0 8px 28px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.2);
+  opacity:0;transition:opacity .3s ease, transform .35s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;white-space:nowrap;color:#fff;
+  box-shadow:0 8px 28px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.2);
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
 
-/* ═══════════════════════════════════
-   MISC (wp-edit, diff, badges)
-═══════════════════════════════════ */
-.mk-custom{background:rgba(163,113,247,.92)!important;border-color:rgba(163,113,247,.5)!important}
-.wp-edit-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:10px;padding:10px;background:rgba(255,255,255,.03);border:1px solid var(--bord);border-radius:10px}
-.wp-edit-row .mf{flex:1;margin-bottom:0}
-.wp-edit-row select{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--bord);border-radius:9px;padding:9px 8px;color:var(--txt);font-size:12px;font-family:inherit;outline:none}
-.wp-remove{background:rgba(248,81,73,.15);border:1px solid rgba(248,81,73,.3);color:var(--red);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-#wp-add-btn{width:100%;padding:10px;border-radius:10px;border:1px dashed var(--bord);background:transparent;color:var(--mute);font-size:12px;cursor:pointer;font-family:inherit;margin-top:4px}
-#wp-add-btn:hover{border-color:var(--ora);color:var(--ora)}
-.diff-select{display:flex;gap:6px}
-.diff-opt{flex:1;padding:8px 4px;text-align:center;border-radius:8px;border:1px solid var(--bord);font-size:11px;font-weight:600;cursor:pointer;color:var(--mute);text-transform:capitalize}
-.diff-opt.sel-easy{background:rgba(46,160,67,.2);border-color:var(--grn);color:var(--grn)}
-.diff-opt.sel-moderate{background:rgba(210,153,34,.2);border-color:var(--yel);color:var(--yel)}
-.diff-opt.sel-difficult{background:rgba(249,115,22,.2);border-color:var(--ora);color:var(--ora)}
-.diff-opt.sel-extreme{background:rgba(248,81,73,.2);border-color:var(--red);color:var(--red)}
-.custom-badge{display:inline-block;font-size:9px;padding:2px 7px;border-radius:8px;background:rgba(163,113,247,.15);color:var(--pur);font-weight:700;margin-left:6px;vertical-align:middle}
-.btn-del{background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);color:var(--red);flex:0 0 auto;padding:13px 16px}
-.btn-del:hover{background:rgba(248,81,73,.2)}
 /* Markers — clean circular badge, consistent with cluster bubbles */
 .mkwrap{
   position:relative;width:34px;height:42px;
@@ -706,495 +624,21 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 /* refresh button */
 .wx-refresh-btn{width:100%;margin-top:12px;padding:11px;border-radius:12px;border:1px dashed var(--bord);background:transparent;color:var(--mute);font-size:13px;cursor:pointer;font-family:inherit;transition:border-color .2s,color .2s}
 .wx-refresh-btn:hover{border-color:var(--ora);color:var(--ora)}
-/* ═══════════════════════════════════════
-   PROFILE CARD
-═══════════════════════════════════════ */
-#profile-overlay{
-  position:fixed;inset:0;z-index:4500;
-  background:rgba(0,0,0,.55);backdrop-filter:blur(8px);
-  display:none;align-items:flex-start;justify-content:flex-end;
-  padding:62px 10px 0;
-}
-#profile-overlay.on{display:flex;animation:pfOverlayIn .2s ease}
-@keyframes pfOverlayIn{from{opacity:0}to{opacity:1}}
-
-#profile-card{
-  width:min(340px,96vw);
-  background:var(--surf);border:1px solid var(--bord);
-  border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.7);
-  overflow:hidden;max-height:88dvh;overflow-y:auto;
-  animation:pfCardIn .28s cubic-bezier(.22,1.4,.36,1);
-}
-@keyframes pfCardIn{from{opacity:0;transform:scale(.92) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
-
-/* ── header ── */
-.pf-header{
-  padding:18px 16px 14px;
-  background:linear-gradient(135deg,rgba(249,115,22,.12),rgba(163,113,247,.08));
-  border-bottom:1px solid var(--bord);position:relative;
-}
-.pf-header-row{display:flex;align-items:flex-start;gap:12px}
-.pf-avatar{
-  width:52px;height:52px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:22px;font-weight:800;color:#fff;flex-shrink:0;
-  border:3px solid rgba(255,255,255,.15);
-  box-shadow:0 4px 16px rgba(0,0,0,.4);
-  overflow:hidden;
-}
-.pf-avatar img{width:100%;height:100%;object-fit:cover}
-
-/* avatar upload overlay */
-.pf-avatar-wrap{position:relative;flex-shrink:0;width:52px;height:52px}.pf-avatar{
-  width:52px;height:52px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:22px;font-weight:800;color:#fff;
-  border:3px solid rgba(255,255,255,.15);
-  box-shadow:0 4px 16px rgba(0,0,0,.4);
-  overflow:hidden;cursor:pointer;
-  transition:filter .2s;
-}
-.pf-avatar:hover .pf-avatar-cam{opacity:1}
-.pf-avatar-cam{
-  position:absolute;inset:0;border-radius:50%;
-  background:rgba(0,0,0,.52);
-  display:flex;align-items:center;justify-content:center;
-  font-size:16px;opacity:0;transition:opacity .18s;
-  pointer-events:none;
-}
-.pf-avatar-wrap.edit-mode .pf-avatar-cam{opacity:1}
-.pf-avatar-wrap.edit-mode .pf-avatar{filter:brightness(.75)}
-.pf-identity{flex:1;min-width:0}
-.pf-name{font-size:17px;font-weight:800;color:var(--txt);line-height:1.2;word-break:break-word}
-.pf-name-input{
-  font-size:17px;font-weight:800;color:var(--txt);
-  background:rgba(255,255,255,.07);border:1.5px solid rgba(249,115,22,.5);
-  border-radius:8px;padding:3px 8px;width:100%;
-  font-family:inherit;outline:none;
-}
-.pf-region-row{display:flex;align-items:center;gap:6px;margin-top:4px}
-.pf-region-ico{font-size:12px}
-.pf-region-select{
-  background:transparent;border:none;color:var(--mute);
-  font-size:12px;font-family:inherit;outline:none;cursor:pointer;
-  padding:0;-webkit-appearance:none;appearance:none;
-}
-.pf-region-select option{background:var(--surf);color:var(--txt)}
-.pf-tagline{
-  font-size:12px;color:var(--mute);margin-top:6px;
-  cursor:pointer;border-radius:6px;padding:3px 6px;
-  transition:background .15s;line-height:1.5;
-  border:1px solid transparent;
-}
-.pf-tagline:hover{background:rgba(255,255,255,.05);border-color:var(--bord)}
-.pf-tagline-input{
-  font-size:12px;color:var(--txt);width:100%;margin-top:6px;
-  background:rgba(255,255,255,.06);border:1.5px solid rgba(249,115,22,.4);
-  border-radius:8px;padding:5px 8px;font-family:inherit;outline:none;resize:none;height:52px;
-}
-.pf-edit-btn{
-  position:absolute;top:14px;right:14px;
-  background:rgba(255,255,255,.08);border:1px solid var(--bord);
-  color:var(--mute);width:30px;height:30px;border-radius:50%;
-  font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  transition:background .15s,color .15s;flex-shrink:0;
-}
-.pf-edit-btn:hover{background:rgba(249,115,22,.15);color:var(--ora)}
-.pf-edit-btn.active{background:rgba(249,115,22,.2);color:var(--ora);border-color:rgba(249,115,22,.4)}
-
-/* ── trek type badges ── */
-.pf-section{padding:12px 16px;border-bottom:1px solid var(--bord)}
-.pf-section-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--mute);margin-bottom:8px}
-.pf-type-grid{display:flex;flex-wrap:wrap;gap:6px}
-.pf-type-pill{
-  padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;
-  border:1px solid var(--bord);color:var(--mute);cursor:pointer;
-  transition:background .15s,border-color .15s,color .15s,transform .1s;
-  background:rgba(255,255,255,.03);
-}
-.pf-type-pill:hover{border-color:var(--ora);color:var(--ora)}
-.pf-type-pill.on{background:rgba(249,115,22,.15);border-color:rgba(249,115,22,.5);color:var(--ora)}
-.pf-type-pill.disabled{pointer-events:none;opacity:.5}
-[data-theme="light"] .pf-type-pill{background:rgba(0,0,0,.04)}
-
-/* ── stats grid ── */
-.pf-stats-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:8px;
-  padding:12px 16px;border-bottom:1px solid var(--bord);
-}
-.pf-stat{
-  background:linear-gradient(135deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
-  border:1px solid var(--bord);border-radius:12px;
-  padding:10px 10px 8px;
-}
-[data-theme="light"] .pf-stat{background:rgba(0,0,0,.03)}
-.pf-stat-val{font-size:17px;font-weight:800;font-family:monospace;color:var(--ora);line-height:1.1}
-.pf-stat-sub{font-size:10px;color:var(--mute);margin-top:2px;line-height:1.3}
-.pf-stat-name{font-size:11px;font-weight:500;color:var(--txt);margin-top:3px;word-break:break-word;line-height:1.3}
-
-/* ── achievements ── */
-.pf-badges-row{
-  display:flex;gap:10px;padding:12px 16px;
-  border-bottom:1px solid var(--bord);overflow-x:auto;scrollbar-width:none;
-}
-.pf-badges-row::-webkit-scrollbar{display:none}
-.pf-badge{
-  display:flex;flex-direction:column;align-items:center;gap:4px;
-  flex-shrink:0;cursor:default;position:relative;
-}
-.pf-badge-icon{
-  width:46px;height:46px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:22px;border:2px solid transparent;
-  transition:transform .2s,box-shadow .2s;position:relative;
-}
-.pf-badge.earned .pf-badge-icon{
-  border-color:var(--ora);
-  box-shadow:0 0 14px rgba(249,115,22,.35);
-  background:rgba(249,115,22,.1);
-}
-.pf-badge.earned:hover .pf-badge-icon{transform:scale(1.12);box-shadow:0 0 20px rgba(249,115,22,.5)}
-.pf-badge.locked .pf-badge-icon{
-  border-color:var(--bord);
-  background:rgba(255,255,255,.03);
-  opacity:.32;filter:grayscale(.6);
-}
-.pf-badge-lock{
-  position:absolute;bottom:-2px;right:-2px;
-  width:16px;height:16px;border-radius:50%;
-  background:var(--surf);border:1px solid var(--bord);
-  font-size:9px;display:flex;align-items:center;justify-content:center;
-}
-.pf-badge-label{font-size:9px;color:var(--mute);text-align:center;max-width:52px;line-height:1.3}
-.pf-badge.earned .pf-badge-label{color:var(--ora);font-weight:600}
-
-/* badge tooltip */
-.pf-badge-tip{
-  position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
-  background:rgba(10,14,26,.96);border:1px solid var(--bord);
-  border-radius:10px;padding:8px 10px;width:130px;text-align:center;
-  font-size:10px;color:var(--txt);line-height:1.5;
-  opacity:0;pointer-events:none;transition:opacity .18s;
-  box-shadow:0 6px 20px rgba(0,0,0,.5);z-index:10;
-  margin-bottom:6px;
-}
-.pf-badge:hover .pf-badge-tip{opacity:1}
-
-/* ── share + save ── */
-.pf-actions{display:flex;gap:8px;padding:12px 16px}
-.pf-share-btn{
-  flex:1;padding:12px;border-radius:12px;border:none;
-  background:linear-gradient(135deg,#fb923c,#f97316);color:#fff;
-  font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;
-  display:flex;align-items:center;justify-content:center;gap:6px;
-  transition:transform .15s,box-shadow .2s;
-  box-shadow:0 4px 14px rgba(249,115,22,.35);
-}
-.pf-share-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(249,115,22,.5)}
-.pf-share-btn:active{transform:scale(.97)}
-.pf-save-btn{
-  flex:1;padding:12px;border-radius:12px;border:1px solid rgba(46,160,67,.4);
-  background:rgba(46,160,67,.12);color:var(--grn);
-  font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;
-  display:flex;align-items:center;justify-content:center;gap:6px;
-  transition:background .15s;
-}
-.pf-save-btn:hover{background:rgba(46,160,67,.2)}
-.pf-save-btn:active{transform:scale(.97)}
-.pf-save-btn.hidden{display:none}
-
-/* ── sign out ── */
-.pf-signout-btn{
-  width:calc(100% - 32px);margin:0 16px 16px;padding:11px;
-  border-radius:12px;border:1px solid rgba(248,81,73,.25);
-  background:rgba(248,81,73,.07);color:var(--red);
-  font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;
-  display:flex;align-items:center;justify-content:center;gap:6px;
-  transition:background .15s;
-}
-.pf-signout-btn:hover{background:rgba(248,81,73,.15)}
-/* ═══════════════════════════════════════
-   BUDGET ESTIMATOR MODAL
-═══════════════════════════════════════ */
-#budget-modal{
-  position:fixed;inset:0;z-index:5500;
-  background:rgba(0,0,0,.75);backdrop-filter:blur(10px);
-  display:none;align-items:flex-end;justify-content:center;
-}
-#budget-modal.on{display:flex;animation:sfadeIn .22s ease}
-#budget-inner{
-  width:100%;max-width:540px;
-  background:var(--surf);border-radius:22px 22px 0 0;
-  border:1px solid var(--bord);border-bottom:none;
-  max-height:92dvh;overflow-y:auto;
-  box-shadow:0 -16px 50px rgba(0,0,0,.6),0 -2px 0 rgba(249,115,22,.4);
-  padding-bottom:env(safe-area-inset-bottom,0px);
-}
-.bgt-handle{width:38px;height:4px;background:var(--bord);border-radius:2px;margin:12px auto 0}
-.bgt-header{
-  padding:14px 16px 12px;
-  border-bottom:1px solid var(--bord);
-  display:flex;align-items:center;gap:10px;
-}
-.bgt-header-icon{font-size:22px}
-.bgt-header-info{flex:1;min-width:0}
-.bgt-trek-name{font-size:15px;font-weight:800;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bgt-trek-meta{font-size:11px;color:var(--mute);margin-top:1px}
-.bgt-close{background:rgba(255,255,255,.08);border:none;color:var(--txt);font-size:18px;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-[data-theme="light"] .bgt-close{background:rgba(0,0,0,.07)}
-
-/* inputs */
-.bgt-inputs{
-  display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;
-  padding:12px 16px;border-bottom:1px solid var(--bord);
-}
-@media(max-width:380px){.bgt-inputs{grid-template-columns:1fr 1fr}}
-.bgt-input-group{display:flex;flex-direction:column;gap:4px}
-.bgt-input-group label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--mute)}
-.bgt-input-group select,
-.bgt-input-group input{
-  background:rgba(255,255,255,.05);border:1px solid var(--bord);
-  border-radius:10px;padding:8px 10px;color:var(--txt);
-  font-size:13px;font-family:inherit;outline:none;
-  transition:border-color .2s;width:100%;
-  -webkit-appearance:none;appearance:none;
-}
-.bgt-input-group select:focus,
-.bgt-input-group input:focus{border-color:rgba(249,115,22,.5)}
-[data-theme="light"] .bgt-input-group select,
-[data-theme="light"] .bgt-input-group input{background:rgba(0,0,0,.04)}
-.bgt-input-group select option{background:var(--surf);color:var(--txt)}
-
-/* guide toggle */
-.bgt-guide-row{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:10px 16px;border-bottom:1px solid var(--bord);
-}
-.bgt-guide-label{font-size:13px;color:var(--txt);display:flex;align-items:center;gap:6px}
-.bgt-toggle{position:relative;width:40px;height:22px;cursor:pointer}
-.bgt-toggle input{opacity:0;width:0;height:0;position:absolute}
-.bgt-toggle-track{
-  position:absolute;inset:0;border-radius:11px;
-  background:var(--bord);transition:background .2s;
-}
-.bgt-toggle input:checked + .bgt-toggle-track{background:var(--ora)}
-.bgt-toggle-thumb{
-  position:absolute;top:3px;left:3px;
-  width:16px;height:16px;border-radius:50%;
-  background:#fff;transition:transform .2s;
-  box-shadow:0 1px 4px rgba(0,0,0,.3);
-}
-.bgt-toggle input:checked ~ .bgt-toggle-thumb{transform:translateX(18px)}
-
-/* breakdown table */
-.bgt-breakdown{padding:12px 16px;border-bottom:1px solid var(--bord)}
-.bgt-section-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--mute);margin-bottom:10px}
-.bgt-row{
-  display:flex;align-items:center;gap:8px;
-  padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);
-}
-.bgt-row:last-child{border:none}
-[data-theme="light"] .bgt-row{border-bottom-color:rgba(0,0,0,.04)}
-.bgt-row-icon{font-size:15px;flex-shrink:0;width:22px;text-align:center}
-.bgt-row-name{flex:1;font-size:12px;color:var(--txt);min-width:0}
-.bgt-row-bar-wrap{width:80px;height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;flex-shrink:0}
-[data-theme="light"] .bgt-row-bar-wrap{background:rgba(0,0,0,.07)}
-.bgt-row-bar{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.16,1,.3,1)}
-.bgt-row-amt{font-size:12px;font-weight:700;font-family:monospace;color:var(--ora);flex-shrink:0;min-width:72px;text-align:right}
-.bgt-row.contingency .bgt-row-amt{color:var(--mute)}
-.bgt-row.total-row{
-  margin-top:6px;padding:10px 0 4px;
-  border-top:1px solid var(--bord)!important;
-  border-bottom:none!important;
-}
-.bgt-row.total-row .bgt-row-name{font-size:13px;font-weight:700}
-.bgt-row.total-row .bgt-row-amt{font-size:15px;color:var(--txt)}
-.bgt-total-group{font-size:15px;color:var(--mute);font-family:monospace;flex-shrink:0;text-align:right;min-width:100px}
-
-/* charts */
-.bgt-charts{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bord);align-items:center}
-@media(max-width:340px){.bgt-charts{flex-direction:column}}
-.bgt-donut-wrap{flex-shrink:0;position:relative;width:90px;height:90px}
-.bgt-donut-wrap svg{width:90px;height:90px}
-.bgt-donut-center{
-  position:absolute;inset:0;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;pointer-events:none;
-}
-.bgt-donut-total{font-size:12px;font-weight:800;color:var(--txt);font-family:monospace}
-.bgt-donut-label{font-size:8px;color:var(--mute);text-transform:uppercase;letter-spacing:.5px}
-.bgt-legend{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0}
-.bgt-legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mute)}
-.bgt-legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.bgt-legend-pct{font-weight:700;color:var(--txt);margin-left:auto;font-family:monospace;font-size:11px}
-
-/* totals summary */
-.bgt-totals{
-  padding:12px 16px;border-bottom:1px solid var(--bord);
-  display:grid;grid-template-columns:1fr 1fr;gap:8px;
-}
-.bgt-total-card{
-  background:linear-gradient(135deg,rgba(249,115,22,.1),rgba(249,115,22,.04));
-  border:1px solid rgba(249,115,22,.25);border-radius:14px;
-  padding:12px 14px;
-}
-.bgt-total-card.group{
-  background:linear-gradient(135deg,rgba(56,139,253,.1),rgba(56,139,253,.04));
-  border-color:rgba(56,139,253,.25);
-}
-.bgt-total-label{font-size:10px;color:var(--mute);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
-.bgt-total-val{font-size:22px;font-weight:800;font-family:monospace;color:var(--ora)}
-.bgt-total-card.group .bgt-total-val{color:var(--blu)}
-.bgt-total-sub{font-size:10px;color:var(--mute);margin-top:2px}
-
-/* actions */
-.bgt-actions{display:flex;gap:8px;padding:12px 16px}
-.bgt-btn{
-  flex:1;padding:13px;border-radius:12px;border:none;
-  font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;
-  display:flex;align-items:center;justify-content:center;gap:6px;
-  transition:transform .15s,opacity .15s;
-}
-.bgt-btn:active{transform:scale(.97)}
-.bgt-btn-primary{background:linear-gradient(135deg,#fb923c,#f97316);color:#fff;box-shadow:0 4px 14px rgba(249,115,22,.3)}
-.bgt-btn-sec{background:rgba(255,255,255,.06);border:1px solid var(--bord);color:var(--txt)}
-[data-theme="light"] .bgt-btn-sec{background:rgba(0,0,0,.05)}
-/* ═══════════════════════════════════════
-   PHOTO SYSTEM
-═══════════════════════════════════════ */
-.photo-section{margin:14px 0 4px}
-.photo-section-title{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--mute);margin-bottom:8px;font-weight:700;display:flex;align-items:center;gap:6px}
-.photo-count-badge{font-size:10px;padding:1px 7px;border-radius:8px;background:rgba(249,115,22,.15);color:var(--ora);font-weight:700}
-.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
-.photo-thumb{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid var(--bord)}
-[data-theme="light"] .photo-thumb{background:rgba(0,0,0,.04)}
-.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s}
-.photo-thumb:hover img{transform:scale(1.07)}
-.photo-del{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.72);border:none;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;z-index:2}
-.photo-thumb:hover .photo-del{opacity:1}
-.photo-new-tag{position:absolute;bottom:4px;left:4px;font-size:8px;background:rgba(0,0,0,.65);color:var(--ora);padding:1px 5px;border-radius:4px;pointer-events:none}
-.photo-add-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;border-radius:11px;border:1px dashed var(--bord);background:transparent;color:var(--mute);font-size:13px;cursor:pointer;font-family:inherit;transition:border-color .2s,color .2s}
-.photo-add-btn:hover{border-color:var(--ora);color:var(--ora)}
-
-/* Lightbox */
-#photo-lightbox{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.94);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px}
-#photo-lightbox.on{display:flex}
-#photo-lightbox img{max-width:100%;max-height:72dvh;border-radius:14px;object-fit:contain;box-shadow:0 8px 40px rgba(0,0,0,.8)}
-#photo-lb-close{position:absolute;top:18px;right:18px;background:rgba(255,255,255,.12);border:none;color:#fff;font-size:20px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2}
-#photo-lb-nav{display:flex;gap:16px;align-items:center}
-#photo-lb-nav button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
-#photo-lb-nav button:hover{background:rgba(255,255,255,.22)}
-#photo-lb-nav button:disabled{opacity:.3;cursor:default}
-#photo-lb-counter{color:var(--mute);font-size:12px;min-width:54px;text-align:center}
 </style>
 </head>
 <body>
 
 <div id="topbar">
-  <div class="logo"><span class="logo-peak">⛰</span> Trek<em>Verse</em></div>
-  <button id="srch-toggle" title="Search treks">🔍</button>
-  <div style="flex:1"></div>
+  <div class="logo"><span class="logo-peak">⛰</span> Summit<em>Log</em></div>
+  <div class="swrap">
+    <span class="sico">🔍</span>
+    <input id="srch" type="text" placeholder="Search trek, mountain, region…" autocomplete="off">
+    <div id="sres"></div>
+  </div>
   <div id="bdg">0 / 0</div>
   <button id="addbtn" title="Add your own trek/pin">+</button>
   <button id="themebtn" title="Switch to light mode">🌙</button>
-  <button id="user-chip" title="Account" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--bord);background:rgba(255,255,255,.06);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden;flex-shrink:0;transition:border-color .2s,transform .15s;color:var(--txt);font-weight:700">👤</button>
   <button id="hubbtn" title="Journey Hub">☰</button>
-</div>
-
-<!-- USER PROFILE CARD OVERLAY -->
-<div id="profile-overlay">
-  <div id="profile-card">
-
-    <!-- HEADER -->
-    <div class="pf-header">
-      <div class="pf-header-row">
-        <div class="pf-avatar-wrap" id="pf-avatar-wrap">
-          <div class="pf-avatar" id="pf-avatar">👤</div>
-          <div class="pf-avatar-cam">📷</div>
-          <input type="file" id="pf-photo-input" accept="image/*" style="display:none">
-        </div>
-        <button id="pf-remove-photo" style="display:none;position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);background:rgba(248,81,73,.15);border:1px solid rgba(248,81,73,.3);color:var(--red);font-size:9px;font-weight:700;border-radius:8px;padding:2px 7px;cursor:pointer;white-space:nowrap;font-family:inherit">✕ Remove</button>
-        <div class="pf-identity">
-          <div class="pf-name" id="pf-name-display">Explorer</div>
-          <input class="pf-name-input" id="pf-name-input" style="display:none" maxlength="32" placeholder="Your name">
-          <div class="pf-region-row">
-            <span class="pf-region-ico">📍</span>
-            <select class="pf-region-select" id="pf-region">
-              <option value="">Select Home Region</option>
-              <option value="himachal">Himachal Pradesh</option>
-              <option value="uttarakhand">Uttarakhand</option>
-              <option value="jk">J&K / Ladakh</option>
-              <option value="nepal">Nepal Himalaya</option>
-              <option value="northeast">Seven Sisters NE</option>
-              <option value="maharashtra">Maharashtra</option>
-              <option value="southindia">South India</option>
-              <option value="tibet">Tibet Border</option>
-            </select>
-          </div>
-          <div class="pf-tagline" id="pf-tagline-display">✏️ Add a tagline…</div>
-          <textarea class="pf-tagline-input" id="pf-tagline-input" style="display:none" maxlength="80" placeholder="e.g. Summiting every peak in HP · Shimla"></textarea>
-        </div>
-        <button class="pf-edit-btn" id="pf-edit-btn" title="Edit profile">✏️</button>
-      </div>
-    </div>
-
-    <!-- TREK TYPE BADGES -->
-    <div class="pf-section">
-      <div class="pf-section-title">My Trek Style</div>
-      <div class="pf-type-grid" id="pf-type-grid">
-        <div class="pf-type-pill" data-type="High Altitude">🏔 High Altitude</div>
-        <div class="pf-type-pill" data-type="Spiritual">🕉️ Spiritual</div>
-        <div class="pf-type-pill" data-type="Forest">🌲 Forest</div>
-        <div class="pf-type-pill" data-type="Winter">❄️ Winter</div>
-        <div class="pf-type-pill" data-type="Solo">🧗 Solo</div>
-        <div class="pf-type-pill" data-type="Group">👥 Group</div>
-        <div class="pf-type-pill" data-type="Backpacking">🎒 Backpacking</div>
-        <div class="pf-type-pill" data-type="Photography">📷 Photography</div>
-      </div>
-    </div>
-
-    <!-- STATS -->
-    <div class="pf-stats-grid" id="pf-stats-grid">
-      <!-- filled by JS -->
-    </div>
-
-    <!-- ACHIEVEMENTS -->
-    <div class="pf-section" style="border-bottom:1px solid var(--bord);padding-bottom:14px">
-      <div class="pf-section-title">Achievements</div>
-      <div class="pf-badges-row" id="pf-badges-row">
-        <!-- filled by JS -->
-      </div>
-    </div>
-
-    <!-- ACTIONS -->
-    <div class="pf-actions">
-      <button class="pf-share-btn" id="pf-share-btn" style="display:none">📤 Share Profile</button>
-      <button class="pf-save-btn" id="pf-save-btn" style="flex:1">✅ Save Profile</button>
-    </div>
-
-    <!-- SIGN OUT -->
-    <button class="pf-signout-btn" id="pf-signout-btn">🚪 Sign Out</button>
-
-  </div>
-</div>
-
-<!-- SEARCH OVERLAY -->
-<div id="srch-overlay">
-  <div id="srch-bar">
-    <span id="srch-ico">🔍</span>
-    <input id="srch" type="text" placeholder="Search trek, mountain, region…" autocomplete="off" enterkeyhint="search">
-    <button id="srch-clear">✕</button>
-    <button id="srch-cancel">Cancel</button>
-  </div>
-  <div id="srch-cats">
-    <button class="srch-cat on" data-cat="">All</button>
-    <button class="srch-cat" data-cat="himalaya">Himalaya</button>
-    <button class="srch-cat" data-cat="spiritual">Spiritual</button>
-    <button class="srch-cat" data-cat="summits">Summits</button>
-    <button class="srch-cat" data-cat="custom">My Pins</button>
-  </div>
-  <div id="srch-results-panel">
-    <div class="srch-empty"><div class="srch-empty-ico">🏔️</div>Type to search any trek, peak or region</div>
-  </div>
 </div>
 
 <div id="addbanner">
@@ -1217,6 +661,11 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   <button class="tab" data-r="southindia"><span class="tab-label">🌴 South India</span><span class="tab-chev">⌃</span></button>
   <button class="tab" data-r="spiritual"><span class="tab-label">🕉️ Spiritual Yatras</span><span class="tab-chev">⌃</span></button>
   <button class="tab" data-r="sevensummits"><span class="tab-label">🌐 Seven Summits</span><span class="tab-chev">⌃</span></button>
+  <button class="tab" data-r="rajasthan"><span class="tab-label">🏜️ Rajasthan</span><span class="tab-chev">⌃</span></button>
+  <button class="tab" data-r="sikkim"><span class="tab-label">🌿 Sikkim</span><span class="tab-chev">⌃</span></button>
+  <button class="tab" data-r="andaman"><span class="tab-label">🌴 Andaman</span><span class="tab-chev">⌃</span></button>
+  <button class="tab" data-r="spiti"><span class="tab-label">🏜 Spiti</span><span class="tab-chev">⌃</span></button>
+  <button class="tab" data-r="ladakwinter"><span class="tab-label">🧊 Ladakh Winter</span><span class="tab-chev">⌃</span></button>
 </div>
 
 <div id="regionpop"></div>
@@ -1234,126 +683,10 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <div class="mf"><label>Date Completed</label><input type="date" id="mdate"></div>
     <div class="mf"><label>Your Rating</label><div class="stars" id="stars"><span class="star" data-v="1">★</span><span class="star" data-v="2">★</span><span class="star" data-v="3">★</span><span class="star" data-v="4">★</span><span class="star" data-v="5">★</span></div></div>
     <div class="mf"><label>Personal Notes</label><textarea id="mnotes" placeholder="Weather conditions, who you went with, highlights…"></textarea></div>
-    <div class="mf">
-      <label>📷 Summit Photos <span id="modal-photo-badge" class="photo-count-badge" style="display:none"></span></label>
-      <div class="photo-grid" id="modal-photo-grid" style="display:none"></div>
-      <button class="photo-add-btn" id="modal-photo-btn" type="button">📷 Add Photos from Gallery</button>
-      <input type="file" id="modal-photo-input" accept="image/*" multiple style="display:none">
-    </div>
     <div class="macts">
       <button class="btn bsec" id="mcancel">Cancel</button>
       <button class="btn bp" id="msave" style="flex:1">✔ Save Summit</button>
     </div>
-  </div>
-</div>
-
-<!-- BUDGET ESTIMATOR MODAL -->
-<div id="budget-modal">
-  <div id="budget-inner">
-    <div class="bgt-handle"></div>
-
-    <!-- Header -->
-    <div class="bgt-header">
-      <div class="bgt-header-icon">💰</div>
-      <div class="bgt-header-info">
-        <div class="bgt-trek-name" id="bgt-trek-name">Budget Estimator</div>
-        <div class="bgt-trek-meta" id="bgt-trek-meta"></div>
-      </div>
-      <button class="bgt-close" id="bgt-close">✕</button>
-    </div>
-
-    <!-- Inputs -->
-    <div class="bgt-inputs">
-      <div class="bgt-input-group" id="bgt-region-override-wrap" style="display:none">
-        <label>🗺 Region</label>
-        <select id="bgt-region-override">
-          <option value="himachal">Himachal Pradesh</option>
-          <option value="uttarakhand">Uttarakhand</option>
-          <option value="jk">J&K / Ladakh</option>
-          <option value="nepal">Nepal Himalaya</option>
-          <option value="tibet">Tibet Border</option>
-          <option value="northeast">Seven Sisters NE</option>
-          <option value="maharashtra">Maharashtra</option>
-          <option value="southindia">South India</option>
-          <option value="spiritual">Spiritual Yatras</option>
-          <option value="sevensummits">Seven Summits</option>
-        </select>
-      </div>
-      <div class="bgt-input-group">
-        <label>👥 Group Size</label>
-        <input type="number" id="bgt-group" min="1" max="20" value="1">
-      </div>
-      <div class="bgt-input-group">
-        <label>🎒 Trek Variant</label>
-        <select id="bgt-variant">
-          <option value="budget">Budget 🏕</option>
-          <option value="comfort">Comfort 🏠</option>
-          <option value="premium">Premium 🏨</option>
-        </select>
-      </div>
-      <div class="bgt-input-group">
-        <label>✈️ Travel From</label>
-        <select id="bgt-city">
-          <option value="delhi">Delhi</option>
-          <option value="mumbai">Mumbai</option>
-          <option value="bangalore">Bangalore</option>
-          <option value="kolkata">Kolkata</option>
-          <option value="pune">Pune</option>
-          <option value="hyderabad">Hyderabad</option>
-          <option value="chandigarh">Chandigarh</option>
-          <option value="ahmedabad">Ahmedabad</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Guide toggle -->
-    <div class="bgt-guide-row">
-      <div class="bgt-guide-label">🧭 Include Guide / Porter charges</div>
-      <label class="bgt-toggle">
-        <input type="checkbox" id="bgt-guide" checked>
-        <div class="bgt-toggle-track"></div>
-        <div class="bgt-toggle-thumb"></div>
-      </label>
-    </div>
-
-    <!-- Cost breakdown -->
-    <div class="bgt-breakdown">
-      <div class="bgt-section-title">Cost Breakdown <span id="bgt-per-label" style="color:var(--ora)">· per person</span></div>
-      <div id="bgt-rows"></div>
-    </div>
-
-    <!-- Charts -->
-    <div class="bgt-charts">
-      <div class="bgt-donut-wrap">
-        <svg viewBox="0 0 90 90" id="bgt-donut-svg"></svg>
-        <div class="bgt-donut-center">
-          <div class="bgt-donut-total" id="bgt-donut-total">₹0</div>
-          <div class="bgt-donut-label">per person</div>
-        </div>
-      </div>
-      <div class="bgt-legend" id="bgt-legend"></div>
-    </div>
-
-    <!-- Total cards -->
-    <div class="bgt-totals">
-      <div class="bgt-total-card">
-        <div class="bgt-total-label">Per Person</div>
-        <div class="bgt-total-val" id="bgt-pp">₹0</div>
-        <div class="bgt-total-sub" id="bgt-pp-sub"></div>
-      </div>
-      <div class="bgt-total-card group">
-        <div class="bgt-total-label">Total Group</div>
-        <div class="bgt-total-val" id="bgt-grp">₹0</div>
-        <div class="bgt-total-sub" id="bgt-grp-sub"></div>
-      </div>
-    </div>
-
-    <!-- Actions -->
-    <div class="bgt-actions">
-      <button class="bgt-btn bgt-btn-sec" id="bgt-share-btn">📋 Share</button>
-      <button class="bgt-btn bgt-btn-primary" id="bgt-download-btn">⬇ Download Summary</button>
-    </div>
-
   </div>
 </div>
 
@@ -1371,17 +704,6 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <div id="wx-body">
       <div class="wx-loading"><div class="wx-spinner"></div>Fetching latest forecast…</div>
     </div>
-  </div>
-</div>
-
-<!-- PHOTO LIGHTBOX -->
-<div id="photo-lightbox">
-  <button id="photo-lb-close">✕</button>
-  <img id="photo-lb-img" src="" alt="">
-  <div id="photo-lb-nav">
-    <button id="photo-lb-prev">‹</button>
-    <span id="photo-lb-counter">1 / 1</span>
-    <button id="photo-lb-next">›</button>
   </div>
 </div>
 
@@ -1407,6 +729,11 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         <option value="southindia">South India Western Ghats</option>
         <option value="spiritual">Spiritual Yatras</option>
         <option value="sevensummits">Seven Summits</option>
+        <option value="rajasthan">Rajasthan Aravalli</option>
+        <option value="sikkim">Sikkim Himalaya</option>
+        <option value="andaman">Andaman Islands</option>
+        <option value="spiti">Spiti Valley</option>
+        <option value="ladakwinter">Ladakh Winter Treks</option>
       </select>
     </div>
 
@@ -1430,13 +757,6 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <div class="mf"><label>Best Season</label><input type="text" id="pm-season" placeholder="e.g. May – Oct"></div>
 
     <div class="mf"><label>Description</label><textarea id="pm-desc" placeholder="What makes this place special…" style="height:60px"></textarea></div>
-
-    <div class="mf">
-      <label>📷 Location Photos <span id="pm-photo-badge" class="photo-count-badge" style="display:none"></span></label>
-      <div class="photo-grid" id="pm-photo-grid" style="display:none"></div>
-      <button class="photo-add-btn" id="pm-photo-btn" type="button">📷 Add Photos of this Place</button>
-      <input type="file" id="pm-photo-input" accept="image/*" multiple style="display:none">
-    </div>
 
     <div class="mf">
       <label>Trail Waypoints / Campsites</label>
@@ -2603,6 +1923,195 @@ wps:[
   {n:'New Zealand Pass',a:4200,t:'pass',lat:-4.085,lng:137.150,note:'High alpine pass before the final approach to base camp.'},
   {n:'Base Camp (Yellow Valley)',a:4350,t:'camp',lat:-4.082,lng:137.155,note:'Final camp below the sheer limestone face of Carstensz Pyramid.'},
   {n:'Carstensz Pyramid Summit (Puncak Jaya)',a:4884,t:'summit',lat:-4.078,lng:137.158,note:'Most technical Seven Summit — exposed rock climbing, fixed ropes, multi-pitch traverse required.'}
+]},
+
+// ══ RAJASTHAN — ARAVALLI TREKS ══
+{id:'rj01',r:'rajasthan',name:'Guru Shikhar Peak Trek',icon:'🏔️',lat:24.592,lng:72.718,alt:1722,km:14,days:1,diff:'moderate',
+season:'Oct – Mar (avoid Apr–Jun, extreme heat above 40°C)',
+desc:'Highest peak in the Aravalli Range and in all of Rajasthan — the "Peak of the Guru" named after sage Dattatreya, whose temple crowns the summit. The range itself is over 2.5 billion years old, one of the oldest fold mountains on Earth. From the top, the plains of Rajasthan and Gujarat are visible on a clear day.',
+wps:[
+  {n:'Mount Abu Town',a:1220,t:'start',lat:24.593,lng:72.707,note:'Rajasthan\'s only hill station, 27km from Abu Road railway station.'},
+  {n:'Achalgarh Fort',a:1380,t:'village',lat:24.590,lng:72.710,note:'14th-century fort en route — combined history and nature.'},
+  {n:'Dilwara Temple Junction',a:1440,t:'pass',lat:24.591,lng:72.715,note:'Marble Jain temples of exceptional craftsmanship, 11th–13th century.'},
+  {n:'Guru Shikhar Summit',a:1722,t:'summit',lat:24.592,lng:72.718,note:'Dattatreya temple at the top, ISRO satellite dish observatory nearby. Panoramic Aravalli and Gujarat plains views.'}
+]},
+
+{id:'rj02',r:'rajasthan',name:'Kumbhalgarh Fort Trek',icon:'🏰',lat:25.148,lng:73.588,alt:1100,km:22,days:2,diff:'easy',
+season:'Oct – Mar',
+desc:'A trek through the Kumbhalgarh Wildlife Sanctuary to the legendary 15th-century fort — birthplace of Maharana Pratap, with walls extending 36km (the world\'s second-longest after the Great Wall of China). Dense leopard-inhabited forest, Jain temples at Ranakpur nearby.',
+wps:[
+  {n:'Ranakpur',a:600,t:'start',lat:25.115,lng:73.467,note:'Famous 15th-century Jain temple complex, trek starting point.'},
+  {n:'Kumbhalgarh Wildlife Sanctuary',a:800,t:'village',lat:25.130,lng:73.520,note:'Leopard, sloth bear, and wolf territory — guide mandatory.'},
+  {n:'Kumbha Palace',a:1080,t:'camp',lat:25.145,lng:73.580,note:'Overnight inside fort walls at heritage accommodation.'},
+  {n:'Kumbhalgarh Fort Walls',a:1100,t:'summit',lat:25.148,lng:73.588,note:'36km walls, birthplace of Maharana Pratap. Thar Desert visible on clear days.'}
+]},
+
+{id:'rj03',r:'rajasthan',name:'Jaisalmer Desert Trek',icon:'🐪',lat:26.915,lng:70.916,alt:225,km:25,days:3,diff:'easy',
+season:'Oct – Feb (avoid Mar–Sep — extreme heat)',
+desc:'A camel and foot safari through the Thar Desert\'s Sam Sand Dunes — golden shifting dunes up to 30m high, ancient fossil sites, and Bishnoi villages where the blackbuck and chinkara are revered. Overnight under a canopy of stars that rivals any Himalayan sky.',
+wps:[
+  {n:'Jaisalmer',a:225,t:'start',lat:26.915,lng:70.916,note:'Golden Fort city, UNESCO World Heritage Site.'},
+  {n:'Sam Sand Dunes',a:200,t:'camp',lat:26.869,lng:70.653,note:'Main dune field, 42km from Jaisalmer. Sunset camel rides start here.'},
+  {n:'Khuri Village',a:210,t:'village',lat:26.826,lng:70.563,note:'Authentic Rajasthani village homestays, less touristy than Sam.'},
+  {n:'Fossil Wood Park',a:220,t:'pass',lat:26.850,lng:70.600,note:'Ancient petrified wood fossils 180 million years old, en route.'},
+  {n:'Kuldhara Abandoned Village',a:225,t:'end',lat:26.877,lng:70.822,note:'Mysterious village abandoned overnight in 1825, now a protected heritage site.'}
+]},
+
+// ══ SIKKIM ══
+{id:'sk01',r:'sikkim',name:'Goecha La Trek (Sikkim)',icon:'🏔️',lat:27.672,lng:88.203,alt:4940,km:90,days:11,diff:'difficult',
+season:'Apr – May, Oct – Nov',
+desc:'The premier high-altitude trek in Sikkim, offering the closest trekker access to Kangchenjunga (8586m) — the world\'s third-highest peak. The trail crosses through Kanchenjunga National Park (UNESCO World Heritage Site), passing yak pastures, glacial lakes and the stunning Samiti Lake before the final viewpoint of the Goecha La pass at dawn.',
+wps:[
+  {n:'Yuksom',a:1780,t:'start',lat:27.422,lng:88.245,note:'Historic coronation site of Sikkim\'s first king. Permits arranged here.'},
+  {n:'Sachen',a:2200,t:'camp',lat:27.460,lng:88.230,note:'Day 1 camp through dense mixed forest.'},
+  {n:'Tsokha',a:2960,t:'village',lat:27.510,lng:88.210,note:'Sherpa village with views of Pandim peak. Yak grazing meadows.'},
+  {n:'Dzongri',a:3965,t:'camp',lat:27.565,lng:88.205,note:'Major plateau campsite. 360° Himalayan panorama including Kangchenjunga, Pandim, Tenchenkang.'},
+  {n:'Dzongri Top',a:4120,t:'pass',lat:27.570,lng:88.200,note:'Pre-dawn sunrise walk — one of the finest Himalayan viewpoints accessible to trekkers.'},
+  {n:'Thansing',a:3875,t:'camp',lat:27.620,lng:88.205,note:'Isolated yak pasture campsite, Kangchenjunga massif dominates the horizon.'},
+  {n:'Lamuney',a:4150,t:'camp',lat:27.648,lng:88.202,note:'Final camp before Goecha La push.'},
+  {n:'Samiti Lake',a:4500,t:'lake',lat:27.660,lng:88.202,note:'Mirror-still glacial lake with Kangchenjunga reflection at dawn.'},
+  {n:'Goecha La',a:4940,t:'summit',lat:27.672,lng:88.203,note:'Closest trekker viewpoint to Kangchenjunga. Rathong and Kabru glaciers visible.'}
+]},
+
+{id:'sk02',r:'sikkim',name:'Kanchenjunga Base Camp Trek',icon:'🏔️',lat:27.703,lng:88.147,alt:5143,km:120,days:16,diff:'extreme',
+season:'Apr – May, Oct – Nov (permits via Mangan DFO)',
+desc:'The most remote and demanding trek in Sikkim — two base camps of the world\'s third-highest peak, via both the north and south approaches. Combines Kanchenjunga North BC (Oktang at 5143m) and passes through rhododendron forests, high-altitude passes and sacred Tibetan Buddhist sites near the Nepal border.',
+wps:[
+  {n:'Taplejung (Nepal-side) / Yuksam (India-side)',a:1820,t:'start',lat:27.350,lng:87.668,note:'Restricted Area Permit mandatory, minimum 2 persons + licensed guide.'},
+  {n:'Torontan',a:2995,t:'camp',lat:27.430,lng:87.780,note:'First major camp, rhododendron forests begin.'},
+  {n:'Tseram / South Base Camp',a:3870,t:'camp',lat:27.520,lng:87.900,note:'Kanchenjunga South Base Camp at Ramche (4580m) accessible from here.'},
+  {n:'Lhonak Valley',a:4790,t:'camp',lat:27.650,lng:88.100,note:'Barren glacial valley approaching the north side.'},
+  {n:'Kanchenjunga North Base Camp (Oktang)',a:5143,t:'summit',lat:27.703,lng:88.147,note:'Northernmost trekker access, Kanchenjunga at 8586m towers directly above.'}
+]},
+
+{id:'sk03',r:'sikkim',name:'Green Lake Trek',icon:'🌿',lat:27.833,lng:88.033,alt:5230,km:100,days:12,diff:'difficult',
+season:'May – Jun, Sep – Oct',
+desc:'One of the most pristine and least-crowded high-altitude treks in India — a truly remote glacial lake at 5230m surrounded by Kangchenjunga group peaks including Zemu Peak. Restricted Area Permit, maximum 15 trekkers per group, and mandatory armed forest escort make this a genuinely wild experience.',
+wps:[
+  {n:'Lachen',a:2600,t:'start',lat:27.729,lng:88.546,note:'North Sikkim base. Restricted area permit issued only here.'},
+  {n:'Tallem',a:3000,t:'camp',lat:27.770,lng:88.480,note:'Through rhododendron and pine corridors.'},
+  {n:'Zemu Samdong',a:4000,t:'camp',lat:27.800,lng:88.300,note:'Convergence of Zemu and Talung glaciers.'},
+  {n:'Yabuk',a:4500,t:'camp',lat:27.818,lng:88.180,note:'High moraine camp, armed forest escort stays here.'},
+  {n:'Green Lake',a:5230,t:'summit',lat:27.833,lng:88.033,note:'Jade-green glacial lake, surrounded by Kangchenjunga group. One of India\'s most restricted trekking zones.'}
+]},
+
+// ══ ANDAMAN ISLANDS ══
+{id:'an01',r:'andaman',name:'Saddle Peak Trek',icon:'🌴',lat:13.278,lng:93.029,alt:732,km:16,days:1,diff:'difficult',
+season:'Oct – Apr (last entry 2pm, gates close 5pm)',
+desc:'The highest point in the Andaman and Nicobar archipelago — 732m rising from the Bay of Bengal on North Andaman Island. 13 species of endemic birds, 36 species of endemic insects, 6 endemic tree species. The Kalpong river (Andaman\'s only river) flows through the park. Forest Department permit mandatory.',
+wps:[
+  {n:'Diglipur',a:5,t:'start',lat:13.270,lng:92.976,note:'North Andaman district HQ. Register at Forest Office before 9am.'},
+  {n:'Kalipur Beach Entry Gate',a:10,t:'village',lat:13.275,lng:93.000,note:'Trailhead. Permit check, guide available here (recommended, not compulsory).'},
+  {n:'First Viewpoint',a:350,t:'pass',lat:13.277,lng:93.010,note:'Bird\'s eye view of North Andaman coastline.'},
+  {n:'Kalpong River Crossing',a:200,t:'lake',lat:13.277,lng:93.018,note:'Andaman\'s only river, refreshing freshwater stream mid-trail.'},
+  {n:'Second Viewpoint (Ice Degree Peak)',a:600,t:'pass',lat:13.278,lng:93.022,note:'Coldest point on the trail, dense canopy closes in.'},
+  {n:'Saddle Peak Summit',a:732,t:'summit',lat:13.278,lng:93.029,note:'Highest point in the Andamans. Panoramic sea views across the archipelago.'}
+]},
+
+{id:'an02',r:'andaman',name:'Baratang Limestone Caves Trek',icon:'🪨',lat:12.280,lng:92.750,alt:20,km:2,days:1,diff:'easy',
+season:'Oct – Apr',
+desc:'A geological wonder — limestone formations dating back millions of years, approached by a thrilling boat ride through narrow mangrove creek passages so tight you can touch both banks simultaneously. Stalactites and stalagmites inside the caves create a surreal, cathedral-like atmosphere.',
+wps:[
+  {n:'Port Blair',a:10,t:'start',lat:11.663,lng:92.736,note:'Drive through Jarawa Tribal Reserve (vehicles move in convoy, no stopping).'},
+  {n:'Nilambur Jetty',a:5,t:'village',lat:12.280,lng:92.745,note:'Boat boarding point. Ride through mangrove creeks begins here.'},
+  {n:'Mangrove Creek Passage',a:5,t:'pass',lat:12.280,lng:92.748,note:'Narrow tidal creek — boats barely squeeze through the mangrove canopy.'},
+  {n:'Baratang Limestone Caves',a:20,t:'summit',lat:12.280,lng:92.750,note:'Stalactite-stalagmite formations inside cool cave chambers. Geology dating 100M+ years.'}
+]},
+
+{id:'an03',r:'andaman',name:'Mount Harriet – Madhuban Trek',icon:'🌿',lat:11.680,lng:92.750,alt:365,km:16,days:1,diff:'moderate',
+season:'Oct – Apr',
+desc:'The third-highest peak in Andaman, once the British colonial summer headquarters. A 16km trail descends through old-growth forest teeming with barking deer, Andaman wild pigs, hornbills and the occasional saltwater crocodile near stream crossings. Ends at the serene Madhuban beach.',
+wps:[
+  {n:'Mount Harriet National Park Entry',a:100,t:'start',lat:11.700,lng:92.730,note:'Accessible by ferry from Phoenix Bay Jetty, Port Blair.'},
+  {n:'Harriet Summit',a:365,t:'pass',lat:11.700,lng:92.740,note:'Colonial-era bungalow ruins, views of Port Blair and surrounding islands.'},
+  {n:'Forest Descent',a:200,t:'camp',lat:11.690,lng:92.745,note:'Dense old-growth forest, spotted deer and hornbills frequent here.'},
+  {n:'Madhuban Beach',a:5,t:'summit',lat:11.680,lng:92.750,note:'Quiet beachhead end-point. Elephant encounters possible — tamed elephants used for forest work.'}
+]},
+
+// ══ SPITI CIRCUIT ══
+{id:'sp_circuit01',r:'spiti',name:'Spiti Valley Circuit Trek',icon:'🏜️',lat:32.243,lng:78.074,alt:4551,km:55,days:6,diff:'moderate',
+season:'Jun – Sep (road opens Jun, closes Oct–Nov)',
+desc:'The ultimate high-altitude desert circuit in Himachal Pradesh — a loop through fossilized sea-creature villages, the world\'s highest post office, the world\'s highest motorable village, and key monastery stops, all at over 4000m. Landscape shifts from barren lunar terrain to turquoise rivers and medieval Buddhist forts.',
+wps:[
+  {n:'Kaza',a:3800,t:'start',lat:32.226,lng:78.072,note:'Spiti Valley HQ, 210km from Manali via Rohtang or Kunzum.'},
+  {n:'Langza Village',a:4400,t:'village',lat:32.327,lng:78.049,note:'Ancient fossils of sea creatures at 4400m — once below the Tethys Ocean.'},
+  {n:'Hikkim',a:4400,t:'village',lat:32.333,lng:78.040,note:'World\'s highest post office (4400m) — post a letter from the roof of the world.'},
+  {n:'Komik',a:4513,t:'village',lat:32.350,lng:78.030,note:'World\'s highest motorable village, Tangyud Monastery here since the 14th century.'},
+  {n:'Kibber',a:4270,t:'camp',lat:32.393,lng:78.014,note:'Snow leopard capital — best sightings Dec–Mar, camouflaged against rocky terrain.'},
+  {n:'Key Monastery',a:4116,t:'village',lat:32.296,lng:78.013,note:'1000-year-old Tibetan Buddhist monastery, tiered like a medieval fort on a hilltop.'},
+  {n:'Kunzum Pass',a:4551,t:'pass',lat:32.457,lng:77.765,note:'Gateway between Spiti and Lahaul, Kunzum Devi temple. Snow till Jun.'},
+  {n:'Chandratal Lake',a:4270,t:'lake',lat:32.483,lng:77.617,note:'"Moon Lake" — crescent-shaped glacial lake, one of the most photographed in India.'}
+]},
+
+{id:'sp_circuit02',r:'spiti',name:'Pin Bhaba Pass Trek',icon:'🗻',lat:31.780,lng:78.120,alt:5319,km:55,days:5,diff:'difficult',
+season:'Jul – Sep',
+desc:'A dramatic high-altitude crossing between the green Bhaba valley of Kinnaur and the barren lunar Pin Valley of Spiti, over the 5319m Pin Bhaba Pass. One of the best contrasting landscapes in any Indian trek — lush forest and waterfalls on the Kinnaur side, red-brown cliffs and glaciers on the Spiti side.',
+wps:[
+  {n:'Kafnu',a:2950,t:'start',lat:31.540,lng:78.250,note:'Kinnaur-side roadhead, 175km from Shimla.'},
+  {n:'Mulling',a:3600,t:'camp',lat:31.600,lng:78.200,note:'Forest camp through birch and pine.'},
+  {n:'Kara',a:3900,t:'camp',lat:31.650,lng:78.180,note:'Alpine meadows, first views of the pass.'},
+  {n:'Pin Bhaba Base Camp',a:4500,t:'camp',lat:31.720,lng:78.150,note:'Below the pass, moraine terrain begins.'},
+  {n:'Pin Bhaba Pass',a:5319,t:'pass',lat:31.780,lng:78.120,note:'Dramatic crossing — green Kinnaur side vs barren red-brown Spiti side.'},
+  {n:'Phutsirang (Mud Village)',a:3700,t:'end',lat:31.800,lng:78.100,note:'Spiti-side descent into the Pin Valley, pickup to Kaza.'}
+]},
+
+// ══ LADAKH WINTER TREKS ══
+{id:'lw01',r:'ladakwinter',name:'Chadar Frozen River Trek',icon:'🧊',lat:33.850,lng:77.100,alt:3300,km:75,days:9,diff:'extreme',
+season:'Jan – Feb ONLY (frozen river window)',
+desc:'Walking on a frozen river gorge through the Zanskar Canyon — one of the most unique and challenging winter experiences on Earth. Temperature drops to -30°C at night. The "Chadar" (sheet of ice) is the only seasonal road to the remote Zanskar villages, used by locals for centuries before the winter road was built.',
+wps:[
+  {n:'Leh',a:3524,t:'start',lat:34.166,lng:77.577,note:'Essential 3-day acclimatisation before attempting winter trek.'},
+  {n:'Chilling',a:3100,t:'village',lat:33.949,lng:77.272,note:'Last motorable point, trek begins on the frozen river from here.'},
+  {n:'Gyalpo Camp',a:3200,t:'camp',lat:33.910,lng:77.230,note:'First night camp on the ice, check for solid footing.'},
+  {n:'Tibb Cave',a:3250,t:'camp',lat:33.880,lng:77.180,note:'Cave camp — natural overhang provides windbreak from -25°C nights.'},
+  {n:'Nerak Waterfall (Frozen)',a:3300,t:'summit',lat:33.850,lng:77.100,note:'65ft waterfall frozen mid-flow — the iconic image of the Chadar trek.'}
+]},
+
+{id:'lw02',r:'ladakwinter',name:'Markha Valley Winter Trek',icon:'❄️',lat:33.800,lng:77.580,alt:5200,km:70,days:8,diff:'difficult',
+season:'Dec – Mar (winter version)',
+desc:'The summer Markha Valley trek transforms completely in winter — deserted villages, frozen streams, snow-capped Kang Yatze and Stok Kangri, and a solitude that is impossible in peak season. The Kongmaru La pass at 5200m becomes a serious high-altitude winter crossing requiring crampons.',
+wps:[
+  {n:'Chilling',a:3100,t:'start',lat:33.949,lng:77.272,note:'Cross the Zanskar river by pulley in winter (bridge removed).'},
+  {n:'Markha Village',a:3750,t:'camp',lat:33.820,lng:77.510,note:'Ruined Markha Fort overlooking the frozen valley.'},
+  {n:'Hankar',a:4000,t:'camp',lat:33.810,lng:77.556,note:'Last village before the high pass, ancient watchtower.'},
+  {n:'Nimaling Plateau',a:4900,t:'camp',lat:33.807,lng:77.570,note:'Winter: completely snowbound, camp with panoramic Kang Yatze views.'},
+  {n:'Kongmaru La',a:5200,t:'summit',lat:33.800,lng:77.580,note:'Highest point, crampons required in winter. Panoramic Karakoram views.'}
+]},
+
+// ══ HIMACHAL HIDDEN GEMS ══
+{id:'hp15',r:'himachal',name:'Deo Tibba Base Camp Trek',icon:'🏔️',lat:32.280,lng:77.205,alt:4270,km:55,days:7,diff:'difficult',
+season:'May – Oct',
+desc:'Deo Tibba (6001m) is one of the most prominent peaks visible from Manali but rarely attempted. The base camp trek via Jagatsukh is Manali\'s best-kept secret — far less crowded than Hampta Pass but with superior views of the Pir Panjal and the glaciated face of Deo Tibba and Indrasan (6221m).',
+wps:[
+  {n:'Jagatsukh Village',a:2100,t:'start',lat:32.210,lng:77.210,note:'Ancient capital of Kullu kingdom, 6km from Manali. Trek begins here.'},
+  {n:'Chikka',a:3215,t:'camp',lat:32.235,lng:77.208,note:'Dense deodar forest campsite.'},
+  {n:'Seri',a:3600,t:'camp',lat:32.255,lng:77.207,note:'Meadow camp, Indrasan and Deo Tibba come into clear view.'},
+  {n:'Tainta / Deo Tibba Base Camp',a:4270,t:'camp',lat:32.270,lng:77.206,note:'Glacial moraine camp below Deo Tibba\'s southwest face.'},
+  {n:'Chota Chandratal Lake',a:4480,t:'summit',lat:32.280,lng:77.205,note:'High-altitude blue lake above the base camp — trek\'s scenic climax.'}
+]},
+
+{id:'hp16',r:'himachal',name:'Bara Bhangal Trek',icon:'🗺️',lat:32.270,lng:76.730,alt:4580,km:90,days:10,diff:'extreme',
+season:'Jul – Sep (only accessible 8-10 weeks per year)',
+desc:'The most remote village in Himachal Pradesh — Bara Bhangal is cut off from the outside world for 9 months a year. The trek crosses three high passes (Thamsar, Kali Hind, Kalihani) from Billing to the Ravi River valley — a genuine wilderness expedition through landscapes that barely see a handful of parties per season.',
+wps:[
+  {n:'Billing / Bir',a:2400,t:'start',lat:31.909,lng:76.714,note:'World\'s top paragliding site, trek entry from here.'},
+  {n:'Rajgundha',a:2900,t:'village',lat:31.980,lng:76.720,note:'Last village, pastoral meadow with nomad encampments.'},
+  {n:'Thamsar Pass',a:4640,t:'pass',lat:32.050,lng:76.720,note:'First major pass, views of Dhauladhar and Kullu ranges.'},
+  {n:'Kali Hind Pass',a:4580,t:'pass',lat:32.150,lng:76.725,note:'Second pass — most difficult of the three.'},
+  {n:'Bara Bhangal Village',a:2580,t:'camp',lat:32.270,lng:76.730,note:'Ultra-remote Gaddi shepherd village, accessible only 2 months a year.'},
+  {n:'Kalihani Pass',a:4580,t:'summit',lat:32.270,lng:76.820,note:'Final pass out of Bara Bhangal toward the Kullu valley.'}
+]},
+
+{id:'hp17',r:'himachal',name:'Chandra Tal Circuit Trek',icon:'🌙',lat:32.483,lng:77.617,alt:4270,km:35,days:5,diff:'moderate',
+season:'Jun – Oct',
+desc:'A circuit around the magical Chandra Tal (Moon Lake) at 4270m in the Lahaul region — one of the most beautiful high-altitude lakes in India. The circuit combines the Hampta Pass crossing with a descent to the lake, then loops back via Batal and the Chandra river gorge.',
+wps:[
+  {n:'Manali',a:2050,t:'start',lat:32.239,lng:77.189,note:'Drive to Jobra, trek starts from the Hampta valley.'},
+  {n:'Jobra / Chika',a:3000,t:'camp',lat:32.264,lng:77.225,note:'Campsite at the start of the glacier zone.'},
+  {n:'Hampta Pass',a:4270,t:'pass',lat:32.350,lng:77.325,note:'3km wide pass, dramatic shift from green Kullu to barren Lahaul.'},
+  {n:'Shea Goru',a:3800,t:'camp',lat:32.400,lng:77.450,note:'Camp in the Lahaul desert landscape.'},
+  {n:'Batal',a:3960,t:'village',lat:32.457,lng:77.567,note:'Only dhaba (roadside eatery) in the entire area, owned by Chacha-Chachi.'},
+  {n:'Chandra Tal Lake',a:4270,t:'summit',lat:32.483,lng:77.617,note:'"Moon Lake" — crescent shaped at 4270m. Sapphire blue, ringed by mountains. Camping now restricted within 100m.'}
 ]}
 
 ]; // end TREKS
@@ -2624,7 +2133,7 @@ let pmDiff = 'easy';
 let pmWaypoints = [];
 let wpIdSeq = 0;
 
-const RNAMES = {himachal:'Himachal Pradesh',uttarakhand:'Uttarakhand',jk:'J&K / Ladakh',northeast:'Seven Sisters NE',nepal:'Nepal Himalaya',tibet:'Tibet / China Border',maharashtra:'Maharashtra Sahyadris',southindia:'South India Western Ghats',spiritual:'Spiritual Yatras',sevensummits:'Seven Summits — World'};
+const RNAMES = {himachal:'Himachal Pradesh',uttarakhand:'Uttarakhand',jk:'J&K / Ladakh',northeast:'Seven Sisters NE',nepal:'Nepal Himalaya',tibet:'Tibet / China Border',maharashtra:'Maharashtra Sahyadris',southindia:'South India Western Ghats',spiritual:'Spiritual Yatras',sevensummits:'Seven Summits — World',rajasthan:'Rajasthan Aravalli',sikkim:'Sikkim Himalaya',andaman:'Andaman Islands',spiti:'Spiti Valley',ladakwinter:'Ladakh Winter Treks'};
 const DFPCT  = {easy:25,moderate:52,difficult:78,extreme:100};
 const DCOLS  = {start:'#2ea043',village:'#7d8590',camp:'#f97316',pass:'#a371f7',lake:'#388bfd',summit:'#f85149',end:'#f85149',temple:'#d29922'};
 const DTAG   = {start:'tv',village:'tv',camp:'tc',pass:'tp',lake:'tl',summit:'ts',end:'tv',temple:'tc'};
@@ -2918,26 +2427,22 @@ function openSheet(t){
       ${ld.date?' · '+ld.date:''} ${ld.rating?' · '+'★'.repeat(ld.rating):''}
       ${ld.notes?`<div style="color:#9ca3af;margin-top:4px">${ld.notes}</div>`:''}
     </div>`:''}
-    <div id="sheet-photos-${t.id}" class="sheet-photos-mount"></div>
     <div class="sacts">
       <button class="btn ${done?'bd':'bp'}" id="slog">${done?'✓ Logged — Update':'+ Log This Summit'}</button>
       ${t.custom?'<button class="btn bsec" id="sedit">✏️</button>':''}
       <button class="btn bsec" id="spin">${pinned.includes(t.id)?'📌':'🔖'}</button>
-      <button class="btn bsec" id="sbudget" title="Estimate Budget">💰</button>
       <button class="btn bsec" id="swx" title="Live weather forecast">🌤</button>
       <button class="btn bsec" id="sshare" title="Share Trek Card">📤</button>
     </div>`;
   document.getElementById('sheet').classList.add('up');
   document.getElementById('sheetbackdrop').classList.add('up');
   drawElev(t); drawTrail(t);
-  renderSheetPhotos(t.id);
   requestAnimationFrame(()=>{
     const fill = document.getElementById('dfb-fill');
     if(fill) requestAnimationFrame(()=>{ fill.style.width = fill.dataset.w+'%'; });
   });
   document.getElementById('slog').onclick=()=>openModal(t);
   document.getElementById('spin').onclick=()=>togglePin(t);
-  document.getElementById('sbudget').onclick=()=>openBudget(t);
   document.getElementById('swx').onclick=()=>openWeather(t);
   document.getElementById('sshare').onclick=()=>openShareCard(t);
   if(t.custom){
@@ -3067,7 +2572,6 @@ function openPinModal(lat, lng, existing){
   });
 
   renderWpEditor();
-  initPmPhotos(existing ? existing.id : null);
   pinModal.classList.add('on');
 }
 
@@ -3105,7 +2609,6 @@ document.getElementById('pm-save').onclick = ()=>{
     customs.push(pinData);
   }
   localStorage.setItem('sl3_customs', JSON.stringify(customs));
-  commitPmPhotos(pinData.id);
 
   pinModal.classList.remove('on');
   editingPin = null;
@@ -3139,7 +2642,6 @@ function openModal(t){
   document.getElementById('mname').textContent=t.name;
   document.getElementById('mdate').value=ld.date||new Date().toISOString().split('T')[0];
   document.getElementById('mnotes').value=ld.notes||'';
-  initModalPhotos(t.id);
   updateStars(); document.getElementById('modal').classList.add('on');
 }
 document.getElementById('mcancel').onclick=()=>document.getElementById('modal').classList.remove('on');
@@ -3147,7 +2649,6 @@ document.getElementById('msave').onclick=()=>{
   if(!current)return;
   logged[current.id]={date:document.getElementById('mdate').value,notes:document.getElementById('mnotes').value,rating:mRating};
   localStorage.setItem('sl3_logged',JSON.stringify(logged));
-  commitModalPhotos();
   document.getElementById('modal').classList.remove('on');
   updateBadge(); buildMkrs(); openSheet(current);
   toast(`🏔 ${current.name} logged!`,'#2ea043');
@@ -3167,135 +2668,28 @@ function togglePin(t){
 }
 
 // ═══════════════════════════════════════════════════
-// SEARCH OVERLAY
+// SEARCH
 // ═══════════════════════════════════════════════════
-const srchOverlay  = document.getElementById('srch-overlay');
-const srchInput    = document.getElementById('srch');
-const srchClear    = document.getElementById('srch-clear');
-const srchCancel   = document.getElementById('srch-cancel');
-const srchPanel    = document.getElementById('srch-results-panel');
-const srchToggle   = document.getElementById('srch-toggle');
-let   srchCat      = '';
-
-function openSearch() {
-  srchOverlay.classList.add('on');
-  document.body.style.overflow = 'hidden';
-  setTimeout(() => srchInput.focus(), 80);
-  renderSearchResults(srchInput.value.trim());
-}
-function closeSearch() {
-  srchOverlay.classList.remove('on');
-  document.body.style.overflow = '';
-  srchInput.blur();
-}
-
-srchToggle.onclick = openSearch;
-srchCancel.onclick = closeSearch;
-
-srchInput.oninput = () => {
-  const q = srchInput.value.trim();
-  srchClear.classList.toggle('vis', q.length > 0);
-  renderSearchResults(q);
+const srch=document.getElementById('srch'), sres=document.getElementById('sres');
+srch.oninput=()=>{
+  const q=srch.value.trim().toLowerCase();
+  if(!q){sres.style.display='none';return}
+  const hits=allTreks().filter(t=>t.name.toLowerCase().includes(q)||(RNAMES[t.r]||'').toLowerCase().includes(q)||t.r.includes(q)||(t.desc||'').toLowerCase().includes(q)).slice(0,8);
+  if(!hits.length){sres.style.display='none';return}
+  sres.innerHTML=hits.map(t=>`<div class="sri ${logged[t.id]?'ok':''}" data-id="${t.id}"><span class="sri-ico">${t.icon}</span><div><div class="sri-name">${t.name}</div><div class="sri-meta">${RNAMES[t.r]} · ${t.alt.toLocaleString()}m · ${t.diff}</div></div></div>`).join('');
+  sres.style.display='block';
 };
-srchClear.onclick = () => {
-  srchInput.value = '';
-  srchClear.classList.remove('vis');
-  srchInput.focus();
-  renderSearchResults('');
+sres.onclick=e=>{
+  const el=e.target.closest('.sri'); if(!el)return;
+  const t=allTreks().find(x=>x.id===el.dataset.id); if(!t)return;
+  srch.value=t.name; sres.style.display='none'; openSheet(t);
 };
-
-// Category filter chips
-document.querySelectorAll('.srch-cat').forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll('.srch-cat').forEach(b => b.classList.remove('on'));
-    btn.classList.add('on');
-    srchCat = btn.dataset.cat;
-    renderSearchResults(srchInput.value.trim());
-  };
-});
-
-function filterByCat(treks, cat) {
-  if (!cat) return treks;
-  if (cat === 'custom') return treks.filter(t => t.custom);
-  if (cat === 'summits') return treks.filter(t => t.id && t.id.startsWith('ss'));
-  if (cat === 'spiritual') return treks.filter(t => t.id && t.id.startsWith('sp'));
-  if (cat === 'himalaya') return treks.filter(t => ['uttarakhand','himachal','jk','nepal','tibet','northeast'].includes(t.r));
-  return treks;
-}
-
-function renderSearchResults(q) {
-  const all = allTreks();
-  let pool = filterByCat(all, srchCat);
-
-  if (!q) {
-    // Show logged treks first, then recent, grouped
-    const loggedTreks = pool.filter(t => logged[t.id]).slice(0, 6);
-    const popular = pool.filter(t => !logged[t.id]).slice(0, 8);
-    let html = '';
-    if (loggedTreks.length) {
-      html += `<div class="srch-section-head">✓ Already Logged</div>` + loggedTreks.map(t => srchRow(t)).join('');
-    }
-    if (popular.length) {
-      html += `<div class="srch-section-head">${srchCat ? 'In Category' : '⛰ Explore'}</div>` + popular.map(t => srchRow(t)).join('');
-    }
-    srchPanel.innerHTML = html || `<div class="srch-empty"><div class="srch-empty-ico">🏔️</div>No treks found in this category</div>`;
-    bindSrchRows();
-    return;
-  }
-
-  const ql = q.toLowerCase();
-  const hits = pool.filter(t =>
-    t.name.toLowerCase().includes(ql) ||
-    (RNAMES[t.r] || '').toLowerCase().includes(ql) ||
-    t.r.includes(ql) ||
-    (t.desc || '').toLowerCase().includes(ql) ||
-    (t.diff || '').toLowerCase().includes(ql)
-  ).slice(0, 12);
-
-  if (!hits.length) {
-    srchPanel.innerHTML = `<div class="srch-empty"><div class="srch-empty-ico">🔍</div>No results for "<b>${q}</b>"<br><span style="font-size:11px">Try a region name, difficulty, or elevation</span></div>`;
-    return;
-  }
-
-  srchPanel.innerHTML = `<div class="srch-section-head">${hits.length} result${hits.length>1?'s':''}</div>` + hits.map(t => srchRow(t)).join('');
-  bindSrchRows();
-}
-
-function srchRow(t) {
-  const region = RNAMES[t.r] || t.r || '';
-  const alt = t.alt ? t.alt.toLocaleString() + 'm' : '';
-  const diff = t.diff || '';
-  const meta = [region, alt, diff].filter(Boolean).join(' · ');
-  return `<div class="sri ${logged[t.id]?'ok':''}" data-id="${t.id}">
-    <div class="sri-ico">${t.icon||'🏔'}</div>
-    <div class="sri-info">
-      <div class="sri-name">${t.name}</div>
-      <div class="sri-meta">${meta}</div>
-    </div>
-  </div>`;
-}
-
-function bindSrchRows() {
-  srchPanel.querySelectorAll('.sri').forEach(el => {
-    el.onclick = () => {
-      const t = allTreks().find(x => x.id === el.dataset.id);
-      if (!t) return;
-      closeSearch();
-      setTimeout(() => openSheet(t), 120);
-    };
-  });
-}
-
-// Close on ESC
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && srchOverlay.classList.contains('on')) closeSearch();
-});
-
+document.addEventListener('click',e=>{if(!e.target.closest('.swrap'))sres.style.display='none'});
 
 // ═══════════════════════════════════════════════════
 // TABS
 // ═══════════════════════════════════════════════════
-const FLY={all:[30.5,80,5],himachal:[32,77.2,8],uttarakhand:[30.5,79.5,8],jk:[34,77,7],northeast:[26.5,92,7],nepal:[28.2,84.5,7],tibet:[30.5,81,7],maharashtra:[19.0,73.5,8],southindia:[11.5,76.5,7],spiritual:[22.5,79.0,5],sevensummits:[20,10,3]};
+const FLY={all:[30.5,80,5],himachal:[32,77.2,8],uttarakhand:[30.5,79.5,8],jk:[34,77,7],northeast:[26.5,92,7],nepal:[28.2,84.5,7],tibet:[30.5,81,7],maharashtra:[19.0,73.5,8],southindia:[11.5,76.5,7],spiritual:[22.5,79.0,5],sevensummits:[20,10,3],rajasthan:[25.0,73.5,7],sikkim:[27.5,88.3,8],andaman:[12.5,92.8,8],spiti:[32.2,78.0,8],ladakwinter:[34.0,77.5,8]};
 
 function switchRegion(tab){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
@@ -3718,929 +3112,6 @@ document.getElementById('themebtn').onclick = toggleTheme;
 
 // Apply saved theme on load (CSS only — no tile swap, map not ready yet)
 (function(){ applyTheme(localStorage.getItem('sl3_theme') || 'dark', false); })();
-
-// ═══════════════════════════════════════════════════
-// TREKKER PROFILE CARD SYSTEM
-// ═══════════════════════════════════════════════════
-
-const PROFILE_KEY = 'trekverse_profile';
-const AVATAR_COLORS = [
-  'linear-gradient(135deg,#f97316,#ea580c)',
-  'linear-gradient(135deg,#a371f7,#7c3aed)',
-  'linear-gradient(135deg,#388bfd,#1d4ed8)',
-  'linear-gradient(135deg,#2ea043,#15803d)',
-  'linear-gradient(135deg,#f85149,#dc2626)',
-  'linear-gradient(135deg,#d29922,#b45309)',
-  'linear-gradient(135deg,#38bdf8,#0284c7)',
-  'linear-gradient(135deg,#fb923c,#a371f7)',
-];
-
-function avatarColor(name) {
-  let h = 0;
-  for (let i = 0; i < (name||'').length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffffffff;
-  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
-}
-
-// ── loadProfile / saveProfile ──
-function loadProfile() {
-  const def = { name:'', tagline:'', region:'', trekTypes:[], edited:false };
-  try { return { ...def, ...JSON.parse(localStorage.getItem(PROFILE_KEY)||'{}') }; }
-  catch { return def; }
-}
-function saveProfile(p) {
-  localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
-}
-
-// ── calculateStats ──
-function calculateStats() {
-  const all = allTreks();
-  const loggedIds = Object.keys(logged);
-  const loggedTreks = all.filter(t => logged[t.id]);
-  const thisYear = new Date().getFullYear();
-
-  // highest peak
-  let highestTrek = null;
-  loggedTreks.forEach(t => {
-    if (!highestTrek || (t.alt||0) > (highestTrek.alt||0)) highestTrek = t;
-  });
-
-  // total altitude gained
-  const totalAlt = loggedTreks.reduce((s,t) => s + (t.alt||0), 0);
-
-  // favourite region
-  const regionCount = {};
-  loggedTreks.forEach(t => { regionCount[t.r] = (regionCount[t.r]||0)+1; });
-  const favR = Object.entries(regionCount).sort((a,b)=>b[1]-a[1])[0];
-  const favRegion = favR ? (RNAMES[favR[0]] || favR[0]) : '—';
-
-  // total trek days
-  const totalDays = loggedTreks.reduce((s,t) => s + (t.days||0), 0);
-
-  // treks this year
-  const thisYearCount = loggedTreks.filter(t => {
-    const ld = logged[t.id]; return ld && ld.date && ld.date.startsWith(String(thisYear));
-  }).length;
-
-  return {
-    total:       loggedIds.length,
-    highestTrek: highestTrek,
-    totalAlt:    totalAlt,
-    favRegion:   favRegion,
-    totalDays:   totalDays,
-    thisYear:    thisYearCount,
-  };
-}
-
-// ── checkAchievements ──
-const ACHIEVEMENTS = [
-  {
-    id:'first_summit', icon:'🏁', name:'First Summit',
-    desc:'Logged your first trek',
-    check: (s, all) => s.total >= 1,
-  },
-  {
-    id:'high_camper', icon:'⛺', name:'High Camper',
-    desc:'Summited a peak above 4,500m',
-    check: (s, all) => all.filter(t=>logged[t.id]&&(t.alt||0)>=4500).length > 0,
-  },
-  {
-    id:'death_zoner', icon:'💀', name:'Death Zoner',
-    desc:'Summited a peak above 8,000m',
-    check: (s, all) => all.filter(t=>logged[t.id]&&(t.alt||0)>=8000).length > 0,
-  },
-  {
-    id:'spiritual_wanderer', icon:'🕉️', name:'Spiritual Wanderer',
-    desc:'Logged a Spiritual Yatras trek',
-    check: (s, all) => all.filter(t=>logged[t.id]&&t.r==='spiritual').length > 0,
-  },
-  {
-    id:'seven_summiter', icon:'🌐', name:'Seven Summiter',
-    desc:'Logged a Seven Summits peak',
-    check: (s, all) => all.filter(t=>logged[t.id]&&t.r==='sevensummits').length > 0,
-  },
-  {
-    id:'veteran', icon:'🎖️', name:'Veteran',
-    desc:'Logged 10 or more treks',
-    check: (s, all) => s.total >= 10,
-  },
-];
-
-function checkAchievements(stats) {
-  const all = allTreks();
-  return ACHIEVEMENTS.map(a => ({ ...a, earned: a.check(stats, all) }));
-}
-
-// ── renderProfileCard ──
-let _pfEditMode = false;
-
-function renderProfileCard() {
-  const profile = loadProfile();
-  const stats   = calculateStats();
-  const badges  = checkAchievements(stats);
-
-  // ── Auth user info ──
-  let authName = 'Explorer', authPhoto = null, authSub = '';
-  try {
-    const u = JSON.parse(localStorage.getItem('tv_user')||'{}');
-    authName  = u.name  || authName;
-    authPhoto = u.photo || null;
-    authSub   = u.email || u.phone || (u.anon ? 'Guest · local only' : '');
-  } catch {}
-
-  const displayName = profile.name || authName;
-
-  // ── Avatar ──
-  const avatarEl = document.getElementById('pf-avatar');
-  const avatarWrap = document.getElementById('pf-avatar-wrap');
-  // Priority: profile custom photo > Google/auth photo > initials
-  const photoSrc = profile.photo || authPhoto;
-  if (photoSrc) {
-    avatarEl.innerHTML = `<img src="${photoSrc}" alt="">`;
-    avatarEl.style.background = '#000';
-  } else {
-    avatarEl.innerHTML = displayName[0]?.toUpperCase() || '⛰';
-    avatarEl.style.background = avatarColor(displayName);
-  }
-  // Show camera overlay only in edit mode
-  avatarWrap.classList.toggle('edit-mode', _pfEditMode);
-
-  // Show remove-photo button only in edit mode when a custom photo exists
-  const removeBtn = document.getElementById('pf-remove-photo');
-  if (removeBtn) {
-    removeBtn.style.display = (_pfEditMode && profile.photo) ? '' : 'none';
-  }
-
-  // ── Name ──
-  document.getElementById('pf-name-display').textContent = displayName;
-  document.getElementById('pf-name-input').value = displayName;
-
-  // ── Region ──
-  const regionSel = document.getElementById('pf-region');
-  regionSel.value = profile.region || '';
-  regionSel.disabled = !_pfEditMode;
-  regionSel.style.color = profile.region ? 'var(--txt)' : 'var(--mute)';
-
-  // ── Tagline ──
-  const tDisplay = document.getElementById('pf-tagline-display');
-  const tInput   = document.getElementById('pf-tagline-input');
-  tDisplay.textContent = profile.tagline || '✏️ Add a tagline…';
-  tInput.value = profile.tagline || '';
-
-  // ── Trek types ──
-  document.querySelectorAll('.pf-type-pill').forEach(pill => {
-    const on = profile.trekTypes.includes(pill.dataset.type);
-    pill.classList.toggle('on', on);
-    pill.classList.toggle('disabled', !_pfEditMode && !on);
-  });
-
-  // ── Stats grid ──
-  const sg = document.getElementById('pf-stats-grid');
-  sg.innerHTML = [
-    { val: stats.total,                                                            sub: 'Treks Logged',       name: '' },
-    { val: stats.highestTrek ? stats.highestTrek.alt?.toLocaleString()+'m' : '—', sub: 'Highest Peak',       name: stats.highestTrek?.name || '' },
-    { val: stats.totalAlt ? stats.totalAlt.toLocaleString()+'m' : '—',            sub: 'Total Alt Gained',   name: '' },
-    { val: stats.favRegion,                                                        sub: 'Fav Region',         name: '', small: true },
-    { val: stats.totalDays || '—',                                                 sub: 'Trek Days',          name: '' },
-    { val: stats.thisYear,                                                         sub: 'Treks This Year',    name: '' },
-  ].map(s => `
-    <div class="pf-stat">
-      <div class="pf-stat-val" style="${s.small?'font-size:13px':''}">${s.val}</div>
-      <div class="pf-stat-sub">${s.sub}</div>
-      ${s.name ? `<div class="pf-stat-name">${s.name}</div>` : ''}
-    </div>`).join('');
-
-  // ── Badges ──
-  const br = document.getElementById('pf-badges-row');
-  br.innerHTML = badges.map(b => `
-    <div class="pf-badge ${b.earned?'earned':'locked'}">
-      <div class="pf-badge-icon">
-        ${b.icon}
-        ${!b.earned ? '<div class="pf-badge-lock">🔒</div>' : ''}
-        <div class="pf-badge-tip"><strong>${b.name}</strong><br>${b.earned ? '✓ Earned!' : b.desc}</div>
-      </div>
-      <div class="pf-badge-label">${b.name}</div>
-    </div>`).join('');
-
-  // ── Edit/Save buttons ──
-  const editBtn  = document.getElementById('pf-edit-btn');
-  const saveBtn  = document.getElementById('pf-save-btn');
-  const shareBtn = document.getElementById('pf-share-btn');
-
-  editBtn.classList.toggle('active', _pfEditMode);
-  editBtn.title = _pfEditMode ? 'Cancel edit' : 'Edit profile';
-  editBtn.textContent = _pfEditMode ? '✕' : '✏️';
-
-  // In edit mode: show Save, hide Share
-  // In view mode: hide Save, show Share (only if profile has been saved before)
-  saveBtn.style.display  = _pfEditMode ? '' : 'none';
-  shareBtn.style.display = _pfEditMode ? 'none' : '';
-}
-
-// ── Open / Close ──
-function openProfileCard() {
-  const profile = loadProfile();
-  // First time (no name saved) → open in edit mode so user can set up
-  _pfEditMode = !profile.edited;
-  renderProfileCard();
-  // Show/hide inputs based on mode
-  document.getElementById('pf-name-display').style.display = _pfEditMode ? 'none' : '';
-  document.getElementById('pf-name-input').style.display   = _pfEditMode ? '' : 'none';
-  document.getElementById('pf-tagline-display').style.display = _pfEditMode ? 'none' : '';
-  document.getElementById('pf-tagline-input').style.display   = _pfEditMode ? '' : 'none';
-  document.getElementById('profile-overlay').classList.add('on');
-  document.body.style.overflow = 'hidden';
-}
-function closeProfileCard() {
-  document.getElementById('profile-overlay').classList.remove('on');
-  document.body.style.overflow = '';
-}
-
-// ── Wire user-chip ──
-(function wireProfileCard() {
-  const chip = document.getElementById('user-chip');
-
-  // Set chip avatar from auth/profile
-  function refreshChip() {
-    const profile = loadProfile();
-    let authName = 'Explorer', authPhoto = null;
-    try {
-      const u = JSON.parse(localStorage.getItem('tv_user')||'{}');
-      authName  = u.name  || authName;
-      authPhoto = u.photo || null;
-    } catch {}
-    const displayName = profile.name || authName;
-    const photoSrc = profile.photo || authPhoto;
-    if (photoSrc) {
-      chip.innerHTML = `<img src="${photoSrc}" style="width:100%;height:100%;object-fit:cover">`;
-      chip.style.background = 'transparent';
-    } else {
-      chip.textContent = displayName[0]?.toUpperCase() || '👤';
-      chip.style.background = avatarColor(displayName);
-      chip.style.color = '#fff';
-      chip.style.fontWeight = '700';
-    }
-  }
-  refreshChip();
-
-  chip.onclick = (e) => { e.stopPropagation(); openProfileCard(); };
-
-  // Close on backdrop click
-  document.getElementById('profile-overlay').addEventListener('click', e => {
-    if (e.target === document.getElementById('profile-overlay')) closeProfileCard();
-  });
-
-  // Edit toggle
-  document.getElementById('pf-edit-btn').onclick = () => {
-    _pfEditMode = !_pfEditMode;
-    renderProfileCard();
-    document.getElementById('pf-name-display').style.display = _pfEditMode ? 'none' : '';
-    document.getElementById('pf-name-input').style.display   = _pfEditMode ? '' : 'none';
-    document.getElementById('pf-tagline-display').style.display = _pfEditMode ? 'none' : '';
-    document.getElementById('pf-tagline-input').style.display   = _pfEditMode ? '' : 'none';
-    if (_pfEditMode) setTimeout(() => document.getElementById('pf-name-input').focus(), 50);
-  };
-
-  // Tagline click-to-edit (view mode)
-  document.getElementById('pf-tagline-display').onclick = () => {
-    if (!_pfEditMode) {
-      _pfEditMode = true;
-      renderProfileCard();
-      document.getElementById('pf-name-display').style.display = 'none';
-      document.getElementById('pf-name-input').style.display   = '';
-      document.getElementById('pf-tagline-display').style.display = 'none';
-      document.getElementById('pf-tagline-input').style.display   = '';
-      document.getElementById('pf-tagline-input').focus();
-    }
-  };
-
-  // ── Photo upload ──
-  const photoInput = document.getElementById('pf-photo-input');
-
-  // Tap avatar wrap → trigger file picker (only in edit mode)
-  document.getElementById('pf-avatar-wrap').onclick = () => {
-    if (_pfEditMode) photoInput.click();
-  };
-
-  photoInput.onchange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    toast('📷 Processing photo…', '#388bfd');
-
-    // Compress to ~200px circle, JPEG 80%
-    const b64 = await new Promise(resolve => {
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.onload = () => {
-        const size = 200;
-        const cv = document.createElement('canvas');
-        cv.width = cv.height = size;
-        const ctx = cv.getContext('2d');
-        // Crop to square from centre
-        const min = Math.min(img.width, img.height);
-        const sx = (img.width  - min) / 2;
-        const sy = (img.height - min) / 2;
-        ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
-        URL.revokeObjectURL(url);
-        resolve(cv.toDataURL('image/jpeg', 0.80));
-      };
-      img.src = url;
-    });
-
-    // Save to profile immediately
-    const p = loadProfile();
-    p.photo = b64;
-    saveProfile(p);
-    e.target.value = '';
-
-    // Update avatar in card + chip instantly
-    const avatarEl = document.getElementById('pf-avatar');
-    avatarEl.innerHTML = `<img src="${b64}" alt="">`;
-    avatarEl.style.background = '#000';
-    refreshChip();
-    toast('✅ Photo updated!', '#2ea043');
-
-    // Show remove button now that photo exists
-    const rb = document.getElementById('pf-remove-photo');
-    if (rb) rb.style.display = '';
-  };
-
-  // Remove photo
-  const removePhotoBtn = document.getElementById('pf-remove-photo');
-  if (removePhotoBtn) {
-    removePhotoBtn.onclick = (e) => {
-      e.stopPropagation();
-      const p = loadProfile();
-      delete p.photo;
-      saveProfile(p);
-      removePhotoBtn.style.display = 'none';
-      renderProfileCard();
-      refreshChip();
-      toast('🗑 Photo removed', '#7d8590');
-    };
-  }
-
-  // Trek type pills
-  document.getElementById('pf-type-grid').addEventListener('click', e => {
-    const pill = e.target.closest('.pf-type-pill');
-    if (!pill || !_pfEditMode) return;
-    pill.classList.toggle('on');
-  });
-
-  // Save
-  document.getElementById('pf-save-btn').onclick = () => {
-    const name     = document.getElementById('pf-name-input').value.trim();
-    const tagline  = document.getElementById('pf-tagline-input').value.trim();
-    const region   = document.getElementById('pf-region').value;
-    const types    = [...document.querySelectorAll('.pf-type-pill.on')].map(p => p.dataset.type);
-
-    const p = loadProfile();
-    const updated = { ...p, name, tagline, region, trekTypes: types, edited: true };
-    saveProfile(updated);
-
-    _pfEditMode = false;
-    renderProfileCard();
-    document.getElementById('pf-name-display').style.display = '';
-    document.getElementById('pf-name-input').style.display   = 'none';
-    document.getElementById('pf-tagline-display').style.display = '';
-    document.getElementById('pf-tagline-input').style.display   = 'none';
-    refreshChip();
-    toast('✅ Profile saved!', '#2ea043');
-  };  document.getElementById('pf-share-btn').onclick = () => {
-    const stats  = calculateStats();
-    const profile = loadProfile();
-    let authName = 'Explorer';
-    try { authName = JSON.parse(localStorage.getItem('tv_user')||'{}').name || authName; } catch {}
-    const name = profile.name || authName;
-    const peakName = stats.highestTrek ? `${stats.highestTrek.name} (${stats.highestTrek.alt?.toLocaleString()}m)` : 'the Himalayas';
-    const text = `🏔 ${name} has logged ${stats.total} trek${stats.total!==1?'s':''} on TrekVerse, including ${peakName}. Total altitude gained: ${stats.totalAlt.toLocaleString()}m. Come join the journey! 🗺\nhttps://devanshdj72.github.io/TrekVerse/`;
-
-    if (navigator.share) {
-      navigator.share({ title: 'My TrekVerse Profile', text }).catch(()=>{});
-    } else if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(() => toast('📋 Profile copied to clipboard!', '#388bfd'));
-    } else {
-      const ta = document.createElement('textarea');
-      ta.value = text; document.body.appendChild(ta); ta.select();
-      document.execCommand('copy'); document.body.removeChild(ta);
-      toast('📋 Profile copied!', '#388bfd');
-    }
-  };
-
-  // Sign out
-  document.getElementById('pf-signout-btn').onclick = async () => {
-    closeProfileCard();
-    if (_fbReady && !_fbConfig.apiKey.includes('YOUR')) {
-      try { await firebase.auth().signOut(); } catch(e) {}
-    }
-    localStorage.removeItem('tv_user');
-    window.location.replace('login.html');
-  };
-
-  // ESC to close
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && document.getElementById('profile-overlay').classList.contains('on')) closeProfileCard();
-  });
-})();
-
-// ═══════════════════════════════════════════════════
-// BUDGET ESTIMATOR ENGINE
-// ═══════════════════════════════════════════════════
-
-// ── REGION COST CONFIG ──
-const REGION_COSTS = {
-  himachal: {
-    name:'Himachal Pradesh', permits:200, guidePerDay:900,
-    accom:{budget:400, comfort:1000, premium:2500},
-    food:{budget:350, comfort:650, premium:1200},
-    transport:{delhi:1200, mumbai:3500, bangalore:4500, kolkata:4000, pune:3800, hyderabad:4200, chandigarh:600, ahmedabad:3200},
-    gear:{base:300, per1000m:150},
-  },
-  uttarakhand: {
-    name:'Uttarakhand', permits:350, guidePerDay:1000,
-    accom:{budget:350, comfort:900, premium:2200},
-    food:{budget:400, comfort:700, premium:1300},
-    transport:{delhi:900, mumbai:3200, bangalore:4200, kolkata:3800, pune:3500, hyderabad:4000, chandigarh:800, ahmedabad:3000},
-    gear:{base:400, per1000m:180},
-  },
-  jk: {
-    name:'J&K / Ladakh', permits:800, guidePerDay:1200,
-    accom:{budget:500, comfort:1200, premium:3000},
-    food:{budget:450, comfort:800, premium:1500},
-    transport:{delhi:1800, mumbai:4500, bangalore:5500, kolkata:5000, pune:4800, hyderabad:5200, chandigarh:1200, ahmedabad:4000},
-    gear:{base:600, per1000m:200},
-  },
-  nepal: {
-    name:'Nepal Himalaya', permits:1500, guidePerDay:1500,
-    accom:{budget:600, comfort:1500, premium:4000},
-    food:{budget:500, comfort:900, premium:1800},
-    transport:{delhi:2500, mumbai:5000, bangalore:6000, kolkata:3000, pune:5500, hyderabad:5800, chandigarh:2800, ahmedabad:5200},
-    gear:{base:800, per1000m:250},
-  },
-  tibet: {
-    name:'Tibet Border', permits:2500, guidePerDay:1800,
-    accom:{budget:800, comfort:2000, premium:5000},
-    food:{budget:600, comfort:1100, premium:2200},
-    transport:{delhi:3500, mumbai:6500, bangalore:7500, kolkata:5000, pune:7000, hyderabad:7200, chandigarh:3800, ahmedabad:6200},
-    gear:{base:1000, per1000m:300},
-  },
-  northeast: {
-    name:'Seven Sisters NE', permits:600, guidePerDay:1000,
-    accom:{budget:400, comfort:900, premium:2200},
-    food:{budget:350, comfort:650, premium:1200},
-    transport:{delhi:3500, mumbai:5500, bangalore:5000, kolkata:1500, pune:5800, hyderabad:5500, chandigarh:3800, ahmedabad:5500},
-    gear:{base:300, per1000m:100},
-  },
-  maharashtra: {
-    name:'Maharashtra Sahyadris', permits:100, guidePerDay:700,
-    accom:{budget:300, comfort:700, premium:1800},
-    food:{budget:300, comfort:550, premium:1000},
-    transport:{delhi:2800, mumbai:300, bangalore:1200, kolkata:3500, pune:200, hyderabad:1000, chandigarh:3200, ahmedabad:1200},
-    gear:{base:150, per1000m:50},
-  },
-  southindia: {
-    name:'South India Ghats', permits:150, guidePerDay:750,
-    accom:{budget:350, comfort:800, premium:2000},
-    food:{budget:300, comfort:600, premium:1100},
-    transport:{delhi:3500, mumbai:1500, bangalore:400, kolkata:4000, pune:1800, hyderabad:800, chandigarh:4000, ahmedabad:2500},
-    gear:{base:200, per1000m:80},
-  },
-  spiritual: {
-    name:'Spiritual Yatras', permits:500, guidePerDay:900,
-    accom:{budget:300, comfort:700, premium:1800},
-    food:{budget:350, comfort:600, premium:1100},
-    transport:{delhi:1000, mumbai:3200, bangalore:4000, kolkata:3500, pune:3400, hyderabad:3800, chandigarh:700, ahmedabad:2800},
-    gear:{base:250, per1000m:120},
-  },
-  sevensummits: {
-    name:'Seven Summits — World', permits:15000, guidePerDay:5000,
-    accom:{budget:3000, comfort:7000, premium:18000},
-    food:{budget:2000, comfort:4000, premium:8000},
-    transport:{delhi:45000, mumbai:48000, bangalore:50000, kolkata:44000, pune:49000, hyderabad:50000, chandigarh:46000, ahmedabad:49000},
-    gear:{base:5000, per1000m:800},
-  },
-};
-
-// fallback for unknown regions
-const DEFAULT_COSTS = REGION_COSTS.himachal;
-
-// Variant multipliers
-const VARIANT_MUL = { budget:1.0, comfort:1.6, premium:2.8 };
-const VARIANT_LABELS = { budget:'Budget 🏕', comfort:'Comfort 🏠', premium:'Premium 🏨' };
-
-// Chart colours per category
-const BGT_COLORS = {
-  permits:      '#f97316',
-  guide:        '#a371f7',
-  accom:        '#388bfd',
-  food:         '#2ea043',
-  transport:    '#d29922',
-  gear:         '#38bdf8',
-  contingency:  '#7d8590',
-};
-
-function inrFmt(n){ return '₹' + Math.round(n).toLocaleString('en-IN'); }
-
-// ── calculateBudget ──
-function calculateBudget(trek, groupSize, variant, fromCity, includeGuide) {
-  const rc = REGION_COSTS[trek.r] || DEFAULT_COSTS;
-  const days = trek.days || 5;
-  const altM  = trek.alt  || 2000;
-  const mul   = VARIANT_MUL[variant] || 1;
-
-  const permits   = rc.permits * mul;
-  const guide     = includeGuide ? rc.guidePerDay * days / groupSize : 0;
-  const accom     = rc.accom[variant] * days;
-  const food      = rc.food[variant]  * days;
-  const rawTransport = (rc.transport[fromCity] || rc.transport.delhi) * mul;
-  const transport = rawTransport / groupSize;
-  const gear      = (rc.gear.base + rc.gear.per1000m * Math.floor(altM / 1000)) * mul;
-
-  const subtotal  = permits + guide + accom + food + transport + gear;
-  const contingency = subtotal * 0.10;
-  const perPerson = subtotal + contingency;
-  const group     = perPerson * groupSize;
-
-  return {
-    rows: [
-      { key:'permits',     icon:'📋', name:'Permits & Entry Fees',       amt:permits,     days:null },
-      { key:'guide',       icon:'🧭', name:'Guide / Porter',             amt:guide,       days:includeGuide ? days : 0 },
-      { key:'accom',       icon:'🏕', name:'Accommodation',              amt:accom,       days },
-      { key:'food',        icon:'🍱', name:'Food & Water',               amt:food,        days },
-      { key:'transport',   icon:'🚌', name:'Transport to Trailhead',     amt:transport,   days:null },
-      { key:'gear',        icon:'🥾', name:'Equipment Rental',           amt:gear,        days:null },
-      { key:'contingency', icon:'🛡', name:'Contingency (10%)',          amt:contingency, days:null },
-    ],
-    subtotal, contingency, perPerson, group, groupSize, days, variant, trek,
-  };
-}
-
-// ── renderBudget ──
-function renderBudget(result) {
-  const { rows, perPerson, group, groupSize, days, variant, trek } = result;
-  const maxAmt = Math.max(...rows.map(r=>r.amt), 1);
-
-  // breakdown rows
-  document.getElementById('bgt-rows').innerHTML = rows.map(r => {
-    const pct = Math.round(r.amt / maxAmt * 100);
-    const isZero = r.amt < 1;
-    return `<div class="bgt-row ${r.key==='contingency'?'contingency':''}" style="${isZero?'opacity:.35':''}">
-      <div class="bgt-row-icon">${r.icon}</div>
-      <div class="bgt-row-name">${r.name}</div>
-      <div class="bgt-row-bar-wrap">
-        <div class="bgt-row-bar" style="width:${pct}%;background:${BGT_COLORS[r.key]}"></div>
-      </div>
-      <div class="bgt-row-amt">${isZero ? '—' : inrFmt(r.amt)}</div>
-    </div>`;
-  }).join('');
-
-  // totals
-  document.getElementById('bgt-pp').textContent  = inrFmt(perPerson);
-  document.getElementById('bgt-grp').textContent = inrFmt(group);
-  document.getElementById('bgt-pp-sub').textContent  = `${days} days · ${VARIANT_LABELS[variant]}`;
-  document.getElementById('bgt-grp-sub').textContent = `${groupSize} person${groupSize>1?'s':''}`;
-
-  // donut chart
-  const donutRows = rows.filter(r => r.amt >= 1 && r.key !== 'contingency');
-  const donutTotal = donutRows.reduce((s,r)=>s+r.amt,0);
-  const cx=45, cy=45, R=34, stroke=10;
-  let angle = -Math.PI/2;
-  const paths = donutRows.map(r => {
-    const sweep = (r.amt/donutTotal) * 2*Math.PI;
-    const x1 = cx + R*Math.cos(angle), y1 = cy + R*Math.sin(angle);
-    angle += sweep;
-    const x2 = cx + R*Math.cos(angle), y2 = cy + R*Math.sin(angle);
-    const large = sweep > Math.PI ? 1 : 0;
-    return `<path d="M${x1.toFixed(2)},${y1.toFixed(2)} A${R},${R} 0 ${large},1 ${x2.toFixed(2)},${y2.toFixed(2)}"
-      fill="none" stroke="${BGT_COLORS[r.key]}" stroke-width="${stroke}" stroke-linecap="butt"/>`;
-  });
-  // background ring
-  document.getElementById('bgt-donut-svg').innerHTML =
-    `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="${stroke}"/>` +
-    paths.join('');
-  document.getElementById('bgt-donut-total').textContent = inrFmt(perPerson).replace('₹','₹');
-
-  // legend
-  document.getElementById('bgt-legend').innerHTML = donutRows.map(r => {
-    const pct = Math.round(r.amt/donutTotal*100);
-    return `<div class="bgt-legend-item">
-      <div class="bgt-legend-dot" style="background:${BGT_COLORS[r.key]}"></div>
-      <span>${r.name.split(' ')[0]}</span>
-      <span class="bgt-legend-pct">${pct}%</span>
-    </div>`;
-  }).join('');
-}
-
-// ── State ──
-let _bgtTrek = null;
-
-function recalcBudget() {
-  if (!_bgtTrek) return;
-  const groupSize    = Math.max(1, Math.min(20, parseInt(document.getElementById('bgt-group').value)||1));
-  const variant      = document.getElementById('bgt-variant').value;
-  const fromCity     = document.getElementById('bgt-city').value;
-  const includeGuide = document.getElementById('bgt-guide').checked;
-
-  // In standalone mode, use the region override picker
-  let trekForCalc = _bgtTrek;
-  const overrideWrap = document.getElementById('bgt-region-override-wrap');
-  if (overrideWrap && overrideWrap.style.display !== 'none') {
-    const overrideR = document.getElementById('bgt-region-override').value;
-    const rc = REGION_COSTS[overrideR];
-    trekForCalc = { ..._bgtTrek, r: overrideR, alt: rc ? 3500 : _bgtTrek.alt };
-  }
-
-  const result = calculateBudget(trekForCalc, groupSize, variant, fromCity, includeGuide);
-  renderBudget(result);
-  document.getElementById('budget-modal').dataset.result = JSON.stringify({
-    trekName: trekForCalc.name || _bgtTrek.name,
-    days: trekForCalc.days||5, groupSize, variant,
-    perPerson: result.perPerson, group: result.group,
-  });
-}
-
-function openBudget(trek) {
-  _bgtTrek = trek;
-  document.getElementById('bgt-trek-name').textContent = trek.name;
-  document.getElementById('bgt-trek-meta').textContent =
-    `${RNAMES[trek.r]||trek.r} · ${trek.days||5} days · ${trek.alt?.toLocaleString()||'—'}m`;
-  // Hide region override for real trek opens
-  document.getElementById('bgt-region-override-wrap').style.display = 'none';
-  document.getElementById('budget-modal').classList.add('on');
-  document.body.style.overflow = 'hidden';
-  recalcBudget();
-}
-
-function closeBudget() {
-  document.getElementById('budget-modal').classList.remove('on');
-  document.body.style.overflow = '';
-}
-
-// ── Wire inputs ──
-document.getElementById('bgt-close').onclick = closeBudget;
-document.getElementById('budget-modal').addEventListener('click', e => {
-  if (e.target === document.getElementById('budget-modal')) closeBudget();
-});
-['bgt-group','bgt-variant','bgt-city','bgt-guide','bgt-region-override'].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) {
-    el.addEventListener('change', recalcBudget);
-    el.addEventListener('input',  recalcBudget);
-  }
-});
-
-// ── Share ──
-document.getElementById('bgt-share-btn').onclick = () => {
-  const raw = document.getElementById('budget-modal').dataset.result;
-  if (!raw) return;
-  const d = JSON.parse(raw);
-  const vm = {budget:'Budget',comfort:'Comfort',premium:'Premium'}[d.variant]||d.variant;
-  const text = `🏔 ${d.trekName} (${d.days} days, ${d.groupSize} person${d.groupSize>1?'s':''}, ${vm}) on TrekVerse\n💰 Est. ${inrFmt(d.perPerson)}/person · Total ${inrFmt(d.group)}\nhttps://devanshdj72.github.io/TrekVerse/`;
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(() => toast('📋 Budget copied to clipboard!','#388bfd'));
-  } else {
-    const ta=document.createElement('textarea'); ta.value=text;
-    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-    toast('📋 Copied!','#388bfd');
-  }
-};
-
-// ── Download ──
-document.getElementById('bgt-download-btn').onclick = () => {
-  if (!_bgtTrek) return;
-  const groupSize    = parseInt(document.getElementById('bgt-group').value)||1;
-  const variant      = document.getElementById('bgt-variant').value;
-  const fromCity     = document.getElementById('bgt-city').value;
-  const includeGuide = document.getElementById('bgt-guide').checked;
-  const res = calculateBudget(_bgtTrek, groupSize, variant, fromCity, includeGuide);
-  const vm  = {budget:'Budget',comfort:'Comfort',premium:'Premium'}[variant];
-  const lines = [
-    `TREKVERSE BUDGET ESTIMATE`,
-    `═══════════════════════════════`,
-    `Trek      : ${_bgtTrek.name}`,
-    `Region    : ${RNAMES[_bgtTrek.r]||_bgtTrek.r}`,
-    `Duration  : ${_bgtTrek.days||5} days`,
-    `Altitude  : ${_bgtTrek.alt?.toLocaleString()||'—'}m`,
-    `Variant   : ${vm}`,
-    `Group Size: ${groupSize} person${groupSize>1?'s':''}`,
-    `From City : ${fromCity.charAt(0).toUpperCase()+fromCity.slice(1)}`,
-    ``,
-    `COST BREAKDOWN (per person)`,
-    `───────────────────────────────`,
-    ...res.rows.map(r => `${r.icon} ${r.name.padEnd(26)} ${inrFmt(r.amt)}`),
-    ``,
-    `─────────────────────────────── `,
-    `💰 TOTAL PER PERSON             ${inrFmt(res.perPerson)}`,
-    `👥 TOTAL FOR GROUP (${groupSize})        ${inrFmt(res.group)}`,
-    ``,
-    `Generated by TrekVerse — https://devanshdj72.github.io/TrekVerse/`,
-    `Note: These are estimates. Actual costs may vary.`,
-  ];
-  const blob = new Blob([lines.join('\n')], {type:'text/plain'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `TrekVerse-Budget-${_bgtTrek.name.replace(/\s+/g,'-')}.txt`;
-  a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-  toast('⬇ Budget saved!','#2ea043');
-};
-
-// ESC to close
-document.addEventListener('keydown', e => {
-  if (e.key==='Escape' && document.getElementById('budget-modal').classList.contains('on')) closeBudget();
-});
-
-// ── Also expose openBudget as standalone (from hub menu) ──
-window.openBudgetStandalone = function() {
-  const planTrek = { id:'_budget_plan', name:'Budget Planner', r:'himachal', alt:3500, days:6, diff:'moderate', icon:'💰' };
-  _bgtTrek = planTrek;
-  document.getElementById('bgt-trek-name').textContent = 'Budget Planner';
-  document.getElementById('bgt-trek-meta').textContent = 'Choose a region to estimate trek costs';
-  // Show region picker
-  document.getElementById('bgt-region-override-wrap').style.display = '';
-  document.getElementById('budget-modal').classList.add('on');
-  document.body.style.overflow = 'hidden';
-  recalcBudget();
-};
-
-// ═══════════════════════════════════════════════════
-// PHOTO SYSTEM
-// ═══════════════════════════════════════════════════
-
-// Storage — { trekId: [{data:base64, ts:number}] }
-let photos = JSON.parse(localStorage.getItem('sl3_photos') || '{}');
-function _savePhotos() { localStorage.setItem('sl3_photos', JSON.stringify(photos)); }
-function getPhotos(id) { return photos[id] || []; }
-
-// Compress image to max WxH, JPEG quality
-function compressImage(file, maxW, maxH, q) {
-  return new Promise(resolve => {
-    const img = new Image(), url = URL.createObjectURL(file);
-    img.onload = () => {
-      const scale = Math.min(1, maxW / img.width, maxH / img.height);
-      const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
-      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-      cv.getContext('2d').drawImage(img, 0, 0, w, h);
-      URL.revokeObjectURL(url);
-      resolve(cv.toDataURL('image/jpeg', q || 0.72));
-    };
-    img.src = url;
-  });
-}
-
-// ── LIGHTBOX ──
-let _lbPhotos = [], _lbIdx = 0;
-
-function openLightbox(arr, idx) {
-  _lbPhotos = arr; _lbIdx = idx;
-  _renderLightbox();
-  document.getElementById('photo-lightbox').classList.add('on');
-  document.body.style.overflow = 'hidden';
-}
-function closeLightbox() {
-  document.getElementById('photo-lightbox').classList.remove('on');
-  document.body.style.overflow = '';
-}
-function _renderLightbox() {
-  document.getElementById('photo-lb-img').src = _lbPhotos[_lbIdx].data;
-  document.getElementById('photo-lb-counter').textContent = `${_lbIdx + 1} / ${_lbPhotos.length}`;
-  document.getElementById('photo-lb-prev').disabled = _lbIdx === 0;
-  document.getElementById('photo-lb-next').disabled = _lbIdx === _lbPhotos.length - 1;
-}
-document.getElementById('photo-lb-close').onclick = closeLightbox;
-document.getElementById('photo-lb-prev').onclick  = () => { if (_lbIdx > 0) { _lbIdx--; _renderLightbox(); } };
-document.getElementById('photo-lb-next').onclick  = () => { if (_lbIdx < _lbPhotos.length - 1) { _lbIdx++; _renderLightbox(); } };
-document.getElementById('photo-lightbox').addEventListener('click', e => {
-  if (e.target === document.getElementById('photo-lightbox')) closeLightbox();
-});
-document.addEventListener('keydown', e => {
-  if (!document.getElementById('photo-lightbox').classList.contains('on')) return;
-  if (e.key === 'Escape') closeLightbox();
-  if (e.key === 'ArrowLeft'  && _lbIdx > 0)                     { _lbIdx--; _renderLightbox(); }
-  if (e.key === 'ArrowRight' && _lbIdx < _lbPhotos.length - 1)  { _lbIdx++; _renderLightbox(); }
-});
-
-// ── PHOTO GRID BUILDER (generic) ──
-// Builds a grid inside `container` from `photoArr` (saved) + `pending` (unsaved)
-// `onDelete(idx, isPending)` called on delete tap
-// `onTap(idx)` called on thumb tap
-function buildPhotoGrid(container, badgeEl, photoArr, pending, onDelete) {
-  const all = [...photoArr, ...pending];
-  if (!all.length) {
-    container.style.display = 'none';
-    if (badgeEl) badgeEl.style.display = 'none';
-    return;
-  }
-  container.style.display = 'grid';
-  if (badgeEl) { badgeEl.style.display = 'inline-block'; badgeEl.textContent = all.length; }
-  const savedLen = photoArr.length;
-  container.innerHTML = all.map((p, i) => `
-    <div class="photo-thumb" data-idx="${i}">
-      <img src="${p.data}" loading="lazy">
-      <button class="photo-del" data-idx="${i}">✕</button>
-      ${i >= savedLen ? '<div class="photo-new-tag">new</div>' : ''}
-    </div>`).join('');
-  // delete
-  container.querySelectorAll('.photo-del').forEach(btn => {
-    btn.onclick = e => { e.stopPropagation(); onDelete(+btn.dataset.idx, +btn.dataset.idx >= savedLen); };
-  });
-  // lightbox
-  container.querySelectorAll('.photo-thumb').forEach(thumb => {
-    thumb.onclick = e => { if (e.target.classList.contains('photo-del')) return; openLightbox(all, +thumb.dataset.idx); };
-  });
-}
-
-// ── SHEET PHOTO DISPLAY ──
-function renderSheetPhotos(trekId) {
-  const mount = document.getElementById(`sheet-photos-${trekId}`);
-  if (!mount) return;
-  const ps = getPhotos(trekId);
-  if (!ps.length) { mount.innerHTML = ''; return; }
-  mount.innerHTML = `
-    <div class="photo-section">
-      <div class="photo-section-title">📷 Photos <span class="photo-count-badge">${ps.length}</span></div>
-      <div class="photo-grid" id="sheet-pg-${trekId}"></div>
-    </div>`;
-  const grid = document.getElementById(`sheet-pg-${trekId}`);
-  buildPhotoGrid(grid, null, ps, [], (idx) => {
-    photos[trekId].splice(idx, 1);
-    _savePhotos();
-    renderSheetPhotos(trekId);
-  });
-  // Show grid (already set by buildPhotoGrid but mount hides it)
-  grid.style.display = 'grid';
-}
-
-// ── LOG SUMMIT MODAL PHOTOS ──
-let _modalTrekId = null, _modalPending = [];
-
-function initModalPhotos(trekId) {
-  _modalTrekId = trekId;
-  _modalPending = [];
-  _refreshModalGrid();
-}
-
-function _refreshModalGrid() {
-  const grid  = document.getElementById('modal-photo-grid');
-  const badge = document.getElementById('modal-photo-badge');
-  buildPhotoGrid(grid, badge, getPhotos(_modalTrekId), _modalPending, (idx, isPending) => {
-    if (isPending) { _modalPending.splice(idx - getPhotos(_modalTrekId).length, 1); }
-    else { photos[_modalTrekId].splice(idx, 1); _savePhotos(); }
-    _refreshModalGrid();
-  });
-}
-
-function commitModalPhotos() {
-  if (!_modalTrekId || !_modalPending.length) return;
-  if (!photos[_modalTrekId]) photos[_modalTrekId] = [];
-  photos[_modalTrekId].push(..._modalPending);
-  _savePhotos();
-  _modalPending = [];
-}
-
-document.getElementById('modal-photo-btn').onclick = () => document.getElementById('modal-photo-input').click();
-document.getElementById('modal-photo-input').onchange = async e => {
-  const files = Array.from(e.target.files); if (!files.length) return;
-  toast('📷 Adding photos…', '#388bfd');
-  for (const f of files) { _modalPending.push({ data: await compressImage(f, 1200, 1200, 0.72), ts: Date.now() }); }
-  e.target.value = '';
-  _refreshModalGrid();
-};
-
-// ── PIN MODAL PHOTOS ──
-let _pmTrekId = null, _pmPending = [];
-
-function initPmPhotos(trekId) {
-  _pmTrekId = trekId || null;
-  _pmPending = [];
-  _refreshPmGrid();
-}
-
-function _refreshPmGrid() {
-  const grid  = document.getElementById('pm-photo-grid');
-  const badge = document.getElementById('pm-photo-badge');
-  buildPhotoGrid(grid, badge, getPhotos(_pmTrekId||''), _pmPending, (idx, isPending) => {
-    if (isPending) { _pmPending.splice(idx - getPhotos(_pmTrekId||'').length, 1); }
-    else if (_pmTrekId) { photos[_pmTrekId].splice(idx, 1); _savePhotos(); }
-    _refreshPmGrid();
-  });
-}
-
-function commitPmPhotos(trekId) {
-  if (!_pmPending.length) return;
-  if (!photos[trekId]) photos[trekId] = [];
-  photos[trekId].push(..._pmPending);
-  _savePhotos();
-  _pmPending = [];
-}
-
-document.getElementById('pm-photo-btn').onclick = () => document.getElementById('pm-photo-input').click();
-document.getElementById('pm-photo-input').onchange = async e => {
-  const files = Array.from(e.target.files); if (!files.length) return;
-  toast('📷 Adding photos…', '#388bfd');
-  for (const f of files) { _pmPending.push({ data: await compressImage(f, 1200, 1200, 0.72), ts: Date.now() }); }
-  e.target.value = '';
-  _refreshPmGrid();
-};
 
 // ═══════════════════════════════════════════════════
 // BOOT
