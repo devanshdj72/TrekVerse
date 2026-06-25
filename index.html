@@ -9,7 +9,7 @@
 <!-- iOS install support -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="SummitLog">
+<meta name="apple-mobile-web-app-title" content="TrekVerse">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
 <!-- Android / general PWA -->
@@ -17,7 +17,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 
-<title>SummitLog — Himalayan Trek Atlas</title>
+<title>TrekVerse — Himalayan Trek Atlas</title>
 
 <!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -502,6 +502,19 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 }
 #fitbtn:hover{background:var(--surf)}
 #fitbtn:active{transform:scale(.9)}
+#locatebtn{
+  position:fixed;right:10px;top:148px;z-index:800;
+  width:38px;height:38px;border-radius:8px;border:1px solid var(--bord);
+  background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  color:var(--txt);font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.4);
+  transition:background .15s,transform .15s,border-color .2s;
+}
+#locatebtn:hover{background:var(--surf);border-color:rgba(249,115,22,.5)}
+#locatebtn:active{transform:scale(.9)}
+#locatebtn.locating{border-color:var(--ora);animation:locatePulse 1s ease-in-out infinite}
+@keyframes locatePulse{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.4)}50%{box-shadow:0 0 0 6px rgba(249,115,22,0)}}
 .leaflet-control-attribution{display:none}
 
 /* Cluster — stacked deck of trek icons fanning out on hover */
@@ -648,6 +661,8 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 
 <div id="map"></div>
 <button id="fitbtn" title="Fit all pins on screen">⤢</button>
+<button id="locatebtn" title="Show my location on map">📍</button>
+<button id="locatebtn" title="Show my location on map">📍</button>
 
 <div id="tabs">
   <button class="tab on" data-r="all"><span class="tab-label">🌏 All</span></button>
@@ -2820,7 +2835,20 @@ document.getElementById('tabs').addEventListener('scroll', ()=> hideRegionPopove
 // ═══════════════════════════════════════════════════
 // BADGE & TOAST
 // ═══════════════════════════════════════════════════
-function updateBadge(){document.getElementById('bdg').textContent=`${Object.keys(logged).length} / ${TREKS.length+customs.length}`}
+function updateBadge(){
+  const loggedCount = Object.keys(logged).length;
+  const totalCount  = TREKS.length + customs.length;
+  document.getElementById('bdg').textContent = `${loggedCount} / ${totalCount}`;
+  document.querySelectorAll('.tab[data-r]').forEach(tab => {
+    const r = tab.dataset.r;
+    const regionTreks  = r==='all' ? allTreks() : allTreks().filter(t=>t.r===r);
+    const regionLogged = regionTreks.filter(t=>logged[t.id]).length;
+    let el = tab.querySelector('.tab-cnt');
+    if(!el){ el=document.createElement('span'); el.className='tab-cnt'; const lbl=tab.querySelector('.tab-label'); if(lbl) lbl.after(el); }
+    el.textContent = regionLogged ? ` ${regionLogged}/${regionTreks.length}` : '';
+    el.style.cssText = 'font-size:9px;opacity:.6;font-family:monospace;margin-left:2px';
+  });
+}
 function toast(msg,bg){
   const el=document.getElementById('toast');
   el.textContent=msg; el.style.background=bg||'#2ea043';
@@ -2832,7 +2860,7 @@ document.getElementById('bdg').onclick=()=>toast(`${Object.keys(logged).length} 
 // PWA SERVICE WORKER
 // ═══════════════════════════════════════════════════
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/summitlog/sw.js').catch(()=>{});
+  navigator.serviceWorker.register('/TrekVerse/sw.js').catch(()=>{});
 }
 
 // ═══════════════════════════════════════════════════
@@ -3145,6 +3173,30 @@ document.getElementById('fitbtn').onclick = () => {
     easeLinearity:0.25
   });
   toast('Fitting all pins…','#388bfd');
+};
+
+// LOCATE ME
+let _locateMarker=null;
+document.getElementById('locatebtn').onclick=()=>{
+  if(!MAP_AVAILABLE){toast('Map not available','#f85149');return;}
+  if(!navigator.geolocation){toast('GPS not supported','#f85149');return;}
+  const btn=document.getElementById('locatebtn');
+  btn.classList.add('locating');
+  navigator.geolocation.getCurrentPosition(pos=>{
+    btn.classList.remove('locating');
+    const {latitude:lat,longitude:lng,accuracy}=pos.coords;
+    if(_locateMarker){map.removeLayer(_locateMarker);_locateMarker=null;}
+    L.circle([lat,lng],{radius:accuracy,color:'#f97316',fillColor:'#f97316',fillOpacity:.08,weight:1.5,dashArray:'4,4'}).addTo(map);
+    const icon=L.divIcon({className:'',html:`<div style="width:16px;height:16px;border-radius:50%;background:#f97316;border:3px solid #fff;box-shadow:0 0 0 4px rgba(249,115,22,.35)"></div>`,iconSize:[16,16],iconAnchor:[8,8]});
+    _locateMarker=L.marker([lat,lng],{icon}).addTo(map);
+    _locateMarker.bindPopup(`<b>📍 You are here</b><br><span style="font-size:11px;color:#888">±${Math.round(accuracy)}m accuracy</span>`,{maxWidth:180}).openPopup();
+    map.flyTo([lat,lng],10,{animate:true,duration:1.4});
+    toast('📍 Location found!','#2ea043');
+  },err=>{
+    btn.classList.remove('locating');
+    const msgs={1:'Location permission denied',2:'Location unavailable',3:'Timed out'};
+    toast('⚠ '+(msgs[err.code]||'GPS error'),'#f85149');
+  },{enableHighAccuracy:true,timeout:10000,maximumAge:30000});
 };
 </script>
 <!-- Journey Hub: Timeline, Bucket List, Achievements, Constellation, Oracle, Export/Import.
