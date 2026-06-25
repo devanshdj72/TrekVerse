@@ -969,8 +969,8 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 
     <!-- ACTIONS -->
     <div class="pf-actions">
-      <button class="pf-share-btn" id="pf-share-btn">📤 Share Profile</button>
-      <button class="pf-save-btn hidden" id="pf-save-btn">✓ Save</button>
+      <button class="pf-share-btn" id="pf-share-btn" style="display:none">📤 Share Profile</button>
+      <button class="pf-save-btn" id="pf-save-btn" style="flex:1">✅ Save Profile</button>
     </div>
 
     <!-- SIGN OUT -->
@@ -3571,14 +3571,31 @@ function renderProfileCard() {
     </div>`).join('');
 
   // ── Edit/Save buttons ──
-  document.getElementById('pf-edit-btn').classList.toggle('active', _pfEditMode);
-  document.getElementById('pf-save-btn').classList.toggle('hidden', !_pfEditMode);
+  const editBtn  = document.getElementById('pf-edit-btn');
+  const saveBtn  = document.getElementById('pf-save-btn');
+  const shareBtn = document.getElementById('pf-share-btn');
+
+  editBtn.classList.toggle('active', _pfEditMode);
+  editBtn.title = _pfEditMode ? 'Cancel edit' : 'Edit profile';
+  editBtn.textContent = _pfEditMode ? '✕' : '✏️';
+
+  // In edit mode: show Save, hide Share
+  // In view mode: hide Save, show Share (only if profile has been saved before)
+  saveBtn.style.display  = _pfEditMode ? '' : 'none';
+  shareBtn.style.display = _pfEditMode ? 'none' : '';
 }
 
 // ── Open / Close ──
 function openProfileCard() {
-  _pfEditMode = false;
+  const profile = loadProfile();
+  // First time (no name saved) → open in edit mode so user can set up
+  _pfEditMode = !profile.edited;
   renderProfileCard();
+  // Show/hide inputs based on mode
+  document.getElementById('pf-name-display').style.display = _pfEditMode ? 'none' : '';
+  document.getElementById('pf-name-input').style.display   = _pfEditMode ? '' : 'none';
+  document.getElementById('pf-tagline-display').style.display = _pfEditMode ? 'none' : '';
+  document.getElementById('pf-tagline-input').style.display   = _pfEditMode ? '' : 'none';
   document.getElementById('profile-overlay').classList.add('on');
   document.body.style.overflow = 'hidden';
 }
@@ -3624,7 +3641,6 @@ function closeProfileCard() {
   document.getElementById('pf-edit-btn').onclick = () => {
     _pfEditMode = !_pfEditMode;
     renderProfileCard();
-    // Show/hide name input vs display
     document.getElementById('pf-name-display').style.display = _pfEditMode ? 'none' : '';
     document.getElementById('pf-name-input').style.display   = _pfEditMode ? '' : 'none';
     document.getElementById('pf-tagline-display').style.display = _pfEditMode ? 'none' : '';
@@ -3671,10 +3687,7 @@ function closeProfileCard() {
     document.getElementById('pf-tagline-input').style.display   = 'none';
     refreshChip();
     toast('✅ Profile saved!', '#2ea043');
-  };
-
-  // Share profile
-  document.getElementById('pf-share-btn').onclick = () => {
+  };  document.getElementById('pf-share-btn').onclick = () => {
     const stats  = calculateStats();
     const profile = loadProfile();
     let authName = 'Explorer';
