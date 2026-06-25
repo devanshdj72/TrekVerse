@@ -743,6 +743,27 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   overflow:hidden;
 }
 .pf-avatar img{width:100%;height:100%;object-fit:cover}
+
+/* avatar upload overlay */
+.pf-avatar-wrap{position:relative;flex-shrink:0;width:52px;height:52px}.pf-avatar{
+  width:52px;height:52px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:800;color:#fff;
+  border:3px solid rgba(255,255,255,.15);
+  box-shadow:0 4px 16px rgba(0,0,0,.4);
+  overflow:hidden;cursor:pointer;
+  transition:filter .2s;
+}
+.pf-avatar:hover .pf-avatar-cam{opacity:1}
+.pf-avatar-cam{
+  position:absolute;inset:0;border-radius:50%;
+  background:rgba(0,0,0,.52);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;opacity:0;transition:opacity .18s;
+  pointer-events:none;
+}
+.pf-avatar-wrap.edit-mode .pf-avatar-cam{opacity:1}
+.pf-avatar-wrap.edit-mode .pf-avatar{filter:brightness(.75)}
 .pf-identity{flex:1;min-width:0}
 .pf-name{font-size:17px;font-weight:800;color:var(--txt);line-height:1.2;word-break:break-word}
 .pf-name-input{
@@ -914,7 +935,12 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <!-- HEADER -->
     <div class="pf-header">
       <div class="pf-header-row">
-        <div class="pf-avatar" id="pf-avatar">👤</div>
+        <div class="pf-avatar-wrap" id="pf-avatar-wrap">
+          <div class="pf-avatar" id="pf-avatar">👤</div>
+          <div class="pf-avatar-cam">📷</div>
+          <input type="file" id="pf-photo-input" accept="image/*" style="display:none">
+        </div>
+        <button id="pf-remove-photo" style="display:none;position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);background:rgba(248,81,73,.15);border:1px solid rgba(248,81,73,.3);color:var(--red);font-size:9px;font-weight:700;border-radius:8px;padding:2px 7px;cursor:pointer;white-space:nowrap;font-family:inherit">✕ Remove</button>
         <div class="pf-identity">
           <div class="pf-name" id="pf-name-display">Explorer</div>
           <input class="pf-name-input" id="pf-name-input" style="display:none" maxlength="32" placeholder="Your name">
@@ -3511,12 +3537,23 @@ function renderProfileCard() {
 
   // ── Avatar ──
   const avatarEl = document.getElementById('pf-avatar');
-  if (authPhoto) {
-    avatarEl.innerHTML = `<img src="${authPhoto}" alt="">`;
-    avatarEl.style.background = 'transparent';
+  const avatarWrap = document.getElementById('pf-avatar-wrap');
+  // Priority: profile custom photo > Google/auth photo > initials
+  const photoSrc = profile.photo || authPhoto;
+  if (photoSrc) {
+    avatarEl.innerHTML = `<img src="${photoSrc}" alt="">`;
+    avatarEl.style.background = '#000';
   } else {
-    avatarEl.textContent = displayName[0]?.toUpperCase() || '⛰';
+    avatarEl.innerHTML = displayName[0]?.toUpperCase() || '⛰';
     avatarEl.style.background = avatarColor(displayName);
+  }
+  // Show camera overlay only in edit mode
+  avatarWrap.classList.toggle('edit-mode', _pfEditMode);
+
+  // Show remove-photo button only in edit mode when a custom photo exists
+  const removeBtn = document.getElementById('pf-remove-photo');
+  if (removeBtn) {
+    removeBtn.style.display = (_pfEditMode && profile.photo) ? '' : 'none';
   }
 
   // ── Name ──
@@ -3618,8 +3655,9 @@ function closeProfileCard() {
       authPhoto = u.photo || null;
     } catch {}
     const displayName = profile.name || authName;
-    if (authPhoto) {
-      chip.innerHTML = `<img src="${authPhoto}" style="width:100%;height:100%;object-fit:cover">`;
+    const photoSrc = profile.photo || authPhoto;
+    if (photoSrc) {
+      chip.innerHTML = `<img src="${photoSrc}" style="width:100%;height:100%;object-fit:cover">`;
       chip.style.background = 'transparent';
     } else {
       chip.textContent = displayName[0]?.toUpperCase() || '👤';
@@ -3660,6 +3698,72 @@ function closeProfileCard() {
       document.getElementById('pf-tagline-input').focus();
     }
   };
+
+  // ── Photo upload ──
+  const photoInput = document.getElementById('pf-photo-input');
+
+  // Tap avatar wrap → trigger file picker (only in edit mode)
+  document.getElementById('pf-avatar-wrap').onclick = () => {
+    if (_pfEditMode) photoInput.click();
+  };
+
+  photoInput.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    toast('📷 Processing photo…', '#388bfd');
+
+    // Compress to ~200px circle, JPEG 80%
+    const b64 = await new Promise(resolve => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const size = 200;
+        const cv = document.createElement('canvas');
+        cv.width = cv.height = size;
+        const ctx = cv.getContext('2d');
+        // Crop to square from centre
+        const min = Math.min(img.width, img.height);
+        const sx = (img.width  - min) / 2;
+        const sy = (img.height - min) / 2;
+        ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
+        URL.revokeObjectURL(url);
+        resolve(cv.toDataURL('image/jpeg', 0.80));
+      };
+      img.src = url;
+    });
+
+    // Save to profile immediately
+    const p = loadProfile();
+    p.photo = b64;
+    saveProfile(p);
+    e.target.value = '';
+
+    // Update avatar in card + chip instantly
+    const avatarEl = document.getElementById('pf-avatar');
+    avatarEl.innerHTML = `<img src="${b64}" alt="">`;
+    avatarEl.style.background = '#000';
+    refreshChip();
+    toast('✅ Photo updated!', '#2ea043');
+
+    // Show remove button now that photo exists
+    const rb = document.getElementById('pf-remove-photo');
+    if (rb) rb.style.display = '';
+  };
+
+  // Remove photo
+  const removePhotoBtn = document.getElementById('pf-remove-photo');
+  if (removePhotoBtn) {
+    removePhotoBtn.onclick = (e) => {
+      e.stopPropagation();
+      const p = loadProfile();
+      delete p.photo;
+      saveProfile(p);
+      removePhotoBtn.style.display = 'none';
+      renderProfileCard();
+      refreshChip();
+      toast('🗑 Photo removed', '#7d8590');
+    };
+  }
 
   // Trek type pills
   document.getElementById('pf-type-grid').addEventListener('click', e => {
