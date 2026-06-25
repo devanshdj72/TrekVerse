@@ -913,6 +913,151 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   transition:background .15s;
 }
 .pf-signout-btn:hover{background:rgba(248,81,73,.15)}
+/* ═══════════════════════════════════════
+   BUDGET ESTIMATOR MODAL
+═══════════════════════════════════════ */
+#budget-modal{
+  position:fixed;inset:0;z-index:5500;
+  background:rgba(0,0,0,.75);backdrop-filter:blur(10px);
+  display:none;align-items:flex-end;justify-content:center;
+}
+#budget-modal.on{display:flex;animation:sfadeIn .22s ease}
+#budget-inner{
+  width:100%;max-width:540px;
+  background:var(--surf);border-radius:22px 22px 0 0;
+  border:1px solid var(--bord);border-bottom:none;
+  max-height:92dvh;overflow-y:auto;
+  box-shadow:0 -16px 50px rgba(0,0,0,.6),0 -2px 0 rgba(249,115,22,.4);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.bgt-handle{width:38px;height:4px;background:var(--bord);border-radius:2px;margin:12px auto 0}
+.bgt-header{
+  padding:14px 16px 12px;
+  border-bottom:1px solid var(--bord);
+  display:flex;align-items:center;gap:10px;
+}
+.bgt-header-icon{font-size:22px}
+.bgt-header-info{flex:1;min-width:0}
+.bgt-trek-name{font-size:15px;font-weight:800;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bgt-trek-meta{font-size:11px;color:var(--mute);margin-top:1px}
+.bgt-close{background:rgba(255,255,255,.08);border:none;color:var(--txt);font-size:18px;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+[data-theme="light"] .bgt-close{background:rgba(0,0,0,.07)}
+
+/* inputs */
+.bgt-inputs{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;
+  padding:12px 16px;border-bottom:1px solid var(--bord);
+}
+@media(max-width:380px){.bgt-inputs{grid-template-columns:1fr 1fr}}
+.bgt-input-group{display:flex;flex-direction:column;gap:4px}
+.bgt-input-group label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--mute)}
+.bgt-input-group select,
+.bgt-input-group input{
+  background:rgba(255,255,255,.05);border:1px solid var(--bord);
+  border-radius:10px;padding:8px 10px;color:var(--txt);
+  font-size:13px;font-family:inherit;outline:none;
+  transition:border-color .2s;width:100%;
+  -webkit-appearance:none;appearance:none;
+}
+.bgt-input-group select:focus,
+.bgt-input-group input:focus{border-color:rgba(249,115,22,.5)}
+[data-theme="light"] .bgt-input-group select,
+[data-theme="light"] .bgt-input-group input{background:rgba(0,0,0,.04)}
+.bgt-input-group select option{background:var(--surf);color:var(--txt)}
+
+/* guide toggle */
+.bgt-guide-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;border-bottom:1px solid var(--bord);
+}
+.bgt-guide-label{font-size:13px;color:var(--txt);display:flex;align-items:center;gap:6px}
+.bgt-toggle{position:relative;width:40px;height:22px;cursor:pointer}
+.bgt-toggle input{opacity:0;width:0;height:0;position:absolute}
+.bgt-toggle-track{
+  position:absolute;inset:0;border-radius:11px;
+  background:var(--bord);transition:background .2s;
+}
+.bgt-toggle input:checked + .bgt-toggle-track{background:var(--ora)}
+.bgt-toggle-thumb{
+  position:absolute;top:3px;left:3px;
+  width:16px;height:16px;border-radius:50%;
+  background:#fff;transition:transform .2s;
+  box-shadow:0 1px 4px rgba(0,0,0,.3);
+}
+.bgt-toggle input:checked ~ .bgt-toggle-thumb{transform:translateX(18px)}
+
+/* breakdown table */
+.bgt-breakdown{padding:12px 16px;border-bottom:1px solid var(--bord)}
+.bgt-section-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--mute);margin-bottom:10px}
+.bgt-row{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);
+}
+.bgt-row:last-child{border:none}
+[data-theme="light"] .bgt-row{border-bottom-color:rgba(0,0,0,.04)}
+.bgt-row-icon{font-size:15px;flex-shrink:0;width:22px;text-align:center}
+.bgt-row-name{flex:1;font-size:12px;color:var(--txt);min-width:0}
+.bgt-row-bar-wrap{width:80px;height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;flex-shrink:0}
+[data-theme="light"] .bgt-row-bar-wrap{background:rgba(0,0,0,.07)}
+.bgt-row-bar{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.16,1,.3,1)}
+.bgt-row-amt{font-size:12px;font-weight:700;font-family:monospace;color:var(--ora);flex-shrink:0;min-width:72px;text-align:right}
+.bgt-row.contingency .bgt-row-amt{color:var(--mute)}
+.bgt-row.total-row{
+  margin-top:6px;padding:10px 0 4px;
+  border-top:1px solid var(--bord)!important;
+  border-bottom:none!important;
+}
+.bgt-row.total-row .bgt-row-name{font-size:13px;font-weight:700}
+.bgt-row.total-row .bgt-row-amt{font-size:15px;color:var(--txt)}
+.bgt-total-group{font-size:15px;color:var(--mute);font-family:monospace;flex-shrink:0;text-align:right;min-width:100px}
+
+/* charts */
+.bgt-charts{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bord);align-items:center}
+@media(max-width:340px){.bgt-charts{flex-direction:column}}
+.bgt-donut-wrap{flex-shrink:0;position:relative;width:90px;height:90px}
+.bgt-donut-wrap svg{width:90px;height:90px}
+.bgt-donut-center{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;pointer-events:none;
+}
+.bgt-donut-total{font-size:12px;font-weight:800;color:var(--txt);font-family:monospace}
+.bgt-donut-label{font-size:8px;color:var(--mute);text-transform:uppercase;letter-spacing:.5px}
+.bgt-legend{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0}
+.bgt-legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mute)}
+.bgt-legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.bgt-legend-pct{font-weight:700;color:var(--txt);margin-left:auto;font-family:monospace;font-size:11px}
+
+/* totals summary */
+.bgt-totals{
+  padding:12px 16px;border-bottom:1px solid var(--bord);
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+}
+.bgt-total-card{
+  background:linear-gradient(135deg,rgba(249,115,22,.1),rgba(249,115,22,.04));
+  border:1px solid rgba(249,115,22,.25);border-radius:14px;
+  padding:12px 14px;
+}
+.bgt-total-card.group{
+  background:linear-gradient(135deg,rgba(56,139,253,.1),rgba(56,139,253,.04));
+  border-color:rgba(56,139,253,.25);
+}
+.bgt-total-label{font-size:10px;color:var(--mute);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.bgt-total-val{font-size:22px;font-weight:800;font-family:monospace;color:var(--ora)}
+.bgt-total-card.group .bgt-total-val{color:var(--blu)}
+.bgt-total-sub{font-size:10px;color:var(--mute);margin-top:2px}
+
+/* actions */
+.bgt-actions{display:flex;gap:8px;padding:12px 16px}
+.bgt-btn{
+  flex:1;padding:13px;border-radius:12px;border:none;
+  font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:transform .15s,opacity .15s;
+}
+.bgt-btn:active{transform:scale(.97)}
+.bgt-btn-primary{background:linear-gradient(135deg,#fb923c,#f97316);color:#fff;box-shadow:0 4px 14px rgba(249,115,22,.3)}
+.bgt-btn-sec{background:rgba(255,255,255,.06);border:1px solid var(--bord);color:var(--txt)}
+[data-theme="light"] .bgt-btn-sec{background:rgba(0,0,0,.05)}
 </style>
 </head>
 <body>
@@ -1066,6 +1211,116 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
       <button class="btn bsec" id="mcancel">Cancel</button>
       <button class="btn bp" id="msave" style="flex:1">✔ Save Summit</button>
     </div>
+  </div>
+</div>
+
+<!-- BUDGET ESTIMATOR MODAL -->
+<div id="budget-modal">
+  <div id="budget-inner">
+    <div class="bgt-handle"></div>
+
+    <!-- Header -->
+    <div class="bgt-header">
+      <div class="bgt-header-icon">💰</div>
+      <div class="bgt-header-info">
+        <div class="bgt-trek-name" id="bgt-trek-name">Budget Estimator</div>
+        <div class="bgt-trek-meta" id="bgt-trek-meta"></div>
+      </div>
+      <button class="bgt-close" id="bgt-close">✕</button>
+    </div>
+
+    <!-- Inputs -->
+    <div class="bgt-inputs">
+      <div class="bgt-input-group" id="bgt-region-override-wrap" style="display:none">
+        <label>🗺 Region</label>
+        <select id="bgt-region-override">
+          <option value="himachal">Himachal Pradesh</option>
+          <option value="uttarakhand">Uttarakhand</option>
+          <option value="jk">J&K / Ladakh</option>
+          <option value="nepal">Nepal Himalaya</option>
+          <option value="tibet">Tibet Border</option>
+          <option value="northeast">Seven Sisters NE</option>
+          <option value="maharashtra">Maharashtra</option>
+          <option value="southindia">South India</option>
+          <option value="spiritual">Spiritual Yatras</option>
+          <option value="sevensummits">Seven Summits</option>
+        </select>
+      </div>
+      <div class="bgt-input-group">
+        <label>👥 Group Size</label>
+        <input type="number" id="bgt-group" min="1" max="20" value="1">
+      </div>
+      <div class="bgt-input-group">
+        <label>🎒 Trek Variant</label>
+        <select id="bgt-variant">
+          <option value="budget">Budget 🏕</option>
+          <option value="comfort">Comfort 🏠</option>
+          <option value="premium">Premium 🏨</option>
+        </select>
+      </div>
+      <div class="bgt-input-group">
+        <label>✈️ Travel From</label>
+        <select id="bgt-city">
+          <option value="delhi">Delhi</option>
+          <option value="mumbai">Mumbai</option>
+          <option value="bangalore">Bangalore</option>
+          <option value="kolkata">Kolkata</option>
+          <option value="pune">Pune</option>
+          <option value="hyderabad">Hyderabad</option>
+          <option value="chandigarh">Chandigarh</option>
+          <option value="ahmedabad">Ahmedabad</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Guide toggle -->
+    <div class="bgt-guide-row">
+      <div class="bgt-guide-label">🧭 Include Guide / Porter charges</div>
+      <label class="bgt-toggle">
+        <input type="checkbox" id="bgt-guide" checked>
+        <div class="bgt-toggle-track"></div>
+        <div class="bgt-toggle-thumb"></div>
+      </label>
+    </div>
+
+    <!-- Cost breakdown -->
+    <div class="bgt-breakdown">
+      <div class="bgt-section-title">Cost Breakdown <span id="bgt-per-label" style="color:var(--ora)">· per person</span></div>
+      <div id="bgt-rows"></div>
+    </div>
+
+    <!-- Charts -->
+    <div class="bgt-charts">
+      <div class="bgt-donut-wrap">
+        <svg viewBox="0 0 90 90" id="bgt-donut-svg"></svg>
+        <div class="bgt-donut-center">
+          <div class="bgt-donut-total" id="bgt-donut-total">₹0</div>
+          <div class="bgt-donut-label">per person</div>
+        </div>
+      </div>
+      <div class="bgt-legend" id="bgt-legend"></div>
+    </div>
+
+    <!-- Total cards -->
+    <div class="bgt-totals">
+      <div class="bgt-total-card">
+        <div class="bgt-total-label">Per Person</div>
+        <div class="bgt-total-val" id="bgt-pp">₹0</div>
+        <div class="bgt-total-sub" id="bgt-pp-sub"></div>
+      </div>
+      <div class="bgt-total-card group">
+        <div class="bgt-total-label">Total Group</div>
+        <div class="bgt-total-val" id="bgt-grp">₹0</div>
+        <div class="bgt-total-sub" id="bgt-grp-sub"></div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="bgt-actions">
+      <button class="bgt-btn bgt-btn-sec" id="bgt-share-btn">📋 Share</button>
+      <button class="bgt-btn bgt-btn-primary" id="bgt-download-btn">⬇ Download Summary</button>
+    </div>
+
   </div>
 </div>
 
@@ -2616,6 +2871,7 @@ function openSheet(t){
       <button class="btn ${done?'bd':'bp'}" id="slog">${done?'✓ Logged — Update':'+ Log This Summit'}</button>
       ${t.custom?'<button class="btn bsec" id="sedit">✏️</button>':''}
       <button class="btn bsec" id="spin">${pinned.includes(t.id)?'📌':'🔖'}</button>
+      <button class="btn bsec" id="sbudget" title="Estimate Budget">💰</button>
       <button class="btn bsec" id="swx" title="Live weather forecast">🌤</button>
       <button class="btn bsec" id="sshare" title="Share Trek Card">📤</button>
     </div>`;
@@ -2628,6 +2884,7 @@ function openSheet(t){
   });
   document.getElementById('slog').onclick=()=>openModal(t);
   document.getElementById('spin').onclick=()=>togglePin(t);
+  document.getElementById('sbudget').onclick=()=>openBudget(t);
   document.getElementById('swx').onclick=()=>openWeather(t);
   document.getElementById('sshare').onclick=()=>openShareCard(t);
   if(t.custom){
@@ -3827,6 +4084,326 @@ function closeProfileCard() {
     if (e.key === 'Escape' && document.getElementById('profile-overlay').classList.contains('on')) closeProfileCard();
   });
 })();
+
+// ═══════════════════════════════════════════════════
+// BUDGET ESTIMATOR ENGINE
+// ═══════════════════════════════════════════════════
+
+// ── REGION COST CONFIG ──
+const REGION_COSTS = {
+  himachal: {
+    name:'Himachal Pradesh', permits:200, guidePerDay:900,
+    accom:{budget:400, comfort:1000, premium:2500},
+    food:{budget:350, comfort:650, premium:1200},
+    transport:{delhi:1200, mumbai:3500, bangalore:4500, kolkata:4000, pune:3800, hyderabad:4200, chandigarh:600, ahmedabad:3200},
+    gear:{base:300, per1000m:150},
+  },
+  uttarakhand: {
+    name:'Uttarakhand', permits:350, guidePerDay:1000,
+    accom:{budget:350, comfort:900, premium:2200},
+    food:{budget:400, comfort:700, premium:1300},
+    transport:{delhi:900, mumbai:3200, bangalore:4200, kolkata:3800, pune:3500, hyderabad:4000, chandigarh:800, ahmedabad:3000},
+    gear:{base:400, per1000m:180},
+  },
+  jk: {
+    name:'J&K / Ladakh', permits:800, guidePerDay:1200,
+    accom:{budget:500, comfort:1200, premium:3000},
+    food:{budget:450, comfort:800, premium:1500},
+    transport:{delhi:1800, mumbai:4500, bangalore:5500, kolkata:5000, pune:4800, hyderabad:5200, chandigarh:1200, ahmedabad:4000},
+    gear:{base:600, per1000m:200},
+  },
+  nepal: {
+    name:'Nepal Himalaya', permits:1500, guidePerDay:1500,
+    accom:{budget:600, comfort:1500, premium:4000},
+    food:{budget:500, comfort:900, premium:1800},
+    transport:{delhi:2500, mumbai:5000, bangalore:6000, kolkata:3000, pune:5500, hyderabad:5800, chandigarh:2800, ahmedabad:5200},
+    gear:{base:800, per1000m:250},
+  },
+  tibet: {
+    name:'Tibet Border', permits:2500, guidePerDay:1800,
+    accom:{budget:800, comfort:2000, premium:5000},
+    food:{budget:600, comfort:1100, premium:2200},
+    transport:{delhi:3500, mumbai:6500, bangalore:7500, kolkata:5000, pune:7000, hyderabad:7200, chandigarh:3800, ahmedabad:6200},
+    gear:{base:1000, per1000m:300},
+  },
+  northeast: {
+    name:'Seven Sisters NE', permits:600, guidePerDay:1000,
+    accom:{budget:400, comfort:900, premium:2200},
+    food:{budget:350, comfort:650, premium:1200},
+    transport:{delhi:3500, mumbai:5500, bangalore:5000, kolkata:1500, pune:5800, hyderabad:5500, chandigarh:3800, ahmedabad:5500},
+    gear:{base:300, per1000m:100},
+  },
+  maharashtra: {
+    name:'Maharashtra Sahyadris', permits:100, guidePerDay:700,
+    accom:{budget:300, comfort:700, premium:1800},
+    food:{budget:300, comfort:550, premium:1000},
+    transport:{delhi:2800, mumbai:300, bangalore:1200, kolkata:3500, pune:200, hyderabad:1000, chandigarh:3200, ahmedabad:1200},
+    gear:{base:150, per1000m:50},
+  },
+  southindia: {
+    name:'South India Ghats', permits:150, guidePerDay:750,
+    accom:{budget:350, comfort:800, premium:2000},
+    food:{budget:300, comfort:600, premium:1100},
+    transport:{delhi:3500, mumbai:1500, bangalore:400, kolkata:4000, pune:1800, hyderabad:800, chandigarh:4000, ahmedabad:2500},
+    gear:{base:200, per1000m:80},
+  },
+  spiritual: {
+    name:'Spiritual Yatras', permits:500, guidePerDay:900,
+    accom:{budget:300, comfort:700, premium:1800},
+    food:{budget:350, comfort:600, premium:1100},
+    transport:{delhi:1000, mumbai:3200, bangalore:4000, kolkata:3500, pune:3400, hyderabad:3800, chandigarh:700, ahmedabad:2800},
+    gear:{base:250, per1000m:120},
+  },
+  sevensummits: {
+    name:'Seven Summits — World', permits:15000, guidePerDay:5000,
+    accom:{budget:3000, comfort:7000, premium:18000},
+    food:{budget:2000, comfort:4000, premium:8000},
+    transport:{delhi:45000, mumbai:48000, bangalore:50000, kolkata:44000, pune:49000, hyderabad:50000, chandigarh:46000, ahmedabad:49000},
+    gear:{base:5000, per1000m:800},
+  },
+};
+
+// fallback for unknown regions
+const DEFAULT_COSTS = REGION_COSTS.himachal;
+
+// Variant multipliers
+const VARIANT_MUL = { budget:1.0, comfort:1.6, premium:2.8 };
+const VARIANT_LABELS = { budget:'Budget 🏕', comfort:'Comfort 🏠', premium:'Premium 🏨' };
+
+// Chart colours per category
+const BGT_COLORS = {
+  permits:      '#f97316',
+  guide:        '#a371f7',
+  accom:        '#388bfd',
+  food:         '#2ea043',
+  transport:    '#d29922',
+  gear:         '#38bdf8',
+  contingency:  '#7d8590',
+};
+
+function inrFmt(n){ return '₹' + Math.round(n).toLocaleString('en-IN'); }
+
+// ── calculateBudget ──
+function calculateBudget(trek, groupSize, variant, fromCity, includeGuide) {
+  const rc = REGION_COSTS[trek.r] || DEFAULT_COSTS;
+  const days = trek.days || 5;
+  const altM  = trek.alt  || 2000;
+  const mul   = VARIANT_MUL[variant] || 1;
+
+  const permits   = rc.permits * mul;
+  const guide     = includeGuide ? rc.guidePerDay * days / groupSize : 0;
+  const accom     = rc.accom[variant] * days;
+  const food      = rc.food[variant]  * days;
+  const rawTransport = (rc.transport[fromCity] || rc.transport.delhi) * mul;
+  const transport = rawTransport / groupSize;
+  const gear      = (rc.gear.base + rc.gear.per1000m * Math.floor(altM / 1000)) * mul;
+
+  const subtotal  = permits + guide + accom + food + transport + gear;
+  const contingency = subtotal * 0.10;
+  const perPerson = subtotal + contingency;
+  const group     = perPerson * groupSize;
+
+  return {
+    rows: [
+      { key:'permits',     icon:'📋', name:'Permits & Entry Fees',       amt:permits,     days:null },
+      { key:'guide',       icon:'🧭', name:'Guide / Porter',             amt:guide,       days:includeGuide ? days : 0 },
+      { key:'accom',       icon:'🏕', name:'Accommodation',              amt:accom,       days },
+      { key:'food',        icon:'🍱', name:'Food & Water',               amt:food,        days },
+      { key:'transport',   icon:'🚌', name:'Transport to Trailhead',     amt:transport,   days:null },
+      { key:'gear',        icon:'🥾', name:'Equipment Rental',           amt:gear,        days:null },
+      { key:'contingency', icon:'🛡', name:'Contingency (10%)',          amt:contingency, days:null },
+    ],
+    subtotal, contingency, perPerson, group, groupSize, days, variant, trek,
+  };
+}
+
+// ── renderBudget ──
+function renderBudget(result) {
+  const { rows, perPerson, group, groupSize, days, variant, trek } = result;
+  const maxAmt = Math.max(...rows.map(r=>r.amt), 1);
+
+  // breakdown rows
+  document.getElementById('bgt-rows').innerHTML = rows.map(r => {
+    const pct = Math.round(r.amt / maxAmt * 100);
+    const isZero = r.amt < 1;
+    return `<div class="bgt-row ${r.key==='contingency'?'contingency':''}" style="${isZero?'opacity:.35':''}">
+      <div class="bgt-row-icon">${r.icon}</div>
+      <div class="bgt-row-name">${r.name}</div>
+      <div class="bgt-row-bar-wrap">
+        <div class="bgt-row-bar" style="width:${pct}%;background:${BGT_COLORS[r.key]}"></div>
+      </div>
+      <div class="bgt-row-amt">${isZero ? '—' : inrFmt(r.amt)}</div>
+    </div>`;
+  }).join('');
+
+  // totals
+  document.getElementById('bgt-pp').textContent  = inrFmt(perPerson);
+  document.getElementById('bgt-grp').textContent = inrFmt(group);
+  document.getElementById('bgt-pp-sub').textContent  = `${days} days · ${VARIANT_LABELS[variant]}`;
+  document.getElementById('bgt-grp-sub').textContent = `${groupSize} person${groupSize>1?'s':''}`;
+
+  // donut chart
+  const donutRows = rows.filter(r => r.amt >= 1 && r.key !== 'contingency');
+  const donutTotal = donutRows.reduce((s,r)=>s+r.amt,0);
+  const cx=45, cy=45, R=34, stroke=10;
+  let angle = -Math.PI/2;
+  const paths = donutRows.map(r => {
+    const sweep = (r.amt/donutTotal) * 2*Math.PI;
+    const x1 = cx + R*Math.cos(angle), y1 = cy + R*Math.sin(angle);
+    angle += sweep;
+    const x2 = cx + R*Math.cos(angle), y2 = cy + R*Math.sin(angle);
+    const large = sweep > Math.PI ? 1 : 0;
+    return `<path d="M${x1.toFixed(2)},${y1.toFixed(2)} A${R},${R} 0 ${large},1 ${x2.toFixed(2)},${y2.toFixed(2)}"
+      fill="none" stroke="${BGT_COLORS[r.key]}" stroke-width="${stroke}" stroke-linecap="butt"/>`;
+  });
+  // background ring
+  document.getElementById('bgt-donut-svg').innerHTML =
+    `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="${stroke}"/>` +
+    paths.join('');
+  document.getElementById('bgt-donut-total').textContent = inrFmt(perPerson).replace('₹','₹');
+
+  // legend
+  document.getElementById('bgt-legend').innerHTML = donutRows.map(r => {
+    const pct = Math.round(r.amt/donutTotal*100);
+    return `<div class="bgt-legend-item">
+      <div class="bgt-legend-dot" style="background:${BGT_COLORS[r.key]}"></div>
+      <span>${r.name.split(' ')[0]}</span>
+      <span class="bgt-legend-pct">${pct}%</span>
+    </div>`;
+  }).join('');
+}
+
+// ── State ──
+let _bgtTrek = null;
+
+function recalcBudget() {
+  if (!_bgtTrek) return;
+  const groupSize    = Math.max(1, Math.min(20, parseInt(document.getElementById('bgt-group').value)||1));
+  const variant      = document.getElementById('bgt-variant').value;
+  const fromCity     = document.getElementById('bgt-city').value;
+  const includeGuide = document.getElementById('bgt-guide').checked;
+
+  // In standalone mode, use the region override picker
+  let trekForCalc = _bgtTrek;
+  const overrideWrap = document.getElementById('bgt-region-override-wrap');
+  if (overrideWrap && overrideWrap.style.display !== 'none') {
+    const overrideR = document.getElementById('bgt-region-override').value;
+    const rc = REGION_COSTS[overrideR];
+    trekForCalc = { ..._bgtTrek, r: overrideR, alt: rc ? 3500 : _bgtTrek.alt };
+  }
+
+  const result = calculateBudget(trekForCalc, groupSize, variant, fromCity, includeGuide);
+  renderBudget(result);
+  document.getElementById('budget-modal').dataset.result = JSON.stringify({
+    trekName: trekForCalc.name || _bgtTrek.name,
+    days: trekForCalc.days||5, groupSize, variant,
+    perPerson: result.perPerson, group: result.group,
+  });
+}
+
+function openBudget(trek) {
+  _bgtTrek = trek;
+  document.getElementById('bgt-trek-name').textContent = trek.name;
+  document.getElementById('bgt-trek-meta').textContent =
+    `${RNAMES[trek.r]||trek.r} · ${trek.days||5} days · ${trek.alt?.toLocaleString()||'—'}m`;
+  // Hide region override for real trek opens
+  document.getElementById('bgt-region-override-wrap').style.display = 'none';
+  document.getElementById('budget-modal').classList.add('on');
+  document.body.style.overflow = 'hidden';
+  recalcBudget();
+}
+
+function closeBudget() {
+  document.getElementById('budget-modal').classList.remove('on');
+  document.body.style.overflow = '';
+}
+
+// ── Wire inputs ──
+document.getElementById('bgt-close').onclick = closeBudget;
+document.getElementById('budget-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('budget-modal')) closeBudget();
+});
+['bgt-group','bgt-variant','bgt-city','bgt-guide','bgt-region-override'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) {
+    el.addEventListener('change', recalcBudget);
+    el.addEventListener('input',  recalcBudget);
+  }
+});
+
+// ── Share ──
+document.getElementById('bgt-share-btn').onclick = () => {
+  const raw = document.getElementById('budget-modal').dataset.result;
+  if (!raw) return;
+  const d = JSON.parse(raw);
+  const vm = {budget:'Budget',comfort:'Comfort',premium:'Premium'}[d.variant]||d.variant;
+  const text = `🏔 ${d.trekName} (${d.days} days, ${d.groupSize} person${d.groupSize>1?'s':''}, ${vm}) on TrekVerse\n💰 Est. ${inrFmt(d.perPerson)}/person · Total ${inrFmt(d.group)}\nhttps://devanshdj72.github.io/TrekVerse/`;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => toast('📋 Budget copied to clipboard!','#388bfd'));
+  } else {
+    const ta=document.createElement('textarea'); ta.value=text;
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    toast('📋 Copied!','#388bfd');
+  }
+};
+
+// ── Download ──
+document.getElementById('bgt-download-btn').onclick = () => {
+  if (!_bgtTrek) return;
+  const groupSize    = parseInt(document.getElementById('bgt-group').value)||1;
+  const variant      = document.getElementById('bgt-variant').value;
+  const fromCity     = document.getElementById('bgt-city').value;
+  const includeGuide = document.getElementById('bgt-guide').checked;
+  const res = calculateBudget(_bgtTrek, groupSize, variant, fromCity, includeGuide);
+  const vm  = {budget:'Budget',comfort:'Comfort',premium:'Premium'}[variant];
+  const lines = [
+    `TREKVERSE BUDGET ESTIMATE`,
+    `═══════════════════════════════`,
+    `Trek      : ${_bgtTrek.name}`,
+    `Region    : ${RNAMES[_bgtTrek.r]||_bgtTrek.r}`,
+    `Duration  : ${_bgtTrek.days||5} days`,
+    `Altitude  : ${_bgtTrek.alt?.toLocaleString()||'—'}m`,
+    `Variant   : ${vm}`,
+    `Group Size: ${groupSize} person${groupSize>1?'s':''}`,
+    `From City : ${fromCity.charAt(0).toUpperCase()+fromCity.slice(1)}`,
+    ``,
+    `COST BREAKDOWN (per person)`,
+    `───────────────────────────────`,
+    ...res.rows.map(r => `${r.icon} ${r.name.padEnd(26)} ${inrFmt(r.amt)}`),
+    ``,
+    `─────────────────────────────── `,
+    `💰 TOTAL PER PERSON             ${inrFmt(res.perPerson)}`,
+    `👥 TOTAL FOR GROUP (${groupSize})        ${inrFmt(res.group)}`,
+    ``,
+    `Generated by TrekVerse — https://devanshdj72.github.io/TrekVerse/`,
+    `Note: These are estimates. Actual costs may vary.`,
+  ];
+  const blob = new Blob([lines.join('\n')], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `TrekVerse-Budget-${_bgtTrek.name.replace(/\s+/g,'-')}.txt`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  toast('⬇ Budget saved!','#2ea043');
+};
+
+// ESC to close
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape' && document.getElementById('budget-modal').classList.contains('on')) closeBudget();
+});
+
+// ── Also expose openBudget as standalone (from hub menu) ──
+window.openBudgetStandalone = function() {
+  const planTrek = { id:'_budget_plan', name:'Budget Planner', r:'himachal', alt:3500, days:6, diff:'moderate', icon:'💰' };
+  _bgtTrek = planTrek;
+  document.getElementById('bgt-trek-name').textContent = 'Budget Planner';
+  document.getElementById('bgt-trek-meta').textContent = 'Choose a region to estimate trek costs';
+  // Show region picker
+  document.getElementById('bgt-region-override-wrap').style.display = '';
+  document.getElementById('budget-modal').classList.add('on');
+  document.body.style.overflow = 'hidden';
+  recalcBudget();
+};
 
 // ═══════════════════════════════════════════════════
 // BOOT

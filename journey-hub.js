@@ -255,6 +255,7 @@ function renderMenu(){
       <button class="btn bsec hub-menu-item" data-go="achievements">🏆<span>Achievements</span></button>
       <button class="btn bsec hub-menu-item" data-go="constellation">✨<span>Constellation</span></button>
       <button class="btn bsec hub-menu-item" data-go="oracle">🔮<span>Ask Oracle</span></button>
+      <button class="btn bsec hub-menu-item" id="hub-budget-btn">💰<span>Budget</span></button>
       <button class="btn bsec hub-menu-item" id="hub-new-pin">➕<span>New Memory</span></button>
     </div>
 
@@ -591,6 +592,10 @@ function wireHubBody(){
   body.querySelector('#hub-new-pin')?.addEventListener('click', ()=>{ hubView_editPin=null; goHub('pinform'); });
   body.querySelector('#hub-new-pin-empty')?.addEventListener('click', ()=>{ hubView_editPin=null; goHub('pinform'); });
   body.querySelector('#hub-new-pin-empty2')?.addEventListener('click', ()=>{ hubView_editPin=null; goHub('pinform'); });
+  body.querySelector('#hub-budget-btn')?.addEventListener('click', ()=>{
+    closeHub();
+    setTimeout(()=>{ if(typeof openBudgetStandalone==='function') openBudgetStandalone(); },200);
+  });
   body.querySelector('#hub-new-bucket')?.addEventListener('click', ()=>{ hubView_editBucket=null; goHub('bucketform'); });
   body.querySelector('#hub-new-bucket-empty')?.addEventListener('click', ()=>{ hubView_editBucket=null; goHub('bucketform'); });
 
