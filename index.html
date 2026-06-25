@@ -1058,6 +1058,33 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .bgt-btn-primary{background:linear-gradient(135deg,#fb923c,#f97316);color:#fff;box-shadow:0 4px 14px rgba(249,115,22,.3)}
 .bgt-btn-sec{background:rgba(255,255,255,.06);border:1px solid var(--bord);color:var(--txt)}
 [data-theme="light"] .bgt-btn-sec{background:rgba(0,0,0,.05)}
+/* ═══════════════════════════════════════
+   PHOTO SYSTEM
+═══════════════════════════════════════ */
+.photo-section{margin:14px 0 4px}
+.photo-section-title{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--mute);margin-bottom:8px;font-weight:700;display:flex;align-items:center;gap:6px}
+.photo-count-badge{font-size:10px;padding:1px 7px;border-radius:8px;background:rgba(249,115,22,.15);color:var(--ora);font-weight:700}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.photo-thumb{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid var(--bord)}
+[data-theme="light"] .photo-thumb{background:rgba(0,0,0,.04)}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s}
+.photo-thumb:hover img{transform:scale(1.07)}
+.photo-del{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.72);border:none;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;z-index:2}
+.photo-thumb:hover .photo-del{opacity:1}
+.photo-new-tag{position:absolute;bottom:4px;left:4px;font-size:8px;background:rgba(0,0,0,.65);color:var(--ora);padding:1px 5px;border-radius:4px;pointer-events:none}
+.photo-add-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;border-radius:11px;border:1px dashed var(--bord);background:transparent;color:var(--mute);font-size:13px;cursor:pointer;font-family:inherit;transition:border-color .2s,color .2s}
+.photo-add-btn:hover{border-color:var(--ora);color:var(--ora)}
+
+/* Lightbox */
+#photo-lightbox{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.94);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px}
+#photo-lightbox.on{display:flex}
+#photo-lightbox img{max-width:100%;max-height:72dvh;border-radius:14px;object-fit:contain;box-shadow:0 8px 40px rgba(0,0,0,.8)}
+#photo-lb-close{position:absolute;top:18px;right:18px;background:rgba(255,255,255,.12);border:none;color:#fff;font-size:20px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2}
+#photo-lb-nav{display:flex;gap:16px;align-items:center}
+#photo-lb-nav button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+#photo-lb-nav button:hover{background:rgba(255,255,255,.22)}
+#photo-lb-nav button:disabled{opacity:.3;cursor:default}
+#photo-lb-counter{color:var(--mute);font-size:12px;min-width:54px;text-align:center}
 </style>
 </head>
 <body>
@@ -1207,6 +1234,12 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <div class="mf"><label>Date Completed</label><input type="date" id="mdate"></div>
     <div class="mf"><label>Your Rating</label><div class="stars" id="stars"><span class="star" data-v="1">★</span><span class="star" data-v="2">★</span><span class="star" data-v="3">★</span><span class="star" data-v="4">★</span><span class="star" data-v="5">★</span></div></div>
     <div class="mf"><label>Personal Notes</label><textarea id="mnotes" placeholder="Weather conditions, who you went with, highlights…"></textarea></div>
+    <div class="mf">
+      <label>📷 Summit Photos <span id="modal-photo-badge" class="photo-count-badge" style="display:none"></span></label>
+      <div class="photo-grid" id="modal-photo-grid" style="display:none"></div>
+      <button class="photo-add-btn" id="modal-photo-btn" type="button">📷 Add Photos from Gallery</button>
+      <input type="file" id="modal-photo-input" accept="image/*" multiple style="display:none">
+    </div>
     <div class="macts">
       <button class="btn bsec" id="mcancel">Cancel</button>
       <button class="btn bp" id="msave" style="flex:1">✔ Save Summit</button>
@@ -1341,6 +1374,17 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   </div>
 </div>
 
+<!-- PHOTO LIGHTBOX -->
+<div id="photo-lightbox">
+  <button id="photo-lb-close">✕</button>
+  <img id="photo-lb-img" src="" alt="">
+  <div id="photo-lb-nav">
+    <button id="photo-lb-prev">‹</button>
+    <span id="photo-lb-counter">1 / 1</span>
+    <button id="photo-lb-next">›</button>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <!-- CREATE/EDIT CUSTOM PIN MODAL -->
@@ -1386,6 +1430,13 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <div class="mf"><label>Best Season</label><input type="text" id="pm-season" placeholder="e.g. May – Oct"></div>
 
     <div class="mf"><label>Description</label><textarea id="pm-desc" placeholder="What makes this place special…" style="height:60px"></textarea></div>
+
+    <div class="mf">
+      <label>📷 Location Photos <span id="pm-photo-badge" class="photo-count-badge" style="display:none"></span></label>
+      <div class="photo-grid" id="pm-photo-grid" style="display:none"></div>
+      <button class="photo-add-btn" id="pm-photo-btn" type="button">📷 Add Photos of this Place</button>
+      <input type="file" id="pm-photo-input" accept="image/*" multiple style="display:none">
+    </div>
 
     <div class="mf">
       <label>Trail Waypoints / Campsites</label>
@@ -2867,6 +2918,7 @@ function openSheet(t){
       ${ld.date?' · '+ld.date:''} ${ld.rating?' · '+'★'.repeat(ld.rating):''}
       ${ld.notes?`<div style="color:#9ca3af;margin-top:4px">${ld.notes}</div>`:''}
     </div>`:''}
+    <div id="sheet-photos-${t.id}" class="sheet-photos-mount"></div>
     <div class="sacts">
       <button class="btn ${done?'bd':'bp'}" id="slog">${done?'✓ Logged — Update':'+ Log This Summit'}</button>
       ${t.custom?'<button class="btn bsec" id="sedit">✏️</button>':''}
@@ -2878,6 +2930,7 @@ function openSheet(t){
   document.getElementById('sheet').classList.add('up');
   document.getElementById('sheetbackdrop').classList.add('up');
   drawElev(t); drawTrail(t);
+  renderSheetPhotos(t.id);
   requestAnimationFrame(()=>{
     const fill = document.getElementById('dfb-fill');
     if(fill) requestAnimationFrame(()=>{ fill.style.width = fill.dataset.w+'%'; });
@@ -3014,6 +3067,7 @@ function openPinModal(lat, lng, existing){
   });
 
   renderWpEditor();
+  initPmPhotos(existing ? existing.id : null);
   pinModal.classList.add('on');
 }
 
@@ -3051,6 +3105,7 @@ document.getElementById('pm-save').onclick = ()=>{
     customs.push(pinData);
   }
   localStorage.setItem('sl3_customs', JSON.stringify(customs));
+  commitPmPhotos(pinData.id);
 
   pinModal.classList.remove('on');
   editingPin = null;
@@ -3084,6 +3139,7 @@ function openModal(t){
   document.getElementById('mname').textContent=t.name;
   document.getElementById('mdate').value=ld.date||new Date().toISOString().split('T')[0];
   document.getElementById('mnotes').value=ld.notes||'';
+  initModalPhotos(t.id);
   updateStars(); document.getElementById('modal').classList.add('on');
 }
 document.getElementById('mcancel').onclick=()=>document.getElementById('modal').classList.remove('on');
@@ -3091,6 +3147,7 @@ document.getElementById('msave').onclick=()=>{
   if(!current)return;
   logged[current.id]={date:document.getElementById('mdate').value,notes:document.getElementById('mnotes').value,rating:mRating};
   localStorage.setItem('sl3_logged',JSON.stringify(logged));
+  commitModalPhotos();
   document.getElementById('modal').classList.remove('on');
   updateBadge(); buildMkrs(); openSheet(current);
   toast(`🏔 ${current.name} logged!`,'#2ea043');
@@ -4403,6 +4460,186 @@ window.openBudgetStandalone = function() {
   document.getElementById('budget-modal').classList.add('on');
   document.body.style.overflow = 'hidden';
   recalcBudget();
+};
+
+// ═══════════════════════════════════════════════════
+// PHOTO SYSTEM
+// ═══════════════════════════════════════════════════
+
+// Storage — { trekId: [{data:base64, ts:number}] }
+let photos = JSON.parse(localStorage.getItem('sl3_photos') || '{}');
+function _savePhotos() { localStorage.setItem('sl3_photos', JSON.stringify(photos)); }
+function getPhotos(id) { return photos[id] || []; }
+
+// Compress image to max WxH, JPEG quality
+function compressImage(file, maxW, maxH, q) {
+  return new Promise(resolve => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const scale = Math.min(1, maxW / img.width, maxH / img.height);
+      const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolve(cv.toDataURL('image/jpeg', q || 0.72));
+    };
+    img.src = url;
+  });
+}
+
+// ── LIGHTBOX ──
+let _lbPhotos = [], _lbIdx = 0;
+
+function openLightbox(arr, idx) {
+  _lbPhotos = arr; _lbIdx = idx;
+  _renderLightbox();
+  document.getElementById('photo-lightbox').classList.add('on');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  document.getElementById('photo-lightbox').classList.remove('on');
+  document.body.style.overflow = '';
+}
+function _renderLightbox() {
+  document.getElementById('photo-lb-img').src = _lbPhotos[_lbIdx].data;
+  document.getElementById('photo-lb-counter').textContent = `${_lbIdx + 1} / ${_lbPhotos.length}`;
+  document.getElementById('photo-lb-prev').disabled = _lbIdx === 0;
+  document.getElementById('photo-lb-next').disabled = _lbIdx === _lbPhotos.length - 1;
+}
+document.getElementById('photo-lb-close').onclick = closeLightbox;
+document.getElementById('photo-lb-prev').onclick  = () => { if (_lbIdx > 0) { _lbIdx--; _renderLightbox(); } };
+document.getElementById('photo-lb-next').onclick  = () => { if (_lbIdx < _lbPhotos.length - 1) { _lbIdx++; _renderLightbox(); } };
+document.getElementById('photo-lightbox').addEventListener('click', e => {
+  if (e.target === document.getElementById('photo-lightbox')) closeLightbox();
+});
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('photo-lightbox').classList.contains('on')) return;
+  if (e.key === 'Escape') closeLightbox();
+  if (e.key === 'ArrowLeft'  && _lbIdx > 0)                     { _lbIdx--; _renderLightbox(); }
+  if (e.key === 'ArrowRight' && _lbIdx < _lbPhotos.length - 1)  { _lbIdx++; _renderLightbox(); }
+});
+
+// ── PHOTO GRID BUILDER (generic) ──
+// Builds a grid inside `container` from `photoArr` (saved) + `pending` (unsaved)
+// `onDelete(idx, isPending)` called on delete tap
+// `onTap(idx)` called on thumb tap
+function buildPhotoGrid(container, badgeEl, photoArr, pending, onDelete) {
+  const all = [...photoArr, ...pending];
+  if (!all.length) {
+    container.style.display = 'none';
+    if (badgeEl) badgeEl.style.display = 'none';
+    return;
+  }
+  container.style.display = 'grid';
+  if (badgeEl) { badgeEl.style.display = 'inline-block'; badgeEl.textContent = all.length; }
+  const savedLen = photoArr.length;
+  container.innerHTML = all.map((p, i) => `
+    <div class="photo-thumb" data-idx="${i}">
+      <img src="${p.data}" loading="lazy">
+      <button class="photo-del" data-idx="${i}">✕</button>
+      ${i >= savedLen ? '<div class="photo-new-tag">new</div>' : ''}
+    </div>`).join('');
+  // delete
+  container.querySelectorAll('.photo-del').forEach(btn => {
+    btn.onclick = e => { e.stopPropagation(); onDelete(+btn.dataset.idx, +btn.dataset.idx >= savedLen); };
+  });
+  // lightbox
+  container.querySelectorAll('.photo-thumb').forEach(thumb => {
+    thumb.onclick = e => { if (e.target.classList.contains('photo-del')) return; openLightbox(all, +thumb.dataset.idx); };
+  });
+}
+
+// ── SHEET PHOTO DISPLAY ──
+function renderSheetPhotos(trekId) {
+  const mount = document.getElementById(`sheet-photos-${trekId}`);
+  if (!mount) return;
+  const ps = getPhotos(trekId);
+  if (!ps.length) { mount.innerHTML = ''; return; }
+  mount.innerHTML = `
+    <div class="photo-section">
+      <div class="photo-section-title">📷 Photos <span class="photo-count-badge">${ps.length}</span></div>
+      <div class="photo-grid" id="sheet-pg-${trekId}"></div>
+    </div>`;
+  const grid = document.getElementById(`sheet-pg-${trekId}`);
+  buildPhotoGrid(grid, null, ps, [], (idx) => {
+    photos[trekId].splice(idx, 1);
+    _savePhotos();
+    renderSheetPhotos(trekId);
+  });
+  // Show grid (already set by buildPhotoGrid but mount hides it)
+  grid.style.display = 'grid';
+}
+
+// ── LOG SUMMIT MODAL PHOTOS ──
+let _modalTrekId = null, _modalPending = [];
+
+function initModalPhotos(trekId) {
+  _modalTrekId = trekId;
+  _modalPending = [];
+  _refreshModalGrid();
+}
+
+function _refreshModalGrid() {
+  const grid  = document.getElementById('modal-photo-grid');
+  const badge = document.getElementById('modal-photo-badge');
+  buildPhotoGrid(grid, badge, getPhotos(_modalTrekId), _modalPending, (idx, isPending) => {
+    if (isPending) { _modalPending.splice(idx - getPhotos(_modalTrekId).length, 1); }
+    else { photos[_modalTrekId].splice(idx, 1); _savePhotos(); }
+    _refreshModalGrid();
+  });
+}
+
+function commitModalPhotos() {
+  if (!_modalTrekId || !_modalPending.length) return;
+  if (!photos[_modalTrekId]) photos[_modalTrekId] = [];
+  photos[_modalTrekId].push(..._modalPending);
+  _savePhotos();
+  _modalPending = [];
+}
+
+document.getElementById('modal-photo-btn').onclick = () => document.getElementById('modal-photo-input').click();
+document.getElementById('modal-photo-input').onchange = async e => {
+  const files = Array.from(e.target.files); if (!files.length) return;
+  toast('📷 Adding photos…', '#388bfd');
+  for (const f of files) { _modalPending.push({ data: await compressImage(f, 1200, 1200, 0.72), ts: Date.now() }); }
+  e.target.value = '';
+  _refreshModalGrid();
+};
+
+// ── PIN MODAL PHOTOS ──
+let _pmTrekId = null, _pmPending = [];
+
+function initPmPhotos(trekId) {
+  _pmTrekId = trekId || null;
+  _pmPending = [];
+  _refreshPmGrid();
+}
+
+function _refreshPmGrid() {
+  const grid  = document.getElementById('pm-photo-grid');
+  const badge = document.getElementById('pm-photo-badge');
+  buildPhotoGrid(grid, badge, getPhotos(_pmTrekId||''), _pmPending, (idx, isPending) => {
+    if (isPending) { _pmPending.splice(idx - getPhotos(_pmTrekId||'').length, 1); }
+    else if (_pmTrekId) { photos[_pmTrekId].splice(idx, 1); _savePhotos(); }
+    _refreshPmGrid();
+  });
+}
+
+function commitPmPhotos(trekId) {
+  if (!_pmPending.length) return;
+  if (!photos[trekId]) photos[trekId] = [];
+  photos[trekId].push(..._pmPending);
+  _savePhotos();
+  _pmPending = [];
+}
+
+document.getElementById('pm-photo-btn').onclick = () => document.getElementById('pm-photo-input').click();
+document.getElementById('pm-photo-input').onchange = async e => {
+  const files = Array.from(e.target.files); if (!files.length) return;
+  toast('📷 Adding photos…', '#388bfd');
+  for (const f of files) { _pmPending.push({ data: await compressImage(f, 1200, 1200, 0.72), ts: Date.now() }); }
+  e.target.value = '';
+  _refreshPmGrid();
 };
 
 // ═══════════════════════════════════════════════════
