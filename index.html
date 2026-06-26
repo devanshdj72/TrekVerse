@@ -1,19 +1,15 @@
 <!DOCTYPE html>
-<!-- TrekVerse v4 — built with all features: auth, profile, photos, weather, budget -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
 <meta name="theme-color" content="#0d1117">
 <meta name="description" content="Track every Himalayan trek and mountain you climb. Real terrain map with GPS trail routes, campsites, passes and summit points.">
-<meta name="mobile-web-app-capable" content="yes">
 
 <!-- iOS install support -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="TrekVerse">
+<meta name="apple-mobile-web-app-title" content="SummitLog">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
 <!-- Android / general PWA -->
@@ -21,7 +17,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 
-<title>TrekVerse — Himalayan Trek Atlas</title>
+<title>SummitLog — Himalayan Trek Atlas</title>
 
 <!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -60,7 +56,6 @@ if (_fbReady && !_fbConfig.apiKey.includes('YOUR')) {
       const guest = localStorage.getItem('tv_user');
       if (!guest) window.location.replace('login.html');
     } else {
-      // Save user info to localStorage
       localStorage.setItem('tv_user', JSON.stringify({
         uid:   user.uid,
         name:  user.displayName || user.phoneNumber || 'Explorer',
@@ -69,23 +64,6 @@ if (_fbReady && !_fbConfig.apiKey.includes('YOUR')) {
         email: user.email || null,
         anon:  user.isAnonymous,
       }));
-      // Refresh the profile chip now that we have fresh auth data
-      // (it may have rendered before auth resolved)
-      const chip = document.getElementById('user-chip');
-      if (chip && typeof avatarColor === 'function') {
-        const profile = JSON.parse(localStorage.getItem('trekverse_profile') || '{}');
-        const displayName = profile.name || user.displayName || user.phoneNumber || 'Explorer';
-        const photoSrc = profile.photo || user.photoURL || null;
-        if (photoSrc) {
-          chip.innerHTML = `<img src="${photoSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-          chip.style.background = 'transparent';
-        } else {
-          chip.textContent = displayName[0]?.toUpperCase() || '👤';
-          chip.style.background = avatarColor(displayName);
-          chip.style.color = '#fff';
-          chip.style.fontWeight = '700';
-        }
-      }
     }
   });
 }
@@ -606,6 +584,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 }
 #fitbtn:hover{background:var(--surf)}
 #fitbtn:active{transform:scale(.9)}
+
 .leaflet-control-attribution{display:none}
 
 /* Cluster — stacked deck of trek icons fanning out on hover */
@@ -1107,184 +1086,10 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 #photo-lb-nav button:hover{background:rgba(255,255,255,.22)}
 #photo-lb-nav button:disabled{opacity:.3;cursor:default}
 #photo-lb-counter{color:var(--mute);font-size:12px;min-width:54px;text-align:center}
-/* ── SHARE CARD ── */
-#share-modal{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);display:none;align-items:flex-end;justify-content:center}
-#share-modal.on{display:flex;animation:sfadeIn .25s ease}
-@keyframes sfadeIn{from{opacity:0}to{opacity:1}}
-#share-inner{width:100%;max-width:500px;background:var(--surf);border-radius:22px 22px 0 0;border:1px solid var(--bord);padding:20px 18px 36px;box-shadow:0 -16px 50px rgba(0,0,0,.6)}
-#share-canvas-wrap{width:100%;aspect-ratio:1;border-radius:14px;overflow:hidden;margin-bottom:14px;background:#0d1117;box-shadow:0 6px 28px rgba(0,0,0,.6)}
-#share-canvas-wrap canvas{width:100%;height:100%;display:block}
-#share-hint{font-size:12px;color:var(--mute);text-align:center;margin-bottom:14px;line-height:1.5}
-#share-actions{display:flex;gap:10px}
-#share-close-btn{position:absolute;top:12px;right:14px;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:18px;width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
 </style>
 </head>
 <body>
 
-<div id="topbar">
-  <div class="logo"><span class="logo-peak">⛰</span> Summit<em>Log</em></div>
-  <div class="swrap">
-    <span class="sico">🔍</span>
-    <input id="srch" type="text" placeholder="Search trek, mountain, region…" autocomplete="off">
-    <div id="sres"></div>
-  </div>
-  <div id="bdg">0 / 0</div>
-  <button id="addbtn" title="Add your own trek/pin">+</button>
-  <button id="hubbtn" title="Journey Hub">☰</button>
-</div>
-
-<div id="addbanner">
-  <span>📍 Tap anywhere on the map to drop your pin</span>
-  <button id="addcancel">Cancel</button>
-</div>
-
-<div id="map"></div>
-<button id="fitbtn" title="Fit all pins on screen">⤢</button>
-
-<div id="tabs">
-  <button class="tab on" data-r="all"><span class="tab-label">🌏 All</span></button>
-  <button class="tab" data-r="himachal"><span class="tab-label">🏔 Himachal</span><span class="tab-chev">⌃</span></button>
-  <button class="tab" data-r="uttarakhand"><span class="tab-label">🌿 Uttarakhand</span><span class="tab-chev">⌃</span></button>
-  <button class="tab" data-r="jk"><span class="tab-label">❄️ J&K / Ladakh</span><span class="tab-chev">⌃</span></button>
-  <button class="tab" data-r="northeast"><span class="tab-label">🌱 7 Sisters</span><span class="tab-chev">⌃</span></button>
-  <button class="tab" data-r="nepal"><span class="tab-label">🏔 Nepal</span><span class="tab-chev">⌃</span></button>
-  <button class="tab" data-r="tibet"><span class="tab-label">🕌 Tibet Border</span><span class="tab-chev">⌃</span></button>
-  <button class="tab" data-r="maharashtra"><span class="tab-label">⛰ Maharashtra</span><span class="tab-chev">⌃</span></button>
-  <button class="tab" data-r="southindia"><span class="tab-label">🌴 South India</span><span class="tab-chev">⌃</span></button>
-  <button class="tab" data-r="spiritual"><span class="tab-label">🕉️ Spiritual Yatras</span><span class="tab-chev">⌃</span></button>
-  <button class="tab" data-r="sevensummits"><span class="tab-label">🌐 Seven Summits</span><span class="tab-chev">⌃</span></button>
-</div>
-
-<div id="regionpop"></div>
-
-<div id="sheetbackdrop"></div>
-<div id="sheet">
-  <div class="shandle"></div>
-  <div id="sbody"></div>
-</div>
-
-<div id="modal">
-  <div class="mbox">
-    <div class="mtitle">Log This Summit</div>
-    <div class="msub" id="mname"></div>
-    <div class="mf"><label>Date Completed</label><input type="date" id="mdate"></div>
-    <div class="mf"><label>Your Rating</label><div class="stars" id="stars"><span class="star" data-v="1">★</span><span class="star" data-v="2">★</span><span class="star" data-v="3">★</span><span class="star" data-v="4">★</span><span class="star" data-v="5">★</span></div></div>
-    <div class="mf"><label>Personal Notes</label><textarea id="mnotes" placeholder="Weather conditions, who you went with, highlights…"></textarea></div>
-    <div class="mf">
-      <label>📷 Summit Photos <span id="modal-photo-count" class="photo-count-badge" style="display:none"></span></label>
-      <div id="modal-photo-grid" class="photo-grid" style="display:none"></div>
-      <button class="photo-add-btn" id="modal-photo-add-btn" type="button">
-        <span style="font-size:18px">📷</span> Add Photo from your Gallery
-      </button>
-      <input type="file" id="modal-photo-input" accept="image/*" multiple style="display:none">
-    </div>
-    <div class="macts">
-      <button class="btn bsec" id="mcancel">Cancel</button>
-      <button class="btn bp" id="msave" style="flex:1">✔ Save Summit</button>
-    </div>
-  </div>
-</div>
-
-<!-- SHARE CARD MODAL -->
-<div id="share-modal">
-  <div id="share-inner" style="position:relative">
-    <button id="share-close-btn">✕</button>
-    <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:14px;text-align:center;letter-spacing:.5px">📤 SHARE TREK CARD</div>
-    <div id="share-canvas-wrap"><canvas id="share-canvas" width="1080" height="1080"></canvas></div>
-    <div id="share-hint">📱 Tap <b>Download</b> to save — then share to Instagram, WhatsApp, or anywhere.<br>Your card is 1080×1080 px — perfect for stories & posts.</div>
-    <div id="share-actions">
-      <button class="btn bsec" id="share-close-btn2" style="flex:1">✕ Close</button>
-      <button class="btn bp" id="share-download-btn" style="flex:2">⬇ Download Card</button>
-    </div>
-  </div>
-</div>
-
-<div id="toast"></div>
-
-<!-- PHOTO LIGHTBOX -->
-<div id="photo-lightbox">
-  <button id="photo-lightbox-close">✕</button>
-  <img id="photo-lightbox-img" src="" alt="">
-  <div id="photo-lightbox-caption"></div>
-  <div id="photo-lightbox-nav">
-    <button id="photo-lb-prev">‹</button>
-    <span id="photo-lb-counter" style="color:var(--mute);font-size:12px;min-width:50px;text-align:center"></span>
-    <button id="photo-lb-next">›</button>
-  </div>
-</div>
-
-<!-- CREATE/EDIT CUSTOM PIN MODAL -->
-<div id="pinmodal">
-  <div class="mbox" style="max-height:85dvh;overflow-y:auto">
-    <div class="mtitle" id="pm-title">New Trek Pin</div>
-    <div class="msub" id="pm-coords"></div>
-
-    <div class="mf"><label>Trek / Mountain Name *</label><input type="text" id="pm-name" placeholder="e.g. My Secret Valley Trek"></div>
-
-    <div class="mf"><label>Region</label>
-      <select id="pm-region" style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--bord);border-radius:10px;padding:9px 12px;color:var(--txt);font-size:13px;font-family:inherit;outline:none">
-        <option value="himachal">Himachal Pradesh</option>
-        <option value="uttarakhand">Uttarakhand</option>
-        <option value="jk">J&K / Ladakh</option>
-        <option value="northeast">Seven Sisters NE</option>
-        <option value="nepal">Nepal Himalaya</option>
-        <option value="tibet">Tibet / China Border</option>
-        <option value="maharashtra">Maharashtra Sahyadris</option>
-        <option value="southindia">South India Western Ghats</option>
-        <option value="spiritual">Spiritual Yatras</option>
-        <option value="sevensummits">Seven Summits</option>
-      </select>
-    </div>
-
-    <div class="mf"><label>Icon (emoji)</label><input type="text" id="pm-icon" placeholder="🏔" maxlength="4" value="📍"></div>
-
-    <div style="display:flex;gap:10px">
-      <div class="mf" style="flex:1"><label>Max Altitude (m) *</label><input type="number" id="pm-alt" placeholder="3800"></div>
-      <div class="mf" style="flex:1"><label>Distance (km)</label><input type="number" id="pm-km" placeholder="20"></div>
-      <div class="mf" style="flex:1"><label>Days</label><input type="number" id="pm-days" placeholder="6"></div>
-    </div>
-
-    <div class="mf"><label>Difficulty</label>
-      <div class="diff-select" id="pm-diff-select">
-        <div class="diff-opt sel-easy" data-d="easy">Easy</div>
-        <div class="diff-opt" data-d="moderate">Moderate</div>
-        <div class="diff-opt" data-d="difficult">Difficult</div>
-        <div class="diff-opt" data-d="extreme">Extreme</div>
-      </div>
-    </div>
-
-    <div class="mf"><label>Best Season</label><input type="text" id="pm-season" placeholder="e.g. May – Oct"></div>
-
-    <div class="mf"><label>Description</label><textarea id="pm-desc" placeholder="What makes this place special…" style="height:60px"></textarea></div>
-
-    <div class="mf">
-      <label>📷 Location Photos <span id="pm-photo-count" class="photo-count-badge" style="display:none"></span></label>
-      <div id="pm-photo-grid" class="photo-grid" style="display:none"></div>
-      <button class="photo-add-btn" id="pm-photo-add-btn" type="button">
-        <span style="font-size:18px">📷</span> Add Photos of this Place
-      </button>
-      <input type="file" id="pm-photo-input" accept="image/*" multiple style="display:none">
-    </div>
-
-    <div class="mf">
-      <label>Trail Waypoints / Campsites</label>
-      <div id="pm-wp-list"></div>
-      <button id="wp-add-btn" type="button">+ Add Waypoint</button>
-    </div>
-
-    <div class="macts">
-      <button class="btn btn-del" id="pm-delete" style="display:none">🗑</button>
-      <button class="btn bsec" id="pm-cancel">Cancel</button>
-      <button class="btn bp" id="pm-save" style="flex:1">✔ Save Pin</button>
-    </div>
-  </div>
-</div>
-
-<!-- Journey Hub: Timeline, Bucket List, Achievements, Constellation, Oracle, Export/Import.
-     All markup is injected by journey-hub.js — kept in a separate file so the
-     core trek-atlas app above is never touched. -->
-<div id="hubroot"></div>
-<script src="journey-hub.js"></script>
 <div id="topbar">
   <div class="logo"><span class="logo-peak">⛰</span> Trek<em>Verse</em></div>
   <button id="srch-toggle" title="Search treks">🔍</button>
@@ -2800,9 +2605,102 @@ wps:[
   {n:'New Zealand Pass',a:4200,t:'pass',lat:-4.085,lng:137.150,note:'High alpine pass before the final approach to base camp.'},
   {n:'Base Camp (Yellow Valley)',a:4350,t:'camp',lat:-4.082,lng:137.155,note:'Final camp below the sheer limestone face of Carstensz Pyramid.'},
   {n:'Carstensz Pyramid Summit (Puncak Jaya)',a:4884,t:'summit',lat:-4.078,lng:137.158,note:'Most technical Seven Summit — exposed rock climbing, fixed ropes, multi-pitch traverse required.'}
+]}
+
+
+{id:'an01',r:'andaman',name:'Saddle Peak Trek',icon:'🌴',lat:13.278,lng:93.029,alt:732,km:16,days:1,diff:'difficult',
+season:'Oct – Apr (last entry 2pm, gates close 5pm)',
+desc:'The highest point in the Andaman and Nicobar archipelago — 732m rising from the Bay of Bengal on North Andaman Island. 13 species of endemic birds, 36 species of endemic insects, 6 endemic tree species. The Kalpong river (Andaman\'s only river) flows through the park. Forest Department permit mandatory.',
+wps:[
+  {n:'Diglipur',a:5,t:'start',lat:13.270,lng:92.976,note:'North Andaman district HQ. Register at Forest Office before 9am.'},
+  {n:'Kalipur Beach Entry Gate',a:10,t:'village',lat:13.275,lng:93.000,note:'Trailhead. Permit check, guide available here (recommended, not compulsory).'},
+  {n:'First Viewpoint',a:350,t:'pass',lat:13.277,lng:93.010,note:'Bird\'s eye view of North Andaman coastline.'},
+  {n:'Kalpong River Crossing',a:200,t:'lake',lat:13.277,lng:93.018,note:'Andaman\'s only river, refreshing freshwater stream mid-trail.'},
+  {n:'Second Viewpoint (Ice Degree Peak)',a:600,t:'pass',lat:13.278,lng:93.022,note:'Coldest point on the trail, dense canopy closes in.'},
+  {n:'Saddle Peak Summit',a:732,t:'summit',lat:13.278,lng:93.029,note:'Highest point in the Andamans. Panoramic sea views across the archipelago.'}
+]},,
+
+{id:'an02',r:'andaman',name:'Baratang Limestone Caves Trek',icon:'🪨',lat:12.280,lng:92.750,alt:20,km:2,days:1,diff:'easy',
+season:'Oct – Apr',
+desc:'A geological wonder — limestone formations dating back millions of years, approached by a thrilling boat ride through narrow mangrove creek passages so tight you can touch both banks simultaneously. Stalactites and stalagmites inside the caves create a surreal, cathedral-like atmosphere.',
+wps:[
+  {n:'Port Blair',a:10,t:'start',lat:11.663,lng:92.736,note:'Drive through Jarawa Tribal Reserve (vehicles move in convoy, no stopping).'},
+  {n:'Nilambur Jetty',a:5,t:'village',lat:12.280,lng:92.745,note:'Boat boarding point. Ride through mangrove creeks begins here.'},
+  {n:'Mangrove Creek Passage',a:5,t:'pass',lat:12.280,lng:92.748,note:'Narrow tidal creek — boats barely squeeze through the mangrove canopy.'},
+  {n:'Baratang Limestone Caves',a:20,t:'summit',lat:12.280,lng:92.750,note:'Stalactite-stalagmite formations inside cool cave chambers. Geology dating 100M+ years.'}
+]},,
+
+{id:'an03',r:'andaman',name:'Mount Harriet – Madhuban Trek',icon:'🌿',lat:11.680,lng:92.750,alt:365,km:16,days:1,diff:'moderate',
+season:'Oct – Apr',
+desc:'The third-highest peak in Andaman, once the British colonial summer headquarters. A 16km trail descends through old-growth forest teeming with barking deer, Andaman wild pigs, hornbills and the occasional saltwater crocodile near stream crossings. Ends at the serene Madhuban beach.',
+wps:[
+  {n:'Mount Harriet National Park Entry',a:100,t:'start',lat:11.700,lng:92.730,note:'Accessible by ferry from Phoenix Bay Jetty, Port Blair.'},
+  {n:'Harriet Summit',a:365,t:'pass',lat:11.700,lng:92.740,note:'Colonial-era bungalow ruins, views of Port Blair and surrounding islands.'},
+  {n:'Forest Descent',a:200,t:'camp',lat:11.690,lng:92.745,note:'Dense old-growth forest, spotted deer and hornbills frequent here.'},
+  {n:'Madhuban Beach',a:5,t:'summit',lat:11.680,lng:92.750,note:'Quiet beachhead end-point. Elephant encounters possible — tamed elephants used for forest work.'}
 ]},
 
-// ══ RAJASTHAN — ARAVALLI TREKS ══
+// ══ SPITI CIRCUIT ══,
+
+{id:'hp15',r:'himachal',name:'Deo Tibba Base Camp Trek',icon:'🏔️',lat:32.280,lng:77.205,alt:4270,km:55,days:7,diff:'difficult',
+season:'May – Oct',
+desc:'Deo Tibba (6001m) is one of the most prominent peaks visible from Manali but rarely attempted. The base camp trek via Jagatsukh is Manali\'s best-kept secret — far less crowded than Hampta Pass but with superior views of the Pir Panjal and the glaciated face of Deo Tibba and Indrasan (6221m).',
+wps:[
+  {n:'Jagatsukh Village',a:2100,t:'start',lat:32.210,lng:77.210,note:'Ancient capital of Kullu kingdom, 6km from Manali. Trek begins here.'},
+  {n:'Chikka',a:3215,t:'camp',lat:32.235,lng:77.208,note:'Dense deodar forest campsite.'},
+  {n:'Seri',a:3600,t:'camp',lat:32.255,lng:77.207,note:'Meadow camp, Indrasan and Deo Tibba come into clear view.'},
+  {n:'Tainta / Deo Tibba Base Camp',a:4270,t:'camp',lat:32.270,lng:77.206,note:'Glacial moraine camp below Deo Tibba\'s southwest face.'},
+  {n:'Chota Chandratal Lake',a:4480,t:'summit',lat:32.280,lng:77.205,note:'High-altitude blue lake above the base camp — trek\'s scenic climax.'}
+]},,
+
+{id:'hp16',r:'himachal',name:'Bara Bhangal Trek',icon:'🗺️',lat:32.270,lng:76.730,alt:4580,km:90,days:10,diff:'extreme',
+season:'Jul – Sep (only accessible 8-10 weeks per year)',
+desc:'The most remote village in Himachal Pradesh — Bara Bhangal is cut off from the outside world for 9 months a year. The trek crosses three high passes (Thamsar, Kali Hind, Kalihani) from Billing to the Ravi River valley — a genuine wilderness expedition through landscapes that barely see a handful of parties per season.',
+wps:[
+  {n:'Billing / Bir',a:2400,t:'start',lat:31.909,lng:76.714,note:'World\'s top paragliding site, trek entry from here.'},
+  {n:'Rajgundha',a:2900,t:'village',lat:31.980,lng:76.720,note:'Last village, pastoral meadow with nomad encampments.'},
+  {n:'Thamsar Pass',a:4640,t:'pass',lat:32.050,lng:76.720,note:'First major pass, views of Dhauladhar and Kullu ranges.'},
+  {n:'Kali Hind Pass',a:4580,t:'pass',lat:32.150,lng:76.725,note:'Second pass — most difficult of the three.'},
+  {n:'Bara Bhangal Village',a:2580,t:'camp',lat:32.270,lng:76.730,note:'Ultra-remote Gaddi shepherd village, accessible only 2 months a year.'},
+  {n:'Kalihani Pass',a:4580,t:'summit',lat:32.270,lng:76.820,note:'Final pass out of Bara Bhangal toward the Kullu valley.'}
+]},,
+
+{id:'hp17',r:'himachal',name:'Chandra Tal Circuit Trek',icon:'🌙',lat:32.483,lng:77.617,alt:4270,km:35,days:5,diff:'moderate',
+season:'Jun – Oct',
+desc:'A circuit around the magical Chandra Tal (Moon Lake) at 4270m in the Lahaul region — one of the most beautiful high-altitude lakes in India. The circuit combines the Hampta Pass crossing with a descent to the lake, then loops back via Batal and the Chandra river gorge.',
+wps:[
+  {n:'Manali',a:2050,t:'start',lat:32.239,lng:77.189,note:'Drive to Jobra, trek starts from the Hampta valley.'},
+  {n:'Jobra / Chika',a:3000,t:'camp',lat:32.264,lng:77.225,note:'Campsite at the start of the glacier zone.'},
+  {n:'Hampta Pass',a:4270,t:'pass',lat:32.350,lng:77.325,note:'3km wide pass, dramatic shift from green Kullu to barren Lahaul.'},
+  {n:'Shea Goru',a:3800,t:'camp',lat:32.400,lng:77.450,note:'Camp in the Lahaul desert landscape.'},
+  {n:'Batal',a:3960,t:'village',lat:32.457,lng:77.567,note:'Only dhaba (roadside eatery) in the entire area, owned by Chacha-Chachi.'},
+  {n:'Chandra Tal Lake',a:4270,t:'summit',lat:32.483,lng:77.617,note:'"Moon Lake" — crescent shaped at 4270m. Sapphire blue, ringed by mountains. Camping now restricted within 100m.'}
+]},
+
+{id:'lw01',r:'ladakwinter',name:'Chadar Frozen River Trek',icon:'🧊',lat:33.850,lng:77.100,alt:3300,km:75,days:9,diff:'extreme',
+season:'Jan – Feb ONLY (frozen river window)',
+desc:'Walking on a frozen river gorge through the Zanskar Canyon — one of the most unique and challenging winter experiences on Earth. Temperature drops to -30°C at night. The "Chadar" (sheet of ice) is the only seasonal road to the remote Zanskar villages, used by locals for centuries before the winter road was built.',
+wps:[
+  {n:'Leh',a:3524,t:'start',lat:34.166,lng:77.577,note:'Essential 3-day acclimatisation before attempting winter trek.'},
+  {n:'Chilling',a:3100,t:'village',lat:33.949,lng:77.272,note:'Last motorable point, trek begins on the frozen river from here.'},
+  {n:'Gyalpo Camp',a:3200,t:'camp',lat:33.910,lng:77.230,note:'First night camp on the ice, check for solid footing.'},
+  {n:'Tibb Cave',a:3250,t:'camp',lat:33.880,lng:77.180,note:'Cave camp — natural overhang provides windbreak from -25°C nights.'},
+  {n:'Nerak Waterfall (Frozen)',a:3300,t:'summit',lat:33.850,lng:77.100,note:'65ft waterfall frozen mid-flow — the iconic image of the Chadar trek.'}
+]},,
+
+{id:'lw02',r:'ladakwinter',name:'Markha Valley Winter Trek',icon:'❄️',lat:33.800,lng:77.580,alt:5200,km:70,days:8,diff:'difficult',
+season:'Dec – Mar (winter version)',
+desc:'The summer Markha Valley trek transforms completely in winter — deserted villages, frozen streams, snow-capped Kang Yatze and Stok Kangri, and a solitude that is impossible in peak season. The Kongmaru La pass at 5200m becomes a serious high-altitude winter crossing requiring crampons.',
+wps:[
+  {n:'Chilling',a:3100,t:'start',lat:33.949,lng:77.272,note:'Cross the Zanskar river by pulley in winter (bridge removed).'},
+  {n:'Markha Village',a:3750,t:'camp',lat:33.820,lng:77.510,note:'Ruined Markha Fort overlooking the frozen valley.'},
+  {n:'Hankar',a:4000,t:'camp',lat:33.810,lng:77.556,note:'Last village before the high pass, ancient watchtower.'},
+  {n:'Nimaling Plateau',a:4900,t:'camp',lat:33.807,lng:77.570,note:'Winter: completely snowbound, camp with panoramic Kang Yatze views.'},
+  {n:'Kongmaru La',a:5200,t:'summit',lat:33.800,lng:77.580,note:'Highest point, crampons required in winter. Panoramic Karakoram views.'}
+]},
+
+// ══ HIMACHAL HIDDEN GEMS ══,
+
 {id:'rj01',r:'rajasthan',name:'Guru Shikhar Peak Trek',icon:'🏔️',lat:24.592,lng:72.718,alt:1722,km:14,days:1,diff:'moderate',
 season:'Oct – Mar (avoid Apr–Jun, extreme heat above 40°C)',
 desc:'Highest peak in the Aravalli Range and in all of Rajasthan — the "Peak of the Guru" named after sage Dattatreya, whose temple crowns the summit. The range itself is over 2.5 billion years old, one of the oldest fold mountains on Earth. From the top, the plains of Rajasthan and Gujarat are visible on a clear day.',
@@ -2811,7 +2709,7 @@ wps:[
   {n:'Achalgarh Fort',a:1380,t:'village',lat:24.590,lng:72.710,note:'14th-century fort en route — combined history and nature.'},
   {n:'Dilwara Temple Junction',a:1440,t:'pass',lat:24.591,lng:72.715,note:'Marble Jain temples of exceptional craftsmanship, 11th–13th century.'},
   {n:'Guru Shikhar Summit',a:1722,t:'summit',lat:24.592,lng:72.718,note:'Dattatreya temple at the top, ISRO satellite dish observatory nearby. Panoramic Aravalli and Gujarat plains views.'}
-]},
+]},,
 
 {id:'rj02',r:'rajasthan',name:'Kumbhalgarh Fort Trek',icon:'🏰',lat:25.148,lng:73.588,alt:1100,km:22,days:2,diff:'easy',
 season:'Oct – Mar',
@@ -2821,7 +2719,7 @@ wps:[
   {n:'Kumbhalgarh Wildlife Sanctuary',a:800,t:'village',lat:25.130,lng:73.520,note:'Leopard, sloth bear, and wolf territory — guide mandatory.'},
   {n:'Kumbha Palace',a:1080,t:'camp',lat:25.145,lng:73.580,note:'Overnight inside fort walls at heritage accommodation.'},
   {n:'Kumbhalgarh Fort Walls',a:1100,t:'summit',lat:25.148,lng:73.588,note:'36km walls, birthplace of Maharana Pratap. Thar Desert visible on clear days.'}
-]},
+]},,
 
 {id:'rj03',r:'rajasthan',name:'Jaisalmer Desert Trek',icon:'🐪',lat:26.915,lng:70.916,alt:225,km:25,days:3,diff:'easy',
 season:'Oct – Feb (avoid Mar–Sep — extreme heat)',
@@ -2834,7 +2732,8 @@ wps:[
   {n:'Kuldhara Abandoned Village',a:225,t:'end',lat:26.877,lng:70.822,note:'Mysterious village abandoned overnight in 1825, now a protected heritage site.'}
 ]},
 
-// ══ SIKKIM ══
+// ══ SIKKIM ══,
+
 {id:'sk01',r:'sikkim',name:'Goecha La Trek (Sikkim)',icon:'🏔️',lat:27.672,lng:88.203,alt:4940,km:90,days:11,diff:'difficult',
 season:'Apr – May, Oct – Nov',
 desc:'The premier high-altitude trek in Sikkim, offering the closest trekker access to Kangchenjunga (8586m) — the world\'s third-highest peak. The trail crosses through Kanchenjunga National Park (UNESCO World Heritage Site), passing yak pastures, glacial lakes and the stunning Samiti Lake before the final viewpoint of the Goecha La pass at dawn.',
@@ -2848,7 +2747,7 @@ wps:[
   {n:'Lamuney',a:4150,t:'camp',lat:27.648,lng:88.202,note:'Final camp before Goecha La push.'},
   {n:'Samiti Lake',a:4500,t:'lake',lat:27.660,lng:88.202,note:'Mirror-still glacial lake with Kangchenjunga reflection at dawn.'},
   {n:'Goecha La',a:4940,t:'summit',lat:27.672,lng:88.203,note:'Closest trekker viewpoint to Kangchenjunga. Rathong and Kabru glaciers visible.'}
-]},
+]},,
 
 {id:'sk02',r:'sikkim',name:'Kanchenjunga Base Camp Trek',icon:'🏔️',lat:27.703,lng:88.147,alt:5143,km:120,days:16,diff:'extreme',
 season:'Apr – May, Oct – Nov (permits via Mangan DFO)',
@@ -2859,7 +2758,7 @@ wps:[
   {n:'Tseram / South Base Camp',a:3870,t:'camp',lat:27.520,lng:87.900,note:'Kanchenjunga South Base Camp at Ramche (4580m) accessible from here.'},
   {n:'Lhonak Valley',a:4790,t:'camp',lat:27.650,lng:88.100,note:'Barren glacial valley approaching the north side.'},
   {n:'Kanchenjunga North Base Camp (Oktang)',a:5143,t:'summit',lat:27.703,lng:88.147,note:'Northernmost trekker access, Kanchenjunga at 8586m towers directly above.'}
-]},
+]},,
 
 {id:'sk03',r:'sikkim',name:'Green Lake Trek',icon:'🌿',lat:27.833,lng:88.033,alt:5230,km:100,days:12,diff:'difficult',
 season:'May – Jun, Sep – Oct',
@@ -2872,40 +2771,8 @@ wps:[
   {n:'Green Lake',a:5230,t:'summit',lat:27.833,lng:88.033,note:'Jade-green glacial lake, surrounded by Kangchenjunga group. One of India\'s most restricted trekking zones.'}
 ]},
 
-// ══ ANDAMAN ISLANDS ══
-{id:'an01',r:'andaman',name:'Saddle Peak Trek',icon:'🌴',lat:13.278,lng:93.029,alt:732,km:16,days:1,diff:'difficult',
-season:'Oct – Apr (last entry 2pm, gates close 5pm)',
-desc:'The highest point in the Andaman and Nicobar archipelago — 732m rising from the Bay of Bengal on North Andaman Island. 13 species of endemic birds, 36 species of endemic insects, 6 endemic tree species. The Kalpong river (Andaman\'s only river) flows through the park. Forest Department permit mandatory.',
-wps:[
-  {n:'Diglipur',a:5,t:'start',lat:13.270,lng:92.976,note:'North Andaman district HQ. Register at Forest Office before 9am.'},
-  {n:'Kalipur Beach Entry Gate',a:10,t:'village',lat:13.275,lng:93.000,note:'Trailhead. Permit check, guide available here (recommended, not compulsory).'},
-  {n:'First Viewpoint',a:350,t:'pass',lat:13.277,lng:93.010,note:'Bird\'s eye view of North Andaman coastline.'},
-  {n:'Kalpong River Crossing',a:200,t:'lake',lat:13.277,lng:93.018,note:'Andaman\'s only river, refreshing freshwater stream mid-trail.'},
-  {n:'Second Viewpoint (Ice Degree Peak)',a:600,t:'pass',lat:13.278,lng:93.022,note:'Coldest point on the trail, dense canopy closes in.'},
-  {n:'Saddle Peak Summit',a:732,t:'summit',lat:13.278,lng:93.029,note:'Highest point in the Andamans. Panoramic sea views across the archipelago.'}
-]},
+// ══ ANDAMAN ISLANDS ══,
 
-{id:'an02',r:'andaman',name:'Baratang Limestone Caves Trek',icon:'🪨',lat:12.280,lng:92.750,alt:20,km:2,days:1,diff:'easy',
-season:'Oct – Apr',
-desc:'A geological wonder — limestone formations dating back millions of years, approached by a thrilling boat ride through narrow mangrove creek passages so tight you can touch both banks simultaneously. Stalactites and stalagmites inside the caves create a surreal, cathedral-like atmosphere.',
-wps:[
-  {n:'Port Blair',a:10,t:'start',lat:11.663,lng:92.736,note:'Drive through Jarawa Tribal Reserve (vehicles move in convoy, no stopping).'},
-  {n:'Nilambur Jetty',a:5,t:'village',lat:12.280,lng:92.745,note:'Boat boarding point. Ride through mangrove creeks begins here.'},
-  {n:'Mangrove Creek Passage',a:5,t:'pass',lat:12.280,lng:92.748,note:'Narrow tidal creek — boats barely squeeze through the mangrove canopy.'},
-  {n:'Baratang Limestone Caves',a:20,t:'summit',lat:12.280,lng:92.750,note:'Stalactite-stalagmite formations inside cool cave chambers. Geology dating 100M+ years.'}
-]},
-
-{id:'an03',r:'andaman',name:'Mount Harriet – Madhuban Trek',icon:'🌿',lat:11.680,lng:92.750,alt:365,km:16,days:1,diff:'moderate',
-season:'Oct – Apr',
-desc:'The third-highest peak in Andaman, once the British colonial summer headquarters. A 16km trail descends through old-growth forest teeming with barking deer, Andaman wild pigs, hornbills and the occasional saltwater crocodile near stream crossings. Ends at the serene Madhuban beach.',
-wps:[
-  {n:'Mount Harriet National Park Entry',a:100,t:'start',lat:11.700,lng:92.730,note:'Accessible by ferry from Phoenix Bay Jetty, Port Blair.'},
-  {n:'Harriet Summit',a:365,t:'pass',lat:11.700,lng:92.740,note:'Colonial-era bungalow ruins, views of Port Blair and surrounding islands.'},
-  {n:'Forest Descent',a:200,t:'camp',lat:11.690,lng:92.745,note:'Dense old-growth forest, spotted deer and hornbills frequent here.'},
-  {n:'Madhuban Beach',a:5,t:'summit',lat:11.680,lng:92.750,note:'Quiet beachhead end-point. Elephant encounters possible — tamed elephants used for forest work.'}
-]},
-
-// ══ SPITI CIRCUIT ══
 {id:'sp_circuit01',r:'spiti',name:'Spiti Valley Circuit Trek',icon:'🏜️',lat:32.243,lng:78.074,alt:4551,km:55,days:6,diff:'moderate',
 season:'Jun – Sep (road opens Jun, closes Oct–Nov)',
 desc:'The ultimate high-altitude desert circuit in Himachal Pradesh — a loop through fossilized sea-creature villages, the world\'s highest post office, the world\'s highest motorable village, and key monastery stops, all at over 4000m. Landscape shifts from barren lunar terrain to turquoise rivers and medieval Buddhist forts.',
@@ -2918,7 +2785,7 @@ wps:[
   {n:'Key Monastery',a:4116,t:'village',lat:32.296,lng:78.013,note:'1000-year-old Tibetan Buddhist monastery, tiered like a medieval fort on a hilltop.'},
   {n:'Kunzum Pass',a:4551,t:'pass',lat:32.457,lng:77.765,note:'Gateway between Spiti and Lahaul, Kunzum Devi temple. Snow till Jun.'},
   {n:'Chandratal Lake',a:4270,t:'lake',lat:32.483,lng:77.617,note:'"Moon Lake" — crescent-shaped glacial lake, one of the most photographed in India.'}
-]},
+]},,
 
 {id:'sp_circuit02',r:'spiti',name:'Pin Bhaba Pass Trek',icon:'🗻',lat:31.780,lng:78.120,alt:5319,km:55,days:5,diff:'difficult',
 season:'Jul – Sep',
@@ -2933,63 +2800,6 @@ wps:[
 ]},
 
 // ══ LADAKH WINTER TREKS ══
-{id:'lw01',r:'ladakwinter',name:'Chadar Frozen River Trek',icon:'🧊',lat:33.850,lng:77.100,alt:3300,km:75,days:9,diff:'extreme',
-season:'Jan – Feb ONLY (frozen river window)',
-desc:'Walking on a frozen river gorge through the Zanskar Canyon — one of the most unique and challenging winter experiences on Earth. Temperature drops to -30°C at night. The "Chadar" (sheet of ice) is the only seasonal road to the remote Zanskar villages, used by locals for centuries before the winter road was built.',
-wps:[
-  {n:'Leh',a:3524,t:'start',lat:34.166,lng:77.577,note:'Essential 3-day acclimatisation before attempting winter trek.'},
-  {n:'Chilling',a:3100,t:'village',lat:33.949,lng:77.272,note:'Last motorable point, trek begins on the frozen river from here.'},
-  {n:'Gyalpo Camp',a:3200,t:'camp',lat:33.910,lng:77.230,note:'First night camp on the ice, check for solid footing.'},
-  {n:'Tibb Cave',a:3250,t:'camp',lat:33.880,lng:77.180,note:'Cave camp — natural overhang provides windbreak from -25°C nights.'},
-  {n:'Nerak Waterfall (Frozen)',a:3300,t:'summit',lat:33.850,lng:77.100,note:'65ft waterfall frozen mid-flow — the iconic image of the Chadar trek.'}
-]},
-
-{id:'lw02',r:'ladakwinter',name:'Markha Valley Winter Trek',icon:'❄️',lat:33.800,lng:77.580,alt:5200,km:70,days:8,diff:'difficult',
-season:'Dec – Mar (winter version)',
-desc:'The summer Markha Valley trek transforms completely in winter — deserted villages, frozen streams, snow-capped Kang Yatze and Stok Kangri, and a solitude that is impossible in peak season. The Kongmaru La pass at 5200m becomes a serious high-altitude winter crossing requiring crampons.',
-wps:[
-  {n:'Chilling',a:3100,t:'start',lat:33.949,lng:77.272,note:'Cross the Zanskar river by pulley in winter (bridge removed).'},
-  {n:'Markha Village',a:3750,t:'camp',lat:33.820,lng:77.510,note:'Ruined Markha Fort overlooking the frozen valley.'},
-  {n:'Hankar',a:4000,t:'camp',lat:33.810,lng:77.556,note:'Last village before the high pass, ancient watchtower.'},
-  {n:'Nimaling Plateau',a:4900,t:'camp',lat:33.807,lng:77.570,note:'Winter: completely snowbound, camp with panoramic Kang Yatze views.'},
-  {n:'Kongmaru La',a:5200,t:'summit',lat:33.800,lng:77.580,note:'Highest point, crampons required in winter. Panoramic Karakoram views.'}
-]},
-
-// ══ HIMACHAL HIDDEN GEMS ══
-{id:'hp15',r:'himachal',name:'Deo Tibba Base Camp Trek',icon:'🏔️',lat:32.280,lng:77.205,alt:4270,km:55,days:7,diff:'difficult',
-season:'May – Oct',
-desc:'Deo Tibba (6001m) is one of the most prominent peaks visible from Manali but rarely attempted. The base camp trek via Jagatsukh is Manali\'s best-kept secret — far less crowded than Hampta Pass but with superior views of the Pir Panjal and the glaciated face of Deo Tibba and Indrasan (6221m).',
-wps:[
-  {n:'Jagatsukh Village',a:2100,t:'start',lat:32.210,lng:77.210,note:'Ancient capital of Kullu kingdom, 6km from Manali. Trek begins here.'},
-  {n:'Chikka',a:3215,t:'camp',lat:32.235,lng:77.208,note:'Dense deodar forest campsite.'},
-  {n:'Seri',a:3600,t:'camp',lat:32.255,lng:77.207,note:'Meadow camp, Indrasan and Deo Tibba come into clear view.'},
-  {n:'Tainta / Deo Tibba Base Camp',a:4270,t:'camp',lat:32.270,lng:77.206,note:'Glacial moraine camp below Deo Tibba\'s southwest face.'},
-  {n:'Chota Chandratal Lake',a:4480,t:'summit',lat:32.280,lng:77.205,note:'High-altitude blue lake above the base camp — trek\'s scenic climax.'}
-]},
-
-{id:'hp16',r:'himachal',name:'Bara Bhangal Trek',icon:'🗺️',lat:32.270,lng:76.730,alt:4580,km:90,days:10,diff:'extreme',
-season:'Jul – Sep (only accessible 8-10 weeks per year)',
-desc:'The most remote village in Himachal Pradesh — Bara Bhangal is cut off from the outside world for 9 months a year. The trek crosses three high passes (Thamsar, Kali Hind, Kalihani) from Billing to the Ravi River valley — a genuine wilderness expedition through landscapes that barely see a handful of parties per season.',
-wps:[
-  {n:'Billing / Bir',a:2400,t:'start',lat:31.909,lng:76.714,note:'World\'s top paragliding site, trek entry from here.'},
-  {n:'Rajgundha',a:2900,t:'village',lat:31.980,lng:76.720,note:'Last village, pastoral meadow with nomad encampments.'},
-  {n:'Thamsar Pass',a:4640,t:'pass',lat:32.050,lng:76.720,note:'First major pass, views of Dhauladhar and Kullu ranges.'},
-  {n:'Kali Hind Pass',a:4580,t:'pass',lat:32.150,lng:76.725,note:'Second pass — most difficult of the three.'},
-  {n:'Bara Bhangal Village',a:2580,t:'camp',lat:32.270,lng:76.730,note:'Ultra-remote Gaddi shepherd village, accessible only 2 months a year.'},
-  {n:'Kalihani Pass',a:4580,t:'summit',lat:32.270,lng:76.820,note:'Final pass out of Bara Bhangal toward the Kullu valley.'}
-]},
-
-{id:'hp17',r:'himachal',name:'Chandra Tal Circuit Trek',icon:'🌙',lat:32.483,lng:77.617,alt:4270,km:35,days:5,diff:'moderate',
-season:'Jun – Oct',
-desc:'A circuit around the magical Chandra Tal (Moon Lake) at 4270m in the Lahaul region — one of the most beautiful high-altitude lakes in India. The circuit combines the Hampta Pass crossing with a descent to the lake, then loops back via Batal and the Chandra river gorge.',
-wps:[
-  {n:'Manali',a:2050,t:'start',lat:32.239,lng:77.189,note:'Drive to Jobra, trek starts from the Hampta valley.'},
-  {n:'Jobra / Chika',a:3000,t:'camp',lat:32.264,lng:77.225,note:'Campsite at the start of the glacier zone.'},
-  {n:'Hampta Pass',a:4270,t:'pass',lat:32.350,lng:77.325,note:'3km wide pass, dramatic shift from green Kullu to barren Lahaul.'},
-  {n:'Shea Goru',a:3800,t:'camp',lat:32.400,lng:77.450,note:'Camp in the Lahaul desert landscape.'},
-  {n:'Batal',a:3960,t:'village',lat:32.457,lng:77.567,note:'Only dhaba (roadside eatery) in the entire area, owned by Chacha-Chachi.'},
-  {n:'Chandra Tal Lake',a:4270,t:'summit',lat:32.483,lng:77.617,note:'"Moon Lake" — crescent shaped at 4270m. Sapphire blue, ringed by mountains. Camping now restricted within 100m.'}
-]}
 
 ]; // end TREKS
 
@@ -3824,7 +3634,7 @@ document.getElementById('bdg').onclick=()=>toast(`${Object.keys(logged).length} 
 // PWA SERVICE WORKER
 // ═══════════════════════════════════════════════════
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/TrekVerse/sw.js').catch(()=>{});
+  navigator.serviceWorker.register('/summitlog/sw.js').catch(()=>{});
 }
 
 // ═══════════════════════════════════════════════════
@@ -5028,8 +4838,6 @@ document.getElementById('pm-photo-input').onchange = async e => {
   _refreshPmGrid();
 };
 
-
-
 // SHARE CARD ENGINE
 // ═══════════════════════════════════════════════════
 
@@ -5428,6 +5236,8 @@ document.getElementById('fitbtn').onclick = () => {
   });
   toast('Fitting all pins…','#388bfd');
 };
+
+
 </script>
 <!-- Journey Hub: Timeline, Bucket List, Achievements, Constellation, Oracle, Export/Import.
      All markup is injected by journey-hub.js — kept in a separate file so the
