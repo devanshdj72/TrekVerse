@@ -3,8 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
 <meta name="theme-color" content="#0d1117">
 <meta name="description" content="Track every Himalayan trek and mountain you climb. Real terrain map with GPS trail routes, campsites, passes and summit points.">
+<meta name="mobile-web-app-capable" content="yes">
 
 <!-- iOS install support -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -56,6 +59,7 @@ if (_fbReady && !_fbConfig.apiKey.includes('YOUR')) {
       const guest = localStorage.getItem('tv_user');
       if (!guest) window.location.replace('login.html');
     } else {
+      // Save user info to localStorage
       localStorage.setItem('tv_user', JSON.stringify({
         uid:   user.uid,
         name:  user.displayName || user.phoneNumber || 'Explorer',
@@ -64,6 +68,23 @@ if (_fbReady && !_fbConfig.apiKey.includes('YOUR')) {
         email: user.email || null,
         anon:  user.isAnonymous,
       }));
+      // Refresh the profile chip now that we have fresh auth data
+      // (it may have rendered before auth resolved)
+      const chip = document.getElementById('user-chip');
+      if (chip && typeof avatarColor === 'function') {
+        const profile = JSON.parse(localStorage.getItem('trekverse_profile') || '{}');
+        const displayName = profile.name || user.displayName || user.phoneNumber || 'Explorer';
+        const photoSrc = profile.photo || user.photoURL || null;
+        if (photoSrc) {
+          chip.innerHTML = `<img src="${photoSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+          chip.style.background = 'transparent';
+        } else {
+          chip.textContent = displayName[0]?.toUpperCase() || '👤';
+          chip.style.background = avatarColor(displayName);
+          chip.style.color = '#fff';
+          chip.style.fontWeight = '700';
+        }
+      }
     }
   });
 }

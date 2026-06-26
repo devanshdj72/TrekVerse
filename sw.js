@@ -1,49 +1,54 @@
-const CACHE = 'summitlog-v5';
+// TrekVerse Service Worker — bump version to force cache clear
+const CACHE = 'trekverse-v3';
 const ASSETS = [
-  '/summitlog/',
-  '/summitlog/index.html',
-  '/summitlog/journey-hub.js',
-  '/summitlog/manifest.json',
-  '/summitlog/icon.svg',
-  '/summitlog/icon-192.png',
-  '/summitlog/icon-512.png',
-  '/summitlog/apple-touch-icon.png'
+  '/TrekVerse/',
+  '/TrekVerse/index.html',
+  '/TrekVerse/login.html',
+  '/TrekVerse/journey-hub.js',
+  '/TrekVerse/manifest.json',
+  '/TrekVerse/icon.svg',
+  '/TrekVerse/icon-192.png',
+  '/TrekVerse/icon-512.png',
+  '/TrekVerse/apple-touch-icon.png',
+  '/TrekVerse/firebase-config.js',
 ];
 
+// INSTALL — cache all assets
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS).catch(()=>{}))
+    caches.open(CACHE).then(c => c.addAll(ASSETS).catch(() => {}))
   );
-  self.skipWaiting();
+  self.skipWaiting(); // activate immediately
 });
 
+// ACTIVATE — delete ALL old caches
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+      Promise.all(keys.map(k => {
+        if (k !== CACHE) { console.log('[SW] Deleting old cache:', k); return caches.delete(k); }
+      }))
     )
   );
-  self.clients.claim();
+  self.clients.claim(); // take control of all tabs immediately
 });
 
+// FETCH — network first, fall back to cache
 self.addEventListener('fetch', e => {
-  if(e.request.method !== 'GET') return;
-  // Never cache cross-origin requests (CDN libraries, map tiles) —
-  // only cache our own same-origin app shell files.
+  if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
-  if(url.origin !== self.location.origin){
-    return; // let the browser handle it normally
-  }
+  // Only handle same-origin requests
+  if (url.origin !== self.location.origin) return;
+
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      if(cached) return cached;
-      return fetch(e.request).then(res => {
-        if(res && res.status === 200) {
+    fetch(e.request)
+      .then(res => {
+        if (res && res.status === 200) {
           const clone = res.clone();
           caches.open(CACHE).then(c => c.put(e.request, clone));
         }
         return res;
-      }).catch(() => cached);
-    })
+      })
+      .catch(() => caches.match(e.request))
   );
 });
