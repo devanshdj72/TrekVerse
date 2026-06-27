@@ -2863,11 +2863,12 @@ if (MAP_AVAILABLE) {
     zoomControl:false, attributionControl:false
   });
 
-  // Leaflet sometimes caches a wrong container size if the DOM isn't fully
-  // settled at init time (causes squished rendering / wrong cluster radius).
-  // Force it to re-measure shortly after load and on every window resize.
-  setTimeout(()=> map.invalidateSize(), 100);
-  setTimeout(()=> map.invalidateSize(), 500);
+  // Force size recalculation — critical after login redirect where
+  // DOM may not have settled when Leaflet first measures the container.
+  // Also rebuild markers each time to ensure they render correctly.
+  setTimeout(()=>{ map.invalidateSize(); buildMkrs(); updateBadge(); }, 80);
+  setTimeout(()=>{ map.invalidateSize(); buildMkrs(); }, 500);
+  setTimeout(()=>{ map.invalidateSize(); }, 1200);
   window.addEventListener('resize', ()=> map.invalidateSize());
   window.addEventListener('orientationchange', ()=> setTimeout(()=>map.invalidateSize(), 200));
   if('ResizeObserver' in window){
@@ -2885,11 +2886,22 @@ if (MAP_AVAILABLE) {
   window._activeTileLayer = primaryTiles;
   window._mapRef = map;
 
+  // When first tiles actually load, rebuild markers — ensures pins
+  // appear even if buildMkrs() ran before tiles were ready.
+  let _firstTileLoad = true;
+  primaryTiles.on('load', () => {
+    if (_firstTileLoad) {
+      _firstTileLoad = false;
+      map.invalidateSize();
+      buildMkrs();
+      updateBadge();
+    }
+  });
+
   let tilesFailed = 0;
   primaryTiles.on('tileerror', () => {
     tilesFailed++;
     if (tilesFailed === 1) {
-      // Swap to OpenStreetMap as fallback after first failure batch
       map.removeLayer(primaryTiles);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
         subdomains:'abc', maxZoom:19
@@ -5221,8 +5233,10 @@ function wrapText(ctx, text, cx, y, maxW, lineH) {
 // ═══════════════════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════════════════
-buildMkrs();
+// Initial build — runs immediately for non-map state (badge, etc.)
+// Map markers are rebuilt again after map/tiles are ready (see map init above)
 updateBadge();
+buildMkrs();
 
 // Apply tile layer for saved theme now that map is ready
 (function(){

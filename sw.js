@@ -1,5 +1,5 @@
 // TrekVerse Service Worker v4 — force clears ALL old caches
-const CACHE = 'trekverse-v4';
+const CACHE = 'trekverse-v5';
 
 // On install — skip waiting immediately, take over all tabs
 self.addEventListener('install', () => self.skipWaiting());
