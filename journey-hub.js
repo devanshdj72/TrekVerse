@@ -188,27 +188,43 @@ function injectHubShell(){
   root.innerHTML = `
     <div id="hubbackdrop"></div>
     <div id="hubsheet">
-      <div class="shandle"></div>
+      <div id="hub-drawer-header">
+        <div>
+          <div id="hub-drawer-title">☰ Journey Hub</div>
+          <div id="hub-drawer-xp">⚡ Level ${getLevel()} · ${xpState.xp||0} XP</div>
+        </div>
+        <button id="hub-drawer-close">✕</button>
+      </div>
       <div id="hubbody"></div>
     </div>
   `;
   document.getElementById('hubbackdrop').addEventListener('click', closeHub);
-  // swipe-down close, same gesture pattern as host's #sheet
-  let ty=0;
+  document.getElementById('hub-drawer-close').addEventListener('click', closeHub);
+
+  // Swipe-right to close
+  let tx = 0;
   const hs = document.getElementById('hubsheet');
-  hs.addEventListener('touchstart', e=>{ty=e.touches[0].clientY}, {passive:true});
-  hs.addEventListener('touchend', e=>{ if(e.changedTouches[0].clientY-ty>80) closeHub(); }, {passive:true});
+  hs.addEventListener('touchstart', e=>{tx=e.touches[0].clientX}, {passive:true});
+  hs.addEventListener('touchend', e=>{
+    if(e.changedTouches[0].clientX - tx > 60) closeHub();
+  }, {passive:true});
 }
 
 function openHub(){
   hubView = 'menu';
   document.getElementById('hubsheet').classList.add('up');
   document.getElementById('hubbackdrop').classList.add('up');
+  document.body.classList.add('hub-open');
+  // Update XP label
+  const xpEl = document.getElementById('hub-drawer-xp');
+  if(xpEl) xpEl.textContent = `⚡ Level ${getLevel()} · ${xpState.xp||0} XP`;
   renderHub();
 }
+
 function closeHub(){
   document.getElementById('hubsheet').classList.remove('up');
   document.getElementById('hubbackdrop').classList.remove('up');
+  document.body.classList.remove('hub-open');
 }
 function goHub(view){ hubView = view; renderHub(); }
 
@@ -237,33 +253,83 @@ let hubView_editBucket = null;
 function renderMenu(){
   const stats = computeStats();
   return `
-    <div class="s-reg">Journey Hub</div>
-    <div class="s-name">Your Travel Story</div>
-    <div class="s-season">⚡ Level ${getLevel()} · ${xpState.xp||0} XP</div>
-
-    <div class="s-stats" style="grid-template-columns:repeat(4,1fr)">
-      <div class="ss"><div class="ssv">${stats.entries}</div><div class="ssl">Memories</div></div>
-      <div class="ss"><div class="ssv">${stats.countries}</div><div class="ssl">Places</div></div>
-      <div class="ss"><div class="ssv">${stats.bucket}</div><div class="ssl">Bucket List</div></div>
-      <div class="ss"><div class="ssv">${stats.achievements}/${ACHIEVEMENTS.length}</div><div class="ssl">Badges</div></div>
+    <!-- Stats strip -->
+    <div class="hub-stats-strip">
+      <div class="hub-stat-pill">
+        <div class="hub-stat-val">${stats.entries}</div>
+        <div class="hub-stat-lbl">Memories</div>
+      </div>
+      <div class="hub-stat-pill">
+        <div class="hub-stat-val">${stats.countries}</div>
+        <div class="hub-stat-lbl">Places</div>
+      </div>
+      <div class="hub-stat-pill">
+        <div class="hub-stat-val">${stats.bucket}</div>
+        <div class="hub-stat-lbl">Wishlist</div>
+      </div>
+      <div class="hub-stat-pill">
+        <div class="hub-stat-val">${stats.achievements}/${ACHIEVEMENTS.length}</div>
+        <div class="hub-stat-lbl">Badges</div>
+      </div>
     </div>
 
-    <div class="wpt" style="margin-top:8px">Explore</div>
-    <div class="hub-menu-grid">
-      <button class="btn bsec hub-menu-item" data-go="timeline">🕐<span>Timeline</span></button>
-      <button class="btn bsec hub-menu-item" data-go="bucket">🗺️<span>Bucket List</span></button>
-      <button class="btn bsec hub-menu-item" data-go="achievements">🏆<span>Achievements</span></button>
-      <button class="btn bsec hub-menu-item" data-go="constellation">✨<span>Constellation</span></button>
-      <button class="btn bsec hub-menu-item" data-go="oracle">🔮<span>Ask Oracle</span></button>
-      <button class="btn bsec hub-menu-item" id="hub-budget-btn">💰<span>Budget</span></button>
-      <button class="btn bsec hub-menu-item" id="hub-new-pin">➕<span>New Memory</span></button>
-    </div>
+    <!-- Nav items -->
+    <div class="hub-nav-section">Explore</div>
 
-    <div class="sacts">
-      <button class="btn bsec" id="hub-export">⬇ Export</button>
-      <button class="btn bsec" id="hub-import">⬆ Import</button>
-      <input type="file" id="hub-import-file" accept=".json" style="display:none">
-    </div>
+    <button class="hub-nav-item" data-go="timeline">
+      <span class="nav-icon">🕐</span>
+      <span class="nav-label">Timeline</span>
+      <span class="nav-arrow">›</span>
+    </button>
+    <button class="hub-nav-item" data-go="bucket">
+      <span class="nav-icon">🗺️</span>
+      <span class="nav-label">Bucket List</span>
+      <span class="nav-arrow">›</span>
+    </button>
+    <button class="hub-nav-item" data-go="achievements">
+      <span class="nav-icon">🏆</span>
+      <span class="nav-label">Achievements</span>
+      <span class="nav-arrow">›</span>
+    </button>
+    <button class="hub-nav-item" data-go="constellation">
+      <span class="nav-icon">✨</span>
+      <span class="nav-label">Constellation Map</span>
+      <span class="nav-arrow">›</span>
+    </button>
+    <button class="hub-nav-item" data-go="oracle">
+      <span class="nav-icon">🔮</span>
+      <span class="nav-label">Ask Oracle</span>
+      <span class="nav-arrow">›</span>
+    </button>
+
+    <div class="hub-nav-divider"></div>
+    <div class="hub-nav-section">Tools</div>
+
+    <button class="hub-nav-item" id="hub-budget-btn">
+      <span class="nav-icon">💰</span>
+      <span class="nav-label">Budget Planner</span>
+      <span class="nav-arrow">›</span>
+    </button>
+    <button class="hub-nav-item" id="hub-new-pin">
+      <span class="nav-icon">➕</span>
+      <span class="nav-label">New Memory Pin</span>
+      <span class="nav-arrow">›</span>
+    </button>
+
+    <div class="hub-nav-divider"></div>
+    <div class="hub-nav-section">Data</div>
+
+    <button class="hub-nav-item" id="hub-export">
+      <span class="nav-icon">⬇</span>
+      <span class="nav-label">Export All Data</span>
+      <span class="nav-arrow">›</span>
+    </button>
+    <button class="hub-nav-item" id="hub-import">
+      <span class="nav-icon">⬆</span>
+      <span class="nav-label">Import Data</span>
+      <span class="nav-arrow">›</span>
+    </button>
+    <input type="file" id="hub-import-file" accept=".json" style="display:none">
   `;
 }
 
@@ -917,24 +983,113 @@ function injectCSS(){
 #xpbar{position:fixed;top:0;left:0;right:0;height:3px;z-index:1500;background:rgba(255,255,255,.06);pointer-events:none}
 #xpbar-fill{height:100%;width:0%;background:linear-gradient(90deg,#a371f7,#f97316);transition:width .6s cubic-bezier(.22,1,.36,1);box-shadow:0 0 8px rgba(163,113,247,.6)}
 
-#hubbackdrop{position:fixed;inset:0;z-index:1850;background:rgba(0,0,0,0);pointer-events:none;transition:background .4s ease}
-#hubbackdrop.up{background:rgba(0,0,0,.5);pointer-events:auto}
-#hubsheet{
-  position:fixed;bottom:-100%;left:0;right:0;z-index:1900;
-  background:var(--surf);border-top:1px solid var(--bord);border-radius:22px 22px 0 0;
-  transition:bottom .42s cubic-bezier(.32,.72,0,1);max-height:84dvh;overflow-y:auto;
-  box-shadow:0 -16px 50px rgba(0,0,0,.55), 0 -2px 0 rgba(163,113,247,.5);
+/* ── RIGHT DRAWER ── */
+#hubbackdrop{
+  position:fixed;inset:0;z-index:1850;
+  background:rgba(0,0,0,0);pointer-events:none;
+  transition:background .35s ease;
 }
-#hubsheet.up{bottom:54px}
-#hubbody{padding:16px 18px 32px;animation:hubBodyIn .3s ease backwards .05s}
-@keyframes hubBodyIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+#hubbackdrop.up{background:rgba(0,0,0,.45);pointer-events:auto}
 
+#hubsheet{
+  position:fixed;top:0;right:0;bottom:0;z-index:1900;
+  width:min(320px,88vw);
+  background:var(--surf);
+  border-left:1px solid var(--bord);
+  transform:translateX(100%);
+  transition:transform .38s cubic-bezier(.32,.72,0,1);
+  overflow-y:auto;overflow-x:hidden;
+  box-shadow:-16px 0 50px rgba(0,0,0,.55),-2px 0 0 rgba(163,113,247,.4);
+  display:flex;flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:calc(54px + env(safe-area-inset-bottom,0px));
+}
+#hubsheet.up{transform:translateX(0)}
+
+/* Push map and topbar left when drawer opens */
+#map,#topbar,#tabs,#fitbtn,#locatebtn{
+  transition:transform .38s cubic-bezier(.32,.72,0,1);
+}
+body.hub-open #map,
+body.hub-open #topbar,
+body.hub-open #tabs{
+  transform:translateX(calc(-1 * min(320px,88vw)));
+}
+body.hub-open #fitbtn,
+body.hub-open #locatebtn{
+  transform:translateX(calc(-1 * min(320px,88vw)));
+}
+
+/* Drawer header */
+#hub-drawer-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 16px 12px;
+  border-bottom:1px solid var(--bord);
+  background:linear-gradient(135deg,rgba(163,113,247,.1),rgba(249,115,22,.06));
+  position:sticky;top:0;z-index:2;
+  backdrop-filter:blur(10px);
+}
+#hub-drawer-title{font-size:16px;font-weight:800;color:var(--txt)}
+#hub-drawer-xp{font-size:11px;color:var(--pur);font-weight:600;margin-top:2px}
+#hub-drawer-close{
+  width:32px;height:32px;border-radius:50%;
+  background:rgba(255,255,255,.08);border:1px solid var(--bord);
+  color:var(--txt);font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s,transform .15s;
+}
+#hub-drawer-close:hover{background:rgba(255,255,255,.15)}
+#hub-drawer-close:active{transform:scale(.9)}
+[data-theme="light"] #hub-drawer-close{background:rgba(0,0,0,.06)}
+
+/* Stats strip */
+.hub-stats-strip{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+  border-bottom:1px solid var(--bord);
+}
+.hub-stat-pill{
+  padding:10px 4px;text-align:center;
+  border-right:1px solid var(--bord);
+}
+.hub-stat-pill:last-child{border-right:none}
+.hub-stat-val{font-size:16px;font-weight:800;color:var(--ora);font-family:monospace}
+.hub-stat-lbl{font-size:9px;color:var(--mute);text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+
+/* Nav items */
+.hub-nav-section{
+  padding:10px 12px 4px;
+  font-size:9px;font-weight:700;text-transform:uppercase;
+  letter-spacing:1.2px;color:var(--mute);
+}
+.hub-nav-item{
+  display:flex;align-items:center;gap:14px;
+  padding:13px 16px;cursor:pointer;
+  border:none;background:transparent;width:100%;text-align:left;
+  font-family:inherit;font-size:14px;font-weight:600;color:var(--txt);
+  transition:background .15s,color .15s,padding-left .15s;
+  border-left:3px solid transparent;position:relative;
+}
+.hub-nav-item:hover{
+  background:rgba(255,255,255,.05);
+  border-left-color:var(--ora);
+  padding-left:20px;
+  color:var(--ora);
+}
+.hub-nav-item:active{background:rgba(255,255,255,.08)}
+[data-theme="light"] .hub-nav-item:hover{background:rgba(0,0,0,.04)}
+.hub-nav-item .nav-icon{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+.hub-nav-item .nav-label{flex:1}
+.hub-nav-item .nav-arrow{font-size:14px;color:var(--mute);opacity:.5;transition:opacity .15s,transform .15s}
+.hub-nav-item:hover .nav-arrow{opacity:1;transform:translateX(3px)}
+.hub-nav-divider{height:1px;background:var(--bord);margin:6px 12px}
+
+/* Sub-view body inside drawer */
+#hubbody{padding:14px 16px 24px;flex:1;animation:hubBodyIn .25s ease}
+@keyframes hubBodyIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+
+/* Back button for sub-views */
 .hub-backrow{display:flex;align-items:center;gap:12px;margin-bottom:14px}
-.hub-backtitle{font-size:16px;font-weight:800;color:var(--txt)}
-
-.hub-menu-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
-.hub-menu-item{flex-direction:column;gap:6px;padding:18px 10px;font-size:24px;height:auto}
-.hub-menu-item span{font-size:11px;font-weight:600;color:var(--mute)}
+.hub-backtitle{font-size:15px;font-weight:800;color:var(--txt)}
 
 .hub-empty{text-align:center;padding:36px 16px}
 .hub-empty-emoji{font-size:40px;margin-bottom:10px}
@@ -955,9 +1110,8 @@ function injectCSS(){
 .hub-ach-desc{font-size:10px;color:var(--mute);margin-top:2px}
 .hub-ach-xp{font-size:10px;color:var(--pur);font-weight:700;margin-top:6px}
 
-.hub-cat-sel{}
-.hub-oracle-msgs{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 0;margin-bottom:10px}
-.hub-oracle-msg{font-size:13px;line-height:1.6;padding:10px 12px;border-radius:12px;max-width:88%}
+.hub-oracle-msgs{max-height:calc(100dvh - 280px);overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 0;margin-bottom:10px}
+.hub-oracle-msg{font-size:13px;line-height:1.6;padding:10px 12px;border-radius:12px;max-width:92%}
 .hub-oracle-msg.oracle{background:rgba(163,113,247,.1);border:1px solid rgba(163,113,247,.25);align-self:flex-start}
 .hub-oracle-msg.user{background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.25);align-self:flex-end;color:var(--txt)}
 .hub-oracle-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
@@ -965,6 +1119,30 @@ function injectCSS(){
 .hub-oracle-typing span:nth-child(2){animation-delay:.15s}
 .hub-oracle-typing span:nth-child(3){animation-delay:.3s}
 @keyframes hubBounce{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-4px);opacity:1}}
+
+/* Progress tracker styles */
+.prog-circuits{display:flex;flex-direction:column;gap:10px;padding-bottom:24px}
+.prog-circuit{background:rgba(255,255,255,.04);border:1px solid var(--bord);border-radius:14px;overflow:hidden}
+.prog-circuit-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 8px;cursor:pointer;user-select:none}
+.prog-circuit-left{display:flex;align-items:center;gap:10px}
+.prog-emoji{font-size:20px;flex-shrink:0}
+.prog-circuit-name{font-size:13px;font-weight:700;color:var(--txt);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.prog-circuit-sub{font-size:10px;color:var(--mute);margin-top:1px}
+.prog-circuit-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.prog-fraction{font-size:16px;font-weight:800;font-family:monospace}
+.prog-chev{font-size:16px;color:var(--mute);transition:transform .22s}
+.prog-bar-wrap{height:4px;background:rgba(255,255,255,.07);margin:0 14px 10px;border-radius:2px;overflow:hidden}
+.prog-bar-fill{height:100%;border-radius:2px;transition:width 1s cubic-bezier(.16,1,.3,1)}
+.prog-badge-done{font-size:9px;padding:1px 6px;border-radius:6px;background:rgba(46,160,67,.15);color:#4ade80;font-weight:700}
+.prog-list{padding:0 8px 8px}
+.prog-item{display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:8px;cursor:pointer;transition:background .15s}
+.prog-item:hover{background:rgba(255,255,255,.05)}
+.prog-check{width:18px;height:18px;border-radius:50%;border:2px solid;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
+.prog-item-info{flex:1;min-width:0}
+.prog-item-name{font-size:12px;font-weight:500;color:var(--txt)}
+.prog-item-meta{font-size:10px;color:var(--mute);margin-top:1px;font-family:monospace}
+.prog-item-jump{font-size:16px;color:var(--mute);flex-shrink:0;transition:color .15s}
+.prog-item:hover .prog-item-jump{color:var(--ora)}
 `;
   const style = document.createElement('style');
   style.textContent = css;
