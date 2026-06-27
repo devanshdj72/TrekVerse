@@ -1219,6 +1219,11 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   <button class="tab" data-r="southindia"><span class="tab-label">🌴 South India</span><span class="tab-chev">⌃</span></button>
   <button class="tab" data-r="spiritual"><span class="tab-label">🕉️ Spiritual Yatras</span><span class="tab-chev">⌃</span></button>
   <button class="tab" data-r="sevensummits"><span class="tab-label">🌐 Seven Summits</span><span class="tab-chev">⌃</span></button>
+  <button class="tab" data-r="rajasthan"><span class="tab-label">🏜️ Rajasthan</span><span class="tab-chev">⌃</span></button>
+  <button class="tab" data-r="sikkim"><span class="tab-label">🌿 Sikkim</span><span class="tab-chev">⌃</span></button>
+  <button class="tab" data-r="andaman"><span class="tab-label">🌴 Andaman</span><span class="tab-chev">⌃</span></button>
+  <button class="tab" data-r="spiti"><span class="tab-label">🏜 Spiti</span><span class="tab-chev">⌃</span></button>
+  <button class="tab" data-r="ladakwinter"><span class="tab-label">🧊 Ladakh Winter</span><span class="tab-chev">⌃</span></button>
 </div>
 
 <div id="regionpop"></div>
@@ -1279,6 +1284,11 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
           <option value="southindia">South India</option>
           <option value="spiritual">Spiritual Yatras</option>
           <option value="sevensummits">Seven Summits</option>
+        <option value="rajasthan">Rajasthan Aravalli</option>
+        <option value="sikkim">Sikkim Himalaya</option>
+        <option value="andaman">Andaman Islands</option>
+        <option value="spiti">Spiti Valley</option>
+        <option value="ladakwinter">Ladakh Winter Treks</option>
         </select>
       </div>
       <div class="bgt-input-group">
@@ -1409,6 +1419,11 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         <option value="southindia">South India Western Ghats</option>
         <option value="spiritual">Spiritual Yatras</option>
         <option value="sevensummits">Seven Summits</option>
+        <option value="rajasthan">Rajasthan Aravalli</option>
+        <option value="sikkim">Sikkim Himalaya</option>
+        <option value="andaman">Andaman Islands</option>
+        <option value="spiti">Spiti Valley</option>
+        <option value="ladakwinter">Ladakh Winter Treks</option>
       </select>
     </div>
 
@@ -2820,7 +2835,7 @@ let pmDiff = 'easy';
 let pmWaypoints = [];
 let wpIdSeq = 0;
 
-const RNAMES = {himachal:'Himachal Pradesh',uttarakhand:'Uttarakhand',jk:'J&K / Ladakh',northeast:'Seven Sisters NE',nepal:'Nepal Himalaya',tibet:'Tibet / China Border',maharashtra:'Maharashtra Sahyadris',southindia:'South India Western Ghats',spiritual:'Spiritual Yatras',sevensummits:'Seven Summits — World'};
+const RNAMES = {himachal:'Himachal Pradesh',uttarakhand:'Uttarakhand',jk:'J&K / Ladakh',northeast:'Seven Sisters NE',nepal:'Nepal Himalaya',tibet:'Tibet / China Border',maharashtra:'Maharashtra Sahyadris',southindia:'South India Western Ghats',spiritual:'Spiritual Yatras',sevensummits:'Seven Summits — World',rajasthan:'Rajasthan Aravalli',sikkim:'Sikkim Himalaya',andaman:'Andaman Islands',spiti:'Spiti Valley',ladakwinter:'Ladakh Winter Treks'};
 const DFPCT  = {easy:25,moderate:52,difficult:78,extreme:100};
 const DCOLS  = {start:'#2ea043',village:'#7d8590',camp:'#f97316',pass:'#a371f7',lake:'#388bfd',summit:'#f85149',end:'#f85149',temple:'#d29922'};
 const DTAG   = {start:'tv',village:'tv',camp:'tc',pass:'tp',lake:'tl',summit:'ts',end:'tv',temple:'tc'};
@@ -3491,7 +3506,7 @@ document.addEventListener('keydown', e => {
 // ═══════════════════════════════════════════════════
 // TABS
 // ═══════════════════════════════════════════════════
-const FLY={all:[30.5,80,5],himachal:[32,77.2,8],uttarakhand:[30.5,79.5,8],jk:[34,77,7],northeast:[26.5,92,7],nepal:[28.2,84.5,7],tibet:[30.5,81,7],maharashtra:[19.0,73.5,8],southindia:[11.5,76.5,7],spiritual:[22.5,79.0,5],sevensummits:[20,10,3]};
+const FLY={all:[30.5,80,5],himachal:[32,77.2,8],uttarakhand:[30.5,79.5,8],jk:[34,77,7],northeast:[26.5,92,7],nepal:[28.2,84.5,7],tibet:[30.5,81,7],maharashtra:[19.0,73.5,8],southindia:[11.5,76.5,7],spiritual:[22.5,79.0,5],sevensummits:[20,10,3],rajasthan:[25.0,73.5,7],sikkim:[27.5,88.3,8],andaman:[12.5,92.8,8],spiti:[32.2,78.0,8],ladakwinter:[34.0,77.5,8]};
 
 function switchRegion(tab){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
