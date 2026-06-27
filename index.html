@@ -1086,6 +1086,191 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 #photo-lb-nav button:hover{background:rgba(255,255,255,.22)}
 #photo-lb-nav button:disabled{opacity:.3;cursor:default}
 #photo-lb-counter{color:var(--mute);font-size:12px;min-width:54px;text-align:center}
+
+/* ═══════════════════════════════════════
+   SIDE DRAWER — replaces bottom tab bar
+   ═══════════════════════════════════════ */
+#tabs{ display:none !important; } /* hide old bottom bar */
+
+/* Hamburger toggle button in topbar */
+#drawerToggle{
+  width:36px;height:36px;border-radius:10px;border:1px solid var(--bord);
+  background:rgba(255,255,255,.06);color:var(--txt);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;font-size:18px;
+  transition:background .2s, transform .2s;
+  box-shadow:0 2px 8px rgba(0,0,0,.3);
+}
+#drawerToggle:hover{background:rgba(255,255,255,.12)}
+#drawerToggle:active{transform:scale(.9)}
+#drawerToggle.open{ background:rgba(249,115,22,.15); border-color:rgba(249,115,22,.4); color:var(--ora); }
+
+/* Overlay backdrop */
+#drawerBackdrop{
+  position:fixed;inset:0;z-index:1500;
+  background:rgba(0,0,0,0);pointer-events:none;
+  transition:background .35s ease;
+}
+#drawerBackdrop.open{
+  background:rgba(0,0,0,.55);pointer-events:auto;
+}
+
+/* Drawer panel */
+#drawer{
+  position:fixed;top:0;left:0;bottom:0;z-index:1600;
+  width:280px;
+  background:var(--surf);
+  border-right:1px solid var(--bord);
+  transform:translateX(-100%);
+  transition:transform .38s cubic-bezier(.22,1,.36,1);
+  display:flex;flex-direction:column;
+  box-shadow:8px 0 40px rgba(0,0,0,.6);
+  overflow:hidden;
+}
+#drawer.open{
+  transform:translateX(0);
+}
+
+/* Map shifts right when drawer opens on wider screens */
+@media(min-width:768px){
+  #map.drawer-push{ left:280px; transition:left .38s cubic-bezier(.22,1,.36,1); }
+  #map:not(.drawer-push){ transition:left .38s cubic-bezier(.22,1,.36,1); }
+  #fitbtn.drawer-push{ right:calc(10px); transition:right .38s; }
+  #topbar.drawer-push{ left:280px; transition:left .38s cubic-bezier(.22,1,.36,1); }
+  #topbar:not(.drawer-push){ transition:left .38s; }
+}
+
+/* Drawer header */
+#drawer-header{
+  display:flex;align-items:center;gap:10px;
+  padding:16px 16px 12px;
+  border-bottom:1px solid var(--bord);
+  flex-shrink:0;
+  background:linear-gradient(135deg,rgba(249,115,22,.08),transparent);
+  padding-top:calc(16px + env(safe-area-inset-top,0px));
+}
+#drawer-header .d-logo{
+  font-size:16px;font-weight:800;color:var(--ora);
+  text-shadow:0 0 14px rgba(249,115,22,.4);
+}
+#drawer-header .d-logo em{color:var(--txt);font-style:normal;font-weight:300}
+#drawer-close{
+  margin-left:auto;width:30px;height:30px;border-radius:8px;
+  border:1px solid var(--bord);background:transparent;
+  color:var(--mute);cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s, color .15s;
+}
+#drawer-close:hover{background:rgba(255,255,255,.08);color:var(--txt)}
+
+/* All Regions shortcut at top */
+#drawer-all{
+  margin:10px 12px 4px;
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:12px;
+  border:1px solid var(--bord);
+  background:rgba(255,255,255,.03);
+  cursor:pointer;font-size:13px;font-weight:600;
+  color:var(--txt);transition:all .18s;
+}
+#drawer-all:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.2)}
+#drawer-all.active{background:rgba(249,115,22,.15);border-color:var(--ora);color:var(--ora)}
+#drawer-all-count{
+  margin-left:auto;font-size:10px;font-weight:700;
+  background:rgba(249,115,22,.15);color:var(--ora);
+  padding:2px 7px;border-radius:10px;
+}
+
+/* Scroll area */
+#drawer-scroll{
+  flex:1;overflow-y:auto;padding:4px 0 20px;
+  scrollbar-width:thin;scrollbar-color:var(--bord) transparent;
+}
+#drawer-scroll::-webkit-scrollbar{width:4px}
+#drawer-scroll::-webkit-scrollbar-thumb{background:var(--bord);border-radius:2px}
+
+/* Group header */
+.drawer-group{ margin:4px 8px; }
+.drawer-group-header{
+  width:100%;display:flex;align-items:center;gap:10px;
+  padding:9px 12px;border-radius:10px;
+  border:none;background:transparent;
+  color:var(--mute);cursor:pointer;font-size:12px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.8px;
+  transition:color .15s, background .15s;
+  font-family:inherit;
+}
+.drawer-group-header:hover{background:rgba(255,255,255,.05);color:var(--txt)}
+.drawer-grp-icon{font-size:14px}
+.drawer-grp-label{flex:1;text-align:left}
+.drawer-grp-chev{
+  font-size:16px;color:var(--mute);
+  transition:transform .25s cubic-bezier(.22,1,.36,1);
+  display:inline-block;
+}
+.drawer-group.expanded .drawer-grp-chev{ transform:rotate(90deg); }
+
+/* Group items — collapsed by default, expand with animation */
+.drawer-group-items{
+  overflow:hidden;
+  max-height:0;
+  transition:max-height .35s cubic-bezier(.22,1,.36,1), opacity .25s ease;
+  opacity:0;
+}
+.drawer-group.expanded .drawer-group-items{
+  max-height:800px;
+  opacity:1;
+}
+
+/* Individual trek region item */
+.drawer-item{
+  width:100%;display:flex;align-items:center;gap:10px;
+  padding:9px 12px 9px 28px;
+  border:none;background:transparent;
+  color:var(--txt);cursor:pointer;font-size:13px;font-weight:500;
+  border-radius:10px;margin:1px 0;
+  transition:background .15s ease, transform .15s ease, color .15s;
+  font-family:inherit;text-align:left;
+}
+.drawer-item:hover{background:rgba(255,255,255,.06);transform:translateX(2px)}
+.drawer-item:active{transform:scale(.97)}
+.drawer-item.on{
+  background:linear-gradient(135deg,rgba(249,115,22,.2),rgba(249,115,22,.08));
+  color:var(--ora);font-weight:700;
+  border-left:3px solid var(--ora);
+  padding-left:25px;
+}
+.drawer-item-icon{font-size:15px;flex-shrink:0}
+.drawer-item-label{flex:1}
+.drawer-item-count{
+  font-size:10px;font-weight:700;
+  background:rgba(255,255,255,.08);color:var(--mute);
+  padding:2px 6px;border-radius:8px;
+  min-width:18px;text-align:center;
+}
+.drawer-item.on .drawer-item-count{
+  background:rgba(249,115,22,.2);color:var(--ora);
+}
+
+/* Active region badge at bottom of drawer */
+#drawer-footer{
+  padding:12px 14px;
+  border-top:1px solid var(--bord);
+  flex-shrink:0;
+  padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
+}
+#drawer-active-label{
+  font-size:11px;color:var(--mute);margin-bottom:4px;text-transform:uppercase;letter-spacing:.6px;font-weight:600;
+}
+#drawer-active-region{
+  font-size:13px;font-weight:700;color:var(--ora);
+}
+
+/* Map bottom now 0 since no bottom bar */
+#map{ bottom:0 !important; }
+#fitbtn{ bottom:16px; top:auto; }
+#sheet.up{ bottom:0 !important; }
+#hubsheet.up{ bottom:0 !important; }
 </style>
 </head>
 <body>
@@ -1095,6 +1280,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   <button id="srch-toggle" title="Search treks">🔍</button>
   <div style="flex:1"></div>
   <div id="bdg">0 / 0</div>
+  <button id="drawerToggle" title="Browse Regions">☰</button>
   <button id="addbtn" title="Add your own trek/pin">+</button>
   <button id="themebtn" title="Switch to light mode">🌙</button>
   <button id="user-chip" title="Account" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--bord);background:rgba(255,255,255,.06);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden;flex-shrink:0;transition:border-color .2s,transform .15s;color:var(--txt);font-weight:700">👤</button>
@@ -1201,6 +1387,141 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <div id="addbanner">
   <span>📍 Tap anywhere on the map to drop your pin</span>
   <button id="addcancel">Cancel</button>
+</div>
+
+
+<!-- Side Drawer Backdrop -->
+<div id="drawerBackdrop"></div>
+
+<!-- Side Drawer -->
+<div id="drawer">
+  <div id="drawer-header">
+    <div class="d-logo">⛰ Trek<em>Verse</em></div>
+    <button id="drawer-close" title="Close">✕</button>
+  </div>
+
+  <!-- All regions shortcut -->
+  <button id="drawer-all" class="tab active" data-r="all">
+    <span style="font-size:18px">🌏</span>
+    <span>All Regions</span>
+    <span id="drawer-all-count">126</span>
+  </button>
+
+  <div id="drawer-scroll">
+
+      <div class="drawer-group" id="dgrp-treks">
+        <button class="drawer-group-header" data-grp="treks">
+          <span class="drawer-grp-icon">🥾</span>
+          <span class="drawer-grp-label">🥾 Treks</span>
+          <span class="drawer-grp-chev">›</span>
+        </button>
+        <div class="drawer-group-items" id="dgitems-treks">
+        <button class="drawer-item tab" data-r="all">
+          <span class="drawer-item-icon">🌏</span>
+          <span class="drawer-item-label">🌏 All Regions</span>
+          <span class="drawer-item-count" id="dcount-all"></span>
+        </button>
+        <button class="drawer-item tab" data-r="himachal">
+          <span class="drawer-item-icon">🏔</span>
+          <span class="drawer-item-label">🏔 Himachal Pradesh</span>
+          <span class="drawer-item-count" id="dcount-himachal"></span>
+        </button>
+        <button class="drawer-item tab" data-r="uttarakhand">
+          <span class="drawer-item-icon">🌿</span>
+          <span class="drawer-item-label">🌿 Uttarakhand</span>
+          <span class="drawer-item-count" id="dcount-uttarakhand"></span>
+        </button>
+        <button class="drawer-item tab" data-r="jk">
+          <span class="drawer-item-icon">❄️</span>
+          <span class="drawer-item-label">❄️ J&K / Ladakh</span>
+          <span class="drawer-item-count" id="dcount-jk"></span>
+        </button>
+        <button class="drawer-item tab" data-r="northeast">
+          <span class="drawer-item-icon">🌱</span>
+          <span class="drawer-item-label">🌱 Seven Sisters NE</span>
+          <span class="drawer-item-count" id="dcount-northeast"></span>
+        </button>
+        <button class="drawer-item tab" data-r="nepal">
+          <span class="drawer-item-icon">🏔</span>
+          <span class="drawer-item-label">🏔 Nepal Himalaya</span>
+          <span class="drawer-item-count" id="dcount-nepal"></span>
+        </button>
+        <button class="drawer-item tab" data-r="tibet">
+          <span class="drawer-item-icon">🕌</span>
+          <span class="drawer-item-label">🕌 Tibet Border</span>
+          <span class="drawer-item-count" id="dcount-tibet"></span>
+        </button>
+        <button class="drawer-item tab" data-r="maharashtra">
+          <span class="drawer-item-icon">⛰</span>
+          <span class="drawer-item-label">⛰ Maharashtra</span>
+          <span class="drawer-item-count" id="dcount-maharashtra"></span>
+        </button>
+        <button class="drawer-item tab" data-r="southindia">
+          <span class="drawer-item-icon">🌴</span>
+          <span class="drawer-item-label">🌴 South India</span>
+          <span class="drawer-item-count" id="dcount-southindia"></span>
+        </button>
+        <button class="drawer-item tab" data-r="rajasthan">
+          <span class="drawer-item-icon">🏜️</span>
+          <span class="drawer-item-label">🏜️ Rajasthan</span>
+          <span class="drawer-item-count" id="dcount-rajasthan"></span>
+        </button>
+        <button class="drawer-item tab" data-r="sikkim">
+          <span class="drawer-item-icon">🌿</span>
+          <span class="drawer-item-label">🌿 Sikkim</span>
+          <span class="drawer-item-count" id="dcount-sikkim"></span>
+        </button>
+        <button class="drawer-item tab" data-r="andaman">
+          <span class="drawer-item-icon">🌴</span>
+          <span class="drawer-item-label">🌴 Andaman Islands</span>
+          <span class="drawer-item-count" id="dcount-andaman"></span>
+        </button>
+        <button class="drawer-item tab" data-r="spiti">
+          <span class="drawer-item-icon">🏜</span>
+          <span class="drawer-item-label">🏜 Spiti Valley</span>
+          <span class="drawer-item-count" id="dcount-spiti"></span>
+        </button>
+        <button class="drawer-item tab" data-r="ladakwinter">
+          <span class="drawer-item-icon">🧊</span>
+          <span class="drawer-item-label">🧊 Ladakh Winter</span>
+          <span class="drawer-item-count" id="dcount-ladakwinter"></span>
+        </button>
+        </div>
+      </div>
+      <div class="drawer-group" id="dgrp-mountaineering">
+        <button class="drawer-group-header" data-grp="mountaineering">
+          <span class="drawer-grp-icon">🏔</span>
+          <span class="drawer-grp-label">🏔 Mountaineering</span>
+          <span class="drawer-grp-chev">›</span>
+        </button>
+        <div class="drawer-group-items" id="dgitems-mountaineering">
+        <button class="drawer-item tab" data-r="sevensummits">
+          <span class="drawer-item-icon">🌐</span>
+          <span class="drawer-item-label">🌐 Seven Summits</span>
+          <span class="drawer-item-count" id="dcount-sevensummits"></span>
+        </button>
+        </div>
+      </div>
+      <div class="drawer-group" id="dgrp-spiritual">
+        <button class="drawer-group-header" data-grp="spiritual">
+          <span class="drawer-grp-icon">🕉️</span>
+          <span class="drawer-grp-label">🕉️ Spiritual</span>
+          <span class="drawer-grp-chev">›</span>
+        </button>
+        <div class="drawer-group-items" id="dgitems-spiritual">
+        <button class="drawer-item tab" data-r="spiritual">
+          <span class="drawer-item-icon">🕉️</span>
+          <span class="drawer-item-label">🕉️ Spiritual Yatras</span>
+          <span class="drawer-item-count" id="dcount-spiritual"></span>
+        </button>
+        </div>
+      </div>
+  </div>
+
+  <div id="drawer-footer">
+    <div id="drawer-active-label">Currently viewing</div>
+    <div id="drawer-active-region">🌏 All Regions</div>
+  </div>
 </div>
 
 <div id="map"></div>
@@ -5272,6 +5593,140 @@ document.getElementById('fitbtn').onclick = () => {
      All markup is injected by journey-hub.js — kept in a separate file so the
      core trek-atlas app above is never touched. -->
 <div id="hubroot"></div>
+<script>
+
+// ═══════════════════════════════════════════════════
+// SIDE DRAWER
+// ═══════════════════════════════════════════════════
+const drawer       = document.getElementById('drawer');
+const drawerBG     = document.getElementById('drawerBackdrop');
+const drawerToggle = document.getElementById('drawerToggle');
+const drawerClose  = document.getElementById('drawer-close');
+const isWide       = () => window.innerWidth >= 768;
+let drawerOpen = false;
+
+function openDrawer(){
+  drawerOpen = true;
+  drawer.classList.add('open');
+  drawerBG.classList.add('open');
+  drawerToggle.classList.add('open');
+  if(isWide()){
+    document.getElementById('map').classList.add('drawer-push');
+    document.getElementById('topbar').classList.add('drawer-push');
+  }
+}
+function closeDrawer(){
+  drawerOpen = false;
+  drawer.classList.remove('open');
+  drawerBG.classList.remove('open');
+  drawerToggle.classList.remove('open');
+  document.getElementById('map').classList.remove('drawer-push');
+  document.getElementById('topbar').classList.remove('drawer-push');
+  if(MAP_AVAILABLE) setTimeout(()=>map.invalidateSize(),400);
+}
+function toggleDrawer(){ drawerOpen ? closeDrawer() : openDrawer(); }
+
+drawerToggle.addEventListener('click', toggleDrawer);
+drawerClose.addEventListener('click', closeDrawer);
+drawerBG.addEventListener('click', closeDrawer);
+
+// Touch swipe-to-open from left edge
+let swipeStartX = 0, swipeStartY = 0;
+document.addEventListener('touchstart', e=>{
+  swipeStartX = e.touches[0].clientX;
+  swipeStartY = e.touches[0].clientY;
+}, {passive:true});
+document.addEventListener('touchend', e=>{
+  const dx = e.changedTouches[0].clientX - swipeStartX;
+  const dy = Math.abs(e.changedTouches[0].clientY - swipeStartY);
+  if(dx > 60 && dy < 60 && swipeStartX < 30 && !drawerOpen) openDrawer();
+  if(dx < -60 && dy < 60 && drawerOpen) closeDrawer();
+}, {passive:true});
+
+// Drawer group accordion
+document.querySelectorAll('.drawer-group-header').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const grp = btn.closest('.drawer-group');
+    const wasOpen = grp.classList.contains('expanded');
+    // collapse all
+    document.querySelectorAll('.drawer-group').forEach(g=>g.classList.remove('expanded'));
+    if(!wasOpen) grp.classList.add('expanded');
+  });
+});
+
+// Auto-expand the group that contains the active region
+function expandGroupForRegion(regionId){
+  document.querySelectorAll('.drawer-group').forEach(grp=>{
+    const items = grp.querySelectorAll('.drawer-item[data-r]');
+    const hasActive = Array.from(items).some(i=>i.dataset.r===regionId);
+    grp.classList.toggle('expanded', hasActive);
+  });
+}
+
+// Update drawer active state
+function updateDrawerActive(regionId){
+  document.querySelectorAll('.drawer-item.tab, #drawer-all').forEach(el=>{
+    el.classList.toggle('on', el.dataset.r===regionId);
+    el.classList.toggle('active', el.dataset.r===regionId);
+  });
+  const RNAMES_DRAWER = {
+    all:'🌏 All Regions',himachal:'🏔 Himachal Pradesh',uttarakhand:'🌿 Uttarakhand',
+    jk:'❄️ J&K / Ladakh',northeast:'🌱 Seven Sisters NE',nepal:'🏔 Nepal Himalaya',
+    tibet:'🕌 Tibet Border',maharashtra:'⛰ Maharashtra',southindia:'🌴 South India',
+    spiritual:'🕉️ Spiritual Yatras',sevensummits:'🌐 Seven Summits',
+    rajasthan:'🏜️ Rajasthan',sikkim:'🌿 Sikkim',andaman:'🌴 Andaman Islands',
+    spiti:'🏜 Spiti Valley',ladakwinter:'🧊 Ladakh Winter'
+  };
+  const activeLabel = document.getElementById('drawer-active-region');
+  if(activeLabel) activeLabel.textContent = RNAMES_DRAWER[regionId] || regionId;
+  expandGroupForRegion(regionId);
+}
+
+// Update trek counts per region in drawer
+function updateDrawerCounts(){
+  const all = allTreks();
+  const counts = {};
+  all.forEach(t=>{ counts[t.r]=(counts[t.r]||0)+1; });
+  document.querySelectorAll('.drawer-item-count[id^="dcount-"]').forEach(el=>{
+    const r = el.id.replace('dcount-','');
+    el.textContent = r==='all' ? all.length : (counts[r]||0);
+  });
+  const allCount = document.getElementById('drawer-all-count');
+  if(allCount) allCount.textContent = all.length;
+}
+
+// Wire drawer items to switchRegion
+document.querySelectorAll('.drawer-item.tab, #drawer-all').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const r = btn.dataset.r;
+    if(!r) return;
+    // Switch region using existing switchRegion logic
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+    btn.classList.add('on');
+    activeR = r;
+    buildMkrs(); closeSheet();
+    if(MAP_AVAILABLE){
+      const FLY_MAP = {all:[30.5,80,5],himachal:[32,77.2,8],uttarakhand:[30.5,79.5,8],
+        jk:[34,77,7],northeast:[26.5,92,7],nepal:[28.2,84.5,7],tibet:[30.5,81,7],
+        maharashtra:[19.0,73.5,8],southindia:[11.5,76.5,7],spiritual:[22.5,79.0,5],
+        sevensummits:[20,10,3],rajasthan:[25.0,73.5,7],sikkim:[27.5,88.3,8],
+        andaman:[12.5,92.8,8],spiti:[32.2,78.0,8],ladakwinter:[34.0,77.5,8]};
+      const [la,lo,z]=FLY_MAP[r]||FLY_MAP.all;
+      map.flyTo([la,lo],z,{duration:1.5});
+    }
+    updateDrawerActive(r);
+    updateBadge();
+    // On mobile close drawer after selecting
+    if(!isWide()) setTimeout(closeDrawer, 300);
+  });
+});
+
+// Init counts and expand first group
+updateDrawerCounts();
+updateDrawerActive('all');
+document.querySelectorAll('.drawer-group')[0]?.classList.add('expanded');
+
+</script>
 <script src="journey-hub.js"></script>
 </body>
 </html>
