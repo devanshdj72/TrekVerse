@@ -31,6 +31,7 @@
 <!-- Firebase Auth -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 // ── FIREBASE AUTH GUARD ──
 // Replace these with your actual Firebase config values
@@ -1311,6 +1312,110 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 #fitbtn{ bottom:16px; top:auto; }
 #sheet.up{ bottom:0 !important; }
 #hubsheet.up{ bottom:0 !important; }
+/* ═══════════════════════════════════════
+   SOCIAL HUB
+═══════════════════════════════════════ */
+.pf-tabs{display:flex;border-bottom:1px solid var(--bord);margin:-4px 0 0}
+.pf-tab{flex:1;padding:10px 6px;font-size:12px;font-weight:600;color:var(--mute);border:none;background:transparent;cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+.pf-tab.on{color:var(--ora);border-bottom-color:var(--ora)}
+#social-modal{position:fixed;inset:0;z-index:5800;background:rgba(0,0,0,.8);backdrop-filter:blur(10px);display:none;align-items:flex-end;justify-content:center}
+#social-modal.on{display:flex;animation:sfadeIn .2s ease}
+#social-inner{width:100%;max-width:520px;background:var(--surf);border-radius:22px 22px 0 0;border:1px solid var(--bord);max-height:92dvh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 -16px 50px rgba(0,0,0,.6)}
+.soc-header{display:flex;align-items:center;padding:14px 16px 0;gap:0;border-bottom:1px solid var(--bord);background:var(--surf);position:sticky;top:0;z-index:2}
+.soc-back{background:none;border:none;color:var(--mute);font-size:20px;cursor:pointer;padding:0 8px 0 0;line-height:1}
+.soc-title{font-size:15px;font-weight:800;flex:1;color:var(--txt)}
+.soc-close{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.08);border:none;color:var(--txt);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+[data-theme="light"] .soc-close{background:rgba(0,0,0,.07)}
+.soc-tabs{display:flex;gap:0;padding:0 16px;border-bottom:1px solid var(--bord);background:var(--surf);overflow-x:auto;scrollbar-width:none}
+.soc-tabs::-webkit-scrollbar{display:none}
+.soc-tab{flex:1;min-width:60px;padding:10px 4px;font-size:11px;font-weight:700;color:var(--mute);border:none;background:transparent;cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.soc-tab.on{color:var(--ora);border-bottom-color:var(--ora)}
+.soc-body{flex:1;overflow-y:auto;padding:14px 16px 32px}
+.soc-search-wrap{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);border:1.5px solid var(--bord);border-radius:12px;padding:0 12px;height:42px;margin-bottom:14px;transition:border-color .2s}
+.soc-search-wrap:focus-within{border-color:rgba(249,115,22,.5)}
+[data-theme="light"] .soc-search-wrap{background:rgba(0,0,0,.04)}
+.soc-search-wrap input{flex:1;background:transparent;border:none;outline:none;color:var(--txt);font-size:14px;font-family:inherit}
+.soc-search-wrap input::placeholder{color:var(--mute)}
+.trekker-card{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;border:1px solid var(--bord);background:rgba(255,255,255,.03);margin-bottom:8px;cursor:pointer;transition:background .15s,border-color .15s}
+.trekker-card:hover{background:rgba(255,255,255,.06);border-color:rgba(249,115,22,.3)}
+[data-theme="light"] .trekker-card{background:rgba(0,0,0,.03)}
+.trekker-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--ora),var(--pur));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0;overflow:hidden;border:2px solid rgba(255,255,255,.1)}
+.trekker-avatar img{width:100%;height:100%;object-fit:cover}
+.trekker-info{flex:1;min-width:0}
+.trekker-name{font-size:13px;font-weight:700;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trekker-meta{font-size:11px;color:var(--mute);margin-top:2px}
+.trekker-badges{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.trekker-badge-dot{font-size:12px}
+.follow-btn{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1.5px solid var(--ora);background:transparent;color:var(--ora);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s,color .15s;white-space:nowrap}
+.follow-btn.following{background:rgba(249,115,22,.15)}
+.follow-btn.mutual{background:linear-gradient(135deg,rgba(249,115,22,.2),rgba(163,113,247,.2));border-color:var(--pur);color:var(--pur)}
+.trekker-detail-header{display:flex;gap:14px;align-items:center;margin-bottom:16px;padding:14px;background:linear-gradient(135deg,rgba(249,115,22,.08),rgba(163,113,247,.06));border-radius:14px;border:1px solid var(--bord)}
+.trekker-detail-avatar{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--ora),var(--pur));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;flex-shrink:0;overflow:hidden;border:3px solid rgba(255,255,255,.15)}
+.trekker-detail-avatar img{width:100%;height:100%;object-fit:cover}
+.trekker-detail-name{font-size:18px;font-weight:800;color:var(--txt)}
+.trekker-detail-tagline{font-size:12px;color:var(--mute);margin-top:2px}
+.follow-counts{display:flex;gap:16px;margin-top:6px}
+.follow-count-item{font-size:11px;color:var(--mute)}
+.follow-count-item strong{color:var(--txt);font-size:13px}
+.compare-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;margin-bottom:14px}
+.compare-col{display:flex;flex-direction:column;gap:6px}
+.compare-label{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--mute);text-align:center;font-weight:700}
+.compare-row{background:rgba(255,255,255,.04);border:1px solid var(--bord);border-radius:10px;padding:8px 10px;text-align:center}
+[data-theme="light"] .compare-row{background:rgba(0,0,0,.04)}
+.compare-row.winner{border-color:rgba(249,115,22,.5);background:rgba(249,115,22,.08)}
+.compare-val{font-size:15px;font-weight:800;font-family:monospace;color:var(--ora)}
+.compare-sub{font-size:9px;color:var(--mute);margin-top:1px}
+.compare-vs{display:flex;align-items:center;justify-content:center}
+.compare-vs-dot{width:26px;height:26px;border-radius:50%;background:var(--bord);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--txt)}
+.rating-section{background:rgba(255,255,255,.03);border:1px solid var(--bord);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+[data-theme="light"] .rating-section{background:rgba(0,0,0,.03)}
+.rating-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--mute);margin-bottom:8px}
+.rating-display{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.rating-avg{font-size:28px;font-weight:800;font-family:monospace;color:var(--ora)}
+.rating-stars-input{display:flex;gap:6px;margin-top:6px}
+.rating-star{font-size:26px;cursor:pointer;color:var(--bord);transition:color .1s,transform .15s}
+.rating-star:hover,.rating-star.on{color:var(--ora)}
+.rating-star:hover{transform:scale(1.2)}
+.mutual-lock{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mute);padding:8px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid var(--bord)}
+[data-theme="light"] .mutual-lock{background:rgba(0,0,0,.03)}
+.story-compose{background:rgba(255,255,255,.03);border:1px solid var(--bord);border-radius:14px;padding:12px;margin-bottom:14px}
+[data-theme="light"] .story-compose{background:rgba(0,0,0,.03)}
+.story-compose-row{display:flex;gap:10px;align-items:flex-start}
+.story-compose-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--ora),var(--pur));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden}
+.story-compose-avatar img{width:100%;height:100%;object-fit:cover}
+.story-compose-input{flex:1;background:transparent;border:none;outline:none;color:var(--txt);font-size:13px;font-family:inherit;resize:none;height:60px;padding:4px 0}
+.story-compose-input::placeholder{color:var(--mute)}
+.story-compose-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--bord)}
+.story-trek-tag{font-size:11px;color:var(--mute)}
+.story-post-btn{padding:7px 16px;border-radius:20px;border:none;background:linear-gradient(135deg,#fb923c,#f97316);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:transform .15s}
+.story-post-btn:active{transform:scale(.95)}
+.story-card{background:rgba(255,255,255,.03);border:1px solid var(--bord);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+[data-theme="light"] .story-card{background:rgba(0,0,0,.03)}
+.story-card-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.story-card-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--ora),var(--pur));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden}
+.story-card-avatar img{width:100%;height:100%;object-fit:cover}
+.story-card-author{font-size:13px;font-weight:700;color:var(--txt)}
+.story-card-time{font-size:10px;color:var(--mute)}
+.story-card-trek{font-size:10px;color:var(--ora);font-weight:600;margin-top:1px}
+.story-card-text{font-size:13px;color:var(--txt);line-height:1.65;margin-bottom:8px}
+.story-card-actions{display:flex;gap:14px;align-items:center}
+.story-like-btn{background:none;border:none;font-size:13px;color:var(--mute);cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;transition:color .15s}
+.story-like-btn.liked{color:var(--red)}
+.story-empty{text-align:center;padding:32px 16px;color:var(--mute);font-size:13px;line-height:1.8}
+.story-mutual-notice{background:rgba(163,113,247,.08);border:1px solid rgba(163,113,247,.2);border-radius:12px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--mute);text-align:center;line-height:1.6}
+.follow-action-row{display:flex;gap:8px;margin-bottom:14px}
+.follow-action-btn{flex:1;padding:12px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:transform .15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.follow-action-btn:active{transform:scale(.97)}
+.btn-follow-main{background:linear-gradient(135deg,#fb923c,#f97316);color:#fff;border:none;box-shadow:0 4px 14px rgba(249,115,22,.3)}
+.btn-unfollow-main{background:rgba(255,255,255,.06);border:1px solid var(--bord);color:var(--mute)}
+[data-theme="light"] .btn-unfollow-main{background:rgba(0,0,0,.06)}
+.btn-compare-main{background:rgba(56,139,253,.12);border:1px solid rgba(56,139,253,.3);color:var(--blu)}
+.leaderboard-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;margin-bottom:6px;background:rgba(255,255,255,.03);border:1px solid var(--bord);cursor:pointer;transition:background .15s}
+[data-theme="light"] .leaderboard-row{background:rgba(0,0,0,.03)}
+.leaderboard-row:hover{background:rgba(255,255,255,.06)}
+.lb-rank{font-size:16px;font-weight:800;font-family:monospace;width:28px;text-align:center;flex-shrink:0}
+.lb-rank.gold{color:#f59e0b}.lb-rank.silver{color:#94a3b8}.lb-rank.bronze{color:#b45309}
+.lb-stat{font-size:15px;font-weight:800;font-family:monospace;color:var(--ora);text-align:right;flex-shrink:0;min-width:50px}
 </style>
 </head>
 <body>
@@ -1395,6 +1500,9 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <div class="pf-actions">
       <button class="pf-share-btn" id="pf-share-btn" style="display:none">📤 Share Profile</button>
       <button class="pf-save-btn" id="pf-save-btn" style="flex:1">✅ Save Profile</button>
+    </div>
+    <div class="pf-actions" style="padding-top:0">
+      <button class="pf-save-btn" id="pf-social-btn" style="flex:1;background:rgba(56,139,253,.12);border-color:rgba(56,139,253,.3);color:var(--blu)">🌐 TrekVerse Social</button>
     </div>
 
     <!-- SIGN OUT -->
@@ -1761,6 +1869,26 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <button id="photo-lb-prev">‹</button>
     <span id="photo-lb-counter">1 / 1</span>
     <button id="photo-lb-next">›</button>
+  </div>
+</div>
+
+<!-- SOCIAL HUB MODAL -->
+<div id="social-modal">
+  <div id="social-inner">
+    <div class="soc-header">
+      <button class="soc-back" id="soc-back" style="display:none">‹</button>
+      <div class="soc-title" id="soc-title">🌐 TrekVerse Social</div>
+      <button class="soc-close" id="soc-close">✕</button>
+    </div>
+    <div class="soc-tabs" id="soc-tabs">
+      <button class="soc-tab on" data-tab="explore">🔍 Explore</button>
+      <button class="soc-tab" data-tab="feed">📖 Feed</button>
+      <button class="soc-tab" data-tab="followers">👥 Network</button>
+      <button class="soc-tab" data-tab="leaderboard">🏆 Board</button>
+    </div>
+    <div class="soc-body" id="soc-body">
+      <div class="story-empty"><div style="font-size:36px;margin-bottom:10px">🌐</div>Loading…</div>
+    </div>
   </div>
 </div>
 
@@ -5598,6 +5726,200 @@ function wrapText(ctx, text, cx, y, maxW, lineH) {
 
 
 // ═══════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════
+// SOCIAL HUB ENGINE
+// ═══════════════════════════════════════════════════
+let _socTab='explore',_socDetailUid=null;
+
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+function openSocialHub(){
+  document.getElementById('social-modal').classList.add('on');
+  document.body.style.overflow='hidden';
+  _socTab='explore';_socDetailUid=null;
+  document.querySelectorAll('.soc-tab').forEach(t=>t.classList.toggle('on',t.dataset.tab==='explore'));
+  document.getElementById('soc-back').style.display='none';
+  document.getElementById('soc-title').textContent='🌐 TrekVerse Social';
+  renderSocTab('explore');
+}
+function closeSocialHub(){document.getElementById('social-modal').classList.remove('on');document.body.style.overflow='';}
+
+document.getElementById('soc-close').onclick=closeSocialHub;
+document.getElementById('social-modal').addEventListener('click',e=>{if(e.target===document.getElementById('social-modal'))closeSocialHub();});
+document.getElementById('soc-back').onclick=()=>{_socDetailUid=null;document.getElementById('soc-back').style.display='none';document.getElementById('soc-title').textContent='🌐 TrekVerse Social';document.getElementById('soc-tabs').style.display='';renderSocTab(_socTab);};
+document.getElementById('soc-tabs').addEventListener('click',e=>{const tab=e.target.closest('.soc-tab');if(!tab)return;_socTab=tab.dataset.tab;_socDetailUid=null;document.getElementById('soc-back').style.display='none';document.getElementById('soc-title').textContent='🌐 TrekVerse Social';document.getElementById('soc-tabs').style.display='';document.querySelectorAll('.soc-tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===_socTab));renderSocTab(_socTab);});
+document.getElementById('pf-social-btn').onclick=()=>{closeProfileCard();setTimeout(openSocialHub,200);if(typeof window.syncProfileToFirestore==='function')window.syncProfileToFirestore();};
+
+function socAvatar(user,size){
+  size=size||44;const name=user.name||'E';const initial=name[0]?.toUpperCase()||'?';
+  if(user.photo)return '<div class="trekker-avatar" style="width:'+size+'px;height:'+size+'px"><img src="'+esc(user.photo)+'" alt=""></div>';
+  const colors=['#f97316','#a371f7','#388bfd','#2ea043','#f85149','#d29922'];
+  const col=colors[name.charCodeAt(0)%colors.length];
+  return '<div class="trekker-avatar" style="width:'+size+'px;height:'+size+'px;background:'+col+'">'+initial+'</div>';
+}
+
+async function renderSocTab(tab){
+  const body=document.getElementById('soc-body');
+  body.innerHTML='<div class="story-empty"><div style="border:3px solid var(--bord);border-top-color:var(--ora);border-radius:50%;width:32px;height:32px;animation:spin .7s linear infinite;margin:0 auto 12px"></div>Loading…</div>';
+  if(!window.TrekSocial){body.innerHTML='<div class="story-empty"><div style="font-size:32px;margin-bottom:10px">⚙️</div>Enable Firestore in Firebase console.</div>';return;}
+  const myUid=TrekSocial.getUID();
+  const isGuest=!myUid||JSON.parse(localStorage.getItem('tv_user')||'{}').anon;
+  if(isGuest){body.innerHTML='<div class="story-empty"><div style="font-size:36px;margin-bottom:10px">🔐</div>Sign in with Google or Phone to use social features.</div>';return;}
+  if(tab==='explore')await renderExplore(body);
+  else if(tab==='feed')await renderFeed(body);
+  else if(tab==='followers')await renderNetwork(body);
+  else if(tab==='leaderboard')await renderLeaderboard(body);
+}
+
+async function renderExplore(body){
+  body.innerHTML='<div class="soc-search-wrap"><span style="color:var(--mute);font-size:14px">🔍</span><input id="soc-search-input" placeholder="Search trekkers by name or region…" autocomplete="off"></div><div id="soc-search-results"></div>';
+  let searchTimer=null;
+  const inp=document.getElementById('soc-search-input');
+  const results=document.getElementById('soc-search-results');
+  async function doSearch(q){
+    results.innerHTML='<div style="color:var(--mute);font-size:12px;text-align:center;padding:16px">Searching…</div>';
+    try{
+      const users=await TrekSocial.searchTrekkers(q);
+      if(!users.length){results.innerHTML='<div class="story-empty"><div style="font-size:32px">🏔️</div>No trekkers found'+(q?' for "'+esc(q)+'"':'')+'. Be the first to explore!</div>';return;}
+      const followChecks=await Promise.all(users.map(u=>TrekSocial.isFollowing(u.uid)));
+      results.innerHTML=users.map((u,i)=>{
+        const iAmF=followChecks[i];
+        const earnedBadges=typeof ACHIEVEMENTS!=='undefined'?(u.badges||[]).slice(0,4).map(b=>{const a=ACHIEVEMENTS.find(x=>x.id===b);return a?'<span title="'+a.name+'">'+a.icon+'</span>':'';}).join(''):'';
+        return '<div class="trekker-card" data-uid="'+esc(u.uid)+'">'+socAvatar(u,44)+'<div class="trekker-info"><div class="trekker-name">'+esc(u.name||'Explorer')+'</div><div class="trekker-meta">🏔 '+(u.stats?.total||0)+' treks'+(u.stats?.highestPeak?.name?' · '+esc(u.stats.highestPeak.name):'')+'</div><div class="trekker-badges">'+earnedBadges+'</div></div><button class="follow-btn '+(iAmF?'following':'')+'" data-uid="'+esc(u.uid)+'" data-following="'+iAmF+'">'+(iAmF?'Following':'+ Follow')+'</button></div>';
+      }).join('');
+      results.querySelectorAll('.follow-btn').forEach(btn=>{btn.onclick=async e=>{e.stopPropagation();const uid=btn.dataset.uid;const isF=btn.dataset.following==='true';btn.disabled=true;btn.textContent='…';if(isF){await TrekSocial.unfollow(uid);btn.textContent='+ Follow';btn.dataset.following='false';btn.className='follow-btn';}else{await TrekSocial.follow(uid);btn.textContent='Following';btn.dataset.following='true';btn.className='follow-btn following';}btn.disabled=false;};});
+      results.querySelectorAll('.trekker-card').forEach(card=>{card.onclick=e=>{if(e.target.classList.contains('follow-btn'))return;showTrekkerDetail(card.dataset.uid);};});
+    }catch(e){results.innerHTML='<div class="story-empty">⚠️ '+esc(e.message||'Error')+'</div>';}
+  }
+  inp.oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>doSearch(inp.value.trim()),400);};
+  doSearch('');
+}
+
+async function showTrekkerDetail(uid){
+  _socDetailUid=uid;
+  document.getElementById('soc-back').style.display='';
+  document.getElementById('soc-tabs').style.display='none';
+  const body=document.getElementById('soc-body');
+  body.innerHTML='<div class="story-empty"><div style="border:3px solid var(--bord);border-top-color:var(--ora);border-radius:50%;width:32px;height:32px;animation:spin .7s linear infinite;margin:0 auto 12px"></div>Loading profile…</div>';
+  try{
+    const myUid=TrekSocial.getUID();
+    const[user,followCounts,iAmFollowing,theySnap,myRating]=await Promise.all([
+      TrekSocial.getUserProfile(uid),TrekSocial.getFollowCounts(uid),TrekSocial.isFollowing(uid),
+      firebase.firestore().collection('users').doc(uid).collection('following').doc(myUid).get(),
+      TrekSocial.getMyRating(uid),
+    ]);
+    if(!user){body.innerHTML='<div class="story-empty">User not found.</div>';return;}
+    const theyFollowMe=theySnap.exists;const mutual=iAmFollowing&&theyFollowMe;
+    const myStats=typeof calculateStats==='function'?calculateStats():{total:0,totalAlt:0,highestTrek:null,totalDays:0};
+    const myProfile=JSON.parse(localStorage.getItem('trekverse_profile')||'{}');
+    const myAuth=JSON.parse(localStorage.getItem('tv_user')||'{}');
+    const myName=myProfile.name||myAuth.name||'Me';
+    document.getElementById('soc-title').textContent=user.name||'Trekker';
+    const compareItems=[
+      {label:'Treks',mine:myStats.total,theirs:user.stats?.total||0,fmt:v=>v},
+      {label:'Highest (m)',mine:myStats.highestTrek?.alt||0,theirs:user.stats?.highestPeak?.alt||0,fmt:v=>v?v.toLocaleString():'—'},
+      {label:'Total Alt',mine:myStats.totalAlt,theirs:user.stats?.totalAlt||0,fmt:v=>v.toLocaleString()+'m'},
+      {label:'Days',mine:myStats.totalDays||0,theirs:user.stats?.totalDays||0,fmt:v=>v},
+    ];
+    const starsDisp=n=>n?'★'.repeat(Math.round(n))+'☆'.repeat(5-Math.round(n)):'☆☆☆☆☆';
+    body.innerHTML=
+      '<div class="trekker-detail-header">'+
+        socAvatar(user,60).replace('trekker-avatar','trekker-detail-avatar')+
+        '<div style="flex:1;min-width:0">'+
+          '<div class="trekker-detail-name">'+esc(user.name||'Explorer')+'</div>'+
+          '<div class="trekker-detail-tagline">'+esc(user.tagline||'')+'</div>'+
+          '<div class="follow-counts"><div class="follow-count-item"><strong>'+followCounts.followers+'</strong> followers</div><div class="follow-count-item"><strong>'+followCounts.following+'</strong> following</div>'+(user.avgRating?'<div class="follow-count-item"><strong>'+user.avgRating+'⭐</strong> ('+user.ratingCount+')</div>':'')+'</div>'+
+          (user.badges?.length?'<div class="trekker-badges" style="margin-top:6px">'+user.badges.slice(0,6).map(b=>{const a=typeof ACHIEVEMENTS!=='undefined'?ACHIEVEMENTS.find(x=>x.id===b):null;return a?'<span title="'+a.name+'">'+a.icon+'</span>':'';}).join('')+'</div>':'')+
+        '</div>'+
+      '</div>'+
+      '<div class="follow-action-row">'+
+        (iAmFollowing?'<button class="follow-action-btn btn-unfollow-main" id="det-follow-btn">✓ Following</button>':'<button class="follow-action-btn btn-follow-main" id="det-follow-btn">+ Follow</button>')+
+        (mutual?'<button class="follow-action-btn btn-compare-main" id="det-compare-btn">⚡ Compare</button>':'')+
+      '</div>'+
+      (!mutual&&iAmFollowing?'<div class="story-mutual-notice">🤝 They need to follow you back to unlock Compare, Stories & Rating</div>':'')+
+      (!iAmFollowing?'<div class="story-mutual-notice">👋 Follow '+esc(user.name||'them')+' — mutual follow unlocks all features</div>':'')+
+      (mutual?
+        '<div class="wpt" style="margin-bottom:8px">⚡ Head-to-Head</div>'+
+        '<div class="compare-grid">'+
+          '<div class="compare-label">'+esc(myName)+'</div><div></div><div class="compare-label">'+esc(user.name||'Them')+'</div>'+
+          compareItems.map(item=>'<div class="compare-row '+(item.mine>item.theirs?'winner':'')+'"><div class="compare-val">'+item.fmt(item.mine)+'</div><div class="compare-sub">'+item.label+'</div></div><div class="compare-vs"><div class="compare-vs-dot">vs</div></div><div class="compare-row '+(item.theirs>item.mine?'winner':'')+'"><div class="compare-val">'+item.fmt(item.theirs)+'</div><div class="compare-sub">'+item.label+'</div></div>').join('')+
+        '</div>'
+      :'')+
+      '<div class="rating-section">'+
+        '<div class="rating-title">Profile Rating</div>'+
+        (user.avgRating?'<div class="rating-display"><div class="rating-avg">'+user.avgRating+'</div><div><div style="color:var(--ora);font-size:16px">'+starsDisp(user.avgRating)+'</div><div style="font-size:11px;color:var(--mute)">'+user.ratingCount+' rating'+(user.ratingCount!==1?'s':'')+'</div></div></div>':'<div style="color:var(--mute);font-size:12px;margin-bottom:8px">No ratings yet</div>')+
+        (mutual?'<div class="rating-title" style="margin-top:8px">Your Rating</div><div class="rating-stars-input" id="det-stars">'+[1,2,3,4,5].map(n=>'<span class="rating-star '+(myRating>=n?'on':'')+'" data-val="'+n+'">★</span>').join('')+'</div>':'<div class="mutual-lock">🔒 Follow each other to rate this profile</div>')+
+      '</div>';
+    const followBtn=document.getElementById('det-follow-btn');
+    if(followBtn)followBtn.onclick=async()=>{followBtn.disabled=true;if(iAmFollowing){await TrekSocial.unfollow(uid);if(typeof toast==='function')toast('Unfollowed','#7d8590');}else{await TrekSocial.follow(uid);if(typeof toast==='function')toast('Following! 🏔','#2ea043');}showTrekkerDetail(uid);};
+    body.querySelectorAll('.rating-star').forEach(star=>{
+      star.onclick=async()=>{const val=+star.dataset.val;const res=await TrekSocial.rateProfile(uid,val);if(res?.error){if(typeof toast==='function')toast('⚠ '+res.error,'#f85149');return;}body.querySelectorAll('.rating-star').forEach((s,i)=>s.classList.toggle('on',i<val));if(typeof toast==='function')toast('Rated '+val+'⭐','#f59e0b');};
+      star.onmouseenter=()=>{const val=+star.dataset.val;body.querySelectorAll('.rating-star').forEach((s,i)=>s.style.color=i<val?'var(--ora)':'var(--bord)');};
+      star.onmouseleave=()=>{body.querySelectorAll('.rating-star').forEach(s=>s.style.color='');};
+    });
+  }catch(e){body.innerHTML='<div class="story-empty">⚠️ '+esc(e.message||'Error loading profile')+'</div>';}
+}
+
+function renderStoryCard(s){
+  const name=esc(s.authorName||'Explorer');const initial=(s.authorName||'E')[0].toUpperCase();
+  const av=s.authorPhoto?'<div class="story-card-avatar"><img src="'+esc(s.authorPhoto)+'" alt=""></div>':'<div class="story-card-avatar">'+initial+'</div>';
+  const ts=s.createdAt?.toDate?s.createdAt.toDate().toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'';
+  const myUid=TrekSocial.getUID();const liked=(s.likes||[]).includes(myUid);
+  return '<div class="story-card" data-story="'+s.id+'"><div class="story-card-header">'+av+'<div><div class="story-card-author">'+name+'</div>'+(s.trekName?'<div class="story-card-trek">📍 '+esc(s.trekName)+'</div>':'')+'<div class="story-card-time">'+ts+'</div></div></div><div class="story-card-text">'+esc(s.text)+'</div><div class="story-card-actions"><button class="story-like-btn '+(liked?'liked':'')+'" data-story="'+s.id+'">'+(liked?'❤️':'🤍')+' '+((s.likes||[]).length||'')+'</button></div></div>';
+}
+function wireStoryLikes(container){
+  container.querySelectorAll('.story-like-btn').forEach(btn=>{
+    btn.onclick=async()=>{const id=btn.dataset.story;await TrekSocial.likeStory(id);const liked=btn.classList.contains('liked');const count=parseInt(btn.textContent.replace(/\D/g,''))||0;btn.classList.toggle('liked');btn.innerHTML=(liked?'🤍':'❤️')+' '+(liked?Math.max(0,count-1):count+1||'');};
+  });
+}
+
+async function renderFeed(body){
+  const myProfile=JSON.parse(localStorage.getItem('trekverse_profile')||'{}');
+  const myAuth=JSON.parse(localStorage.getItem('tv_user')||'{}');
+  const myName=myProfile.name||myAuth.name||'Explorer';const myPhoto=myProfile.photo||myAuth.photo||null;
+  const lastTrek=typeof current!=='undefined'&&current?current.name:null;
+  body.innerHTML=
+    '<div class="story-mutual-notice">📖 Stories visible only between mutual followers.</div>'+
+    '<div class="story-compose"><div class="story-compose-row">'+(myPhoto?'<div class="story-compose-avatar"><img src="'+esc(myPhoto)+'" alt=""></div>':'<div class="story-compose-avatar">'+myName[0].toUpperCase()+'</div>')+'<textarea class="story-compose-input" id="story-text" placeholder="Share a trek story, tip or moment…"></textarea></div><div class="story-compose-footer"><span class="story-trek-tag">'+(lastTrek?'📍 '+esc(lastTrek):'No trek tagged')+'</span><button class="story-post-btn" id="story-post-btn">Post 🏔</button></div></div>'+
+    '<div id="story-feed-list"><div style="color:var(--mute);font-size:12px;text-align:center;padding:16px">Loading feed…</div></div>';
+  document.getElementById('story-post-btn').onclick=async()=>{const text=document.getElementById('story-text').value.trim();if(!text){if(typeof toast==='function')toast('Write something first!','#f85149');return;}const btn=document.getElementById('story-post-btn');btn.disabled=true;btn.textContent='…';await TrekSocial.postStory(text,lastTrek||'');document.getElementById('story-text').value='';btn.disabled=false;btn.textContent='Post 🏔';if(typeof toast==='function')toast('Story posted! 🏔','#2ea043');loadFeed();};
+  async function loadFeed(){const feedDiv=document.getElementById('story-feed-list');if(!feedDiv)return;try{const stories=await TrekSocial.getFeedStories();if(!stories.length){feedDiv.innerHTML='<div class="story-empty"><div style="font-size:32px">📖</div>No stories yet.<br>Follow people and they need to follow back to see stories.</div>';return;}feedDiv.innerHTML=stories.map(s=>renderStoryCard(s)).join('');wireStoryLikes(feedDiv);}catch(e){feedDiv.innerHTML='<div class="story-empty">⚠️ '+esc(e.message||'Error')+'</div>';}}
+  loadFeed();
+}
+
+async function renderNetwork(body){
+  const myUid=TrekSocial.getUID();body.innerHTML='<div style="color:var(--mute);font-size:12px;text-align:center;padding:20px">Loading network…</div>';
+  try{
+    const db=firebase.firestore();
+    const[fSnap,rSnap]=await Promise.all([db.collection('users').doc(myUid).collection('following').get(),db.collection('users').doc(myUid).collection('followers').get()]);
+    const followerIds=new Set(rSnap.docs.map(d=>d.id));const followingIds=fSnap.docs.map(d=>d.id);
+    const profiles=await Promise.all(followingIds.map(uid=>TrekSocial.getUserProfile(uid)));
+    body.innerHTML=
+      '<div style="display:flex;gap:20px;margin-bottom:16px;padding:14px;background:rgba(255,255,255,.03);border-radius:12px;border:1px solid var(--bord)">'+
+        '<div style="text-align:center;flex:1"><div style="font-size:24px;font-weight:800;color:var(--ora)">'+rSnap.size+'</div><div style="font-size:11px;color:var(--mute)">Followers</div></div>'+
+        '<div style="text-align:center;flex:1"><div style="font-size:24px;font-weight:800;color:var(--blu)">'+fSnap.size+'</div><div style="font-size:11px;color:var(--mute)">Following</div></div>'+
+        '<div style="text-align:center;flex:1"><div style="font-size:24px;font-weight:800;color:var(--grn)">'+followingIds.filter(id=>followerIds.has(id)).length+'</div><div style="font-size:11px;color:var(--mute)">Mutual</div></div>'+
+      '</div>'+
+      (profiles.filter(Boolean).length?profiles.filter(Boolean).map(u=>{const mutual=followerIds.has(u.uid);return '<div class="trekker-card" data-uid="'+esc(u.uid)+'">'+socAvatar(u,40)+'<div class="trekker-info"><div class="trekker-name">'+esc(u.name||'Explorer')+(mutual?' <span style="font-size:10px;color:var(--grn)">✦ mutual</span>':'')+'</div><div class="trekker-meta">🏔 '+(u.stats?.total||0)+' treks</div></div><button class="follow-btn following" data-uid="'+esc(u.uid)+'" data-following="true">Following</button></div>';}).join(''):'<div class="story-empty"><div style="font-size:32px">👥</div>Not following anyone yet.<br>Go to Explore to find trekkers!</div>');
+    body.querySelectorAll('.trekker-card').forEach(c=>{c.onclick=e=>{if(e.target.classList.contains('follow-btn'))return;showTrekkerDetail(c.dataset.uid);};});
+    body.querySelectorAll('.follow-btn').forEach(btn=>{btn.onclick=async e=>{e.stopPropagation();if(btn.dataset.following==='true'){await TrekSocial.unfollow(btn.dataset.uid);btn.textContent='+ Follow';btn.className='follow-btn';btn.dataset.following='false';if(typeof toast==='function')toast('Unfollowed','#7d8590');}};});
+  }catch(e){body.innerHTML='<div class="story-empty">⚠️ '+esc(e.message||'Error')+'</div>';}
+}
+
+async function renderLeaderboard(body){
+  body.innerHTML='<div style="color:var(--mute);font-size:12px;text-align:center;padding:20px">Loading leaderboard…</div>';
+  try{
+    const snap=await firebase.firestore().collection('users').where('isAnon','==',false).orderBy('stats.total','desc').limit(20).get();
+    const users=snap.docs.map(d=>d.data());
+    const rankEmoji=['🥇','🥈','🥉'];const rankClass=['gold','silver','bronze'];
+    body.innerHTML='<div class="wpt" style="margin-bottom:10px">🏆 Top Trekkers by Summits</div>'+
+      users.map((u,i)=>'<div class="leaderboard-row" data-uid="'+esc(u.uid)+'"><div class="lb-rank '+(rankClass[i]||'')+'">'+((rankEmoji[i])||(i+1))+'</div>'+socAvatar(u,36)+'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(u.name||'Explorer')+'</div><div style="font-size:10px;color:var(--mute)">'+(u.stats?.highestPeak?.name||'—')+(u.stats?.highestPeak?.alt?' · '+u.stats.highestPeak.alt.toLocaleString()+'m':'')+'</div></div><div class="lb-stat">'+(u.stats?.total||0)+'<div style="font-size:9px;color:var(--mute);font-weight:400">treks</div></div></div>').join('');
+    body.querySelectorAll('.leaderboard-row').forEach(row=>{row.onclick=()=>showTrekkerDetail(row.dataset.uid);});
+  }catch(e){body.innerHTML='<div class="story-empty">⚠️ '+(e.message||'Could not load leaderboard')+'</div>';}
+}
+
+
 // BOOT
 // ═══════════════════════════════════════════════════
 // Initial build — runs immediately for non-map state (badge, etc.)
@@ -5774,5 +6096,6 @@ document.querySelectorAll('.drawer-group')[0]?.classList.add('expanded');
 
 </script>
 <script src="journey-hub.js"></script>
+<script src="social.js"></script>
 </body>
 </html>
