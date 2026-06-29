@@ -1416,6 +1416,10 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .lb-rank{font-size:16px;font-weight:800;font-family:monospace;width:28px;text-align:center;flex-shrink:0}
 .lb-rank.gold{color:#f59e0b}.lb-rank.silver{color:#94a3b8}.lb-rank.bronze{color:#b45309}
 .lb-stat{font-size:15px;font-weight:800;font-family:monospace;color:var(--ora);text-align:right;flex-shrink:0;min-width:50px}
+
+/* Share card modal */
+#share-modal { display:none !important; }
+#share-modal.on { display:flex !important; }
 </style>
 </head>
 <body>
@@ -5376,23 +5380,28 @@ function closeShareCard() {
   document.body.style.overflow = '';
 }
 
-document.getElementById('share-close-btn').onclick = closeShareCard;
-document.getElementById('share-close-btn2').onclick = closeShareCard;
-document.getElementById('share-modal').addEventListener('click', e => {
-  if (e.target === document.getElementById('share-modal')) closeShareCard();
-});
-
-document.getElementById('share-download-btn').onclick = () => {
-  const canvas = document.getElementById('share-canvas');
-  const a = document.createElement('a');
-  a.download = (canvas.dataset.trekname || 'trek-card') + '.jpg';
-  canvas.toBlob(blob => {
-    a.href = URL.createObjectURL(blob);
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-  }, 'image/jpeg', 0.95);
-  toast('📥 Card saved to your downloads!', '#2ea043');
-};
+// Guard share card button wiring (elements may not exist if share feature not yet used)
+(function(){
+  const scb = document.getElementById('share-close-btn');
+  const scb2 = document.getElementById('share-close-btn2');
+  const sm = document.getElementById('share-modal');
+  const sdb = document.getElementById('share-download-btn');
+  if(scb) scb.onclick = closeShareCard;
+  if(scb2) scb2.onclick = closeShareCard;
+  if(sm) sm.addEventListener('click', e => { if(e.target === sm) closeShareCard(); });
+  if(sdb) sdb.onclick = () => {
+    const canvas = document.getElementById('share-canvas');
+    if(!canvas) return;
+    const a = document.createElement('a');
+    a.download = (canvas.dataset.trekname || 'trek-card') + '.jpg';
+    canvas.toBlob(blob => {
+      a.href = URL.createObjectURL(blob);
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    }, 'image/jpeg', 0.95);
+    if(typeof toast === 'function') toast('📥 Card saved!', '#2ea043');
+  };
+})();
 
 function drawShareCard(canvas, trek) {
   canvas.dataset.trekname = trek.name.replace(/\s+/g, '-').toLowerCase();
@@ -6095,6 +6104,22 @@ updateDrawerActive('all');
 document.querySelectorAll('.drawer-group')[0]?.classList.add('expanded');
 
 </script>
+
+<!-- SHARE CARD MODAL -->
+<div id="share-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)">
+  <div style="background:#161b22;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:20px;max-width:400px;width:100%;position:relative">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-size:15px;font-weight:700;color:#e6edf3">📸 Share Your Summit</div>
+      <button id="share-close-btn" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#e6edf3;width:30px;height:30px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <canvas id="share-canvas" style="width:100%;border-radius:12px;display:block;background:#0d1117"></canvas>
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button id="share-download-btn" style="flex:1;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#fb923c,#f97316);color:#fff;font-size:14px;font-weight:600;cursor:pointer">⬇ Download Card</button>
+      <button id="share-close-btn2" style="padding:12px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#e6edf3;font-size:14px;cursor:pointer">Close</button>
+    </div>
+  </div>
+</div>
+
 <script src="journey-hub.js"></script>
 <script src="social.js"></script>
 </body>
