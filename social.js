@@ -87,5 +87,25 @@ async function getUserProfile(uid){const db=initDB();if(!db)return null;const s=
 
 window.TrekSocial={init:initDB,syncProfile:window.syncProfileToFirestore,follow:followUser,unfollow:unfollowUser,isFollowing,getFollowCounts,rateProfile,getMyRating,postStory,getFeedStories,likeStory,searchTrekkers,getUserProfile,getUID};
 
-window.addEventListener('load',()=>{const uid=getUID();if(uid&&!JSON.parse(localStorage.getItem('tv_user')||'{}').anon){setTimeout(()=>window.syncProfileToFirestore(),2000);}});
+window.addEventListener('load',()=>{
+  // Wait for Firebase auth to confirm user before writing to Firestore
+  // This prevents "Missing or insufficient permissions" errors
+  try{
+    if(typeof firebase!=='undefined'&&firebase.apps&&firebase.apps.length){
+      firebase.auth().onAuthStateChanged(user=>{
+        if(user&&!user.isAnonymous){
+          // Auth confirmed — safe to sync now
+          setTimeout(()=>window.syncProfileToFirestore(),1000);
+        }
+      });
+    } else {
+      // Firebase not ready yet — fallback with delay
+      setTimeout(()=>{
+        const uid=getUID();
+        const u=JSON.parse(localStorage.getItem('tv_user')||'{}');
+        if(uid&&!u.anon) window.syncProfileToFirestore();
+      },4000);
+    }
+  }catch(e){console.warn('[Social]',e);}
+});
 })();
